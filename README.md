@@ -1,2 +1,12 @@
 # t1_mfds_2025
 MFDS 2025 T1
+
+# Equipo 1 Metodos Formales
+
+## Integrantes
+
+- 🗿 222804 | Diego Alejandro jasso Fernandez
+- 🗿 223229 | Anna Lizbeth Barajas Sandoval 
+- 🗿 223229 | Vilchis Ríos Gabriel Alberto
+- 🗿 223229 | Luis Ubaldo Flores Pineda
+- 🗿 223229 | Ricardo Rodriguez Ponce
