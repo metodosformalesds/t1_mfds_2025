@@ -6,7 +6,7 @@ MFDS 2025 T1
 ## Integrantes
 
 - 🗿 222804 | Diego Alejandro jasso Fernandez
-- 🗿 223229 | Anna Lizbeth Barajas Sandoval 
-- 🗿 223229 | Vilchis Ríos Gabriel Alberto
-- 🗿 223229 | Luis Ubaldo Flores Pineda
+- 🗿 222835 | Anna Lizbeth Barajas Sandoval 
+- 🗿 215460 | Vilchis Ríos Gabriel Alberto
+- 🗿 223046 | Luis Ubaldo Flores Pineda
 - 🗿 223229 | Ricardo Rodriguez Ponce
