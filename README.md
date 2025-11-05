@@ -10,8 +10,9 @@ Para instalar las dependencias requeridas ubicadas en "requirements.txt", es nec
 4. Para instalar las dependencias: pip install -r requirements.txt 
 
 ## Levantar el server de FastAPI
-Para leventar el server de fastapi mediante la uvicorn, es necesario correr la siguiente linea de codigo:
+Para leventar el server de fastapi mediante la uvicorn, es necesario crealizar lo siguiente:
 
-uvicorn Backend.main:app --reload
+cd Backend 
+uvicorn app.main:app --reload
 
 Para cerrar el server una vez que se este ejecutando: ctrl + c
