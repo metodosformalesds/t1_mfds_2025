@@ -1,26 +1,28 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, Text, DateTime
-from sqlalchemy.orm import relationship
-from datetime import datetime
+from sqlalchemy import Integer, ForeignKey, Numeric, Text, Date
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from datetime import date
+from typing import Optional
+from decimal import Decimal
 from app.core.database import Base
-
 
 class Review(Base):
     tablename = "reviews"
 
-    review_id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.product_id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    rating = Column(Integer, nullable=False)  # 1-5 estrellas
-    review_text = Column(Text, nullable=True)
+    # Keys
+    review_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.product_id", ondelete="CASCADE"), nullable=False)
+    order_id: Mapped[int] = mapped_column(ForeignKey("order.order_id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
 
-    #Control
-    date_created = Column(DateTime, default=datetime.utcnow, nullable=False)
-    #updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    # Attributes
+    rating: Mapped[Decimal] = mapped_column(Numeric(2, 1), nullable=False)  # 1-5 star rating including halves
+    review_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    date_updated: Mapped[date] = mapped_column(Date, nullable=False)
 
-    #Relaciones
-    product = relationship("Product", back_populates="reviews")
-    user = relationship("User", back_populates="reviews")
-    orders = relationship("Order", back_populates="reviews")
+    # Relationships
+    product: Mapped["Product"] = relationship("Product", back_populates="reviews")
+    order: Mapped["Order"] = relationship("Order", back_populates="reviews")
+    user: Mapped["User"] = relationship("User", back_populates="reviews")
 
-    def repr(self):
-        return f"<Review product_id={self.product_id} rating={self.rating}>"
+    def __repr__(self) -> str:
+        return f"<Review(review_id={self.review_id}, product_id={self.product_id}, rating={self.rating})>"
