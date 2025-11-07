@@ -15,7 +15,7 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.USER, nullable=False)
     email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, index=True, nullable=True)
     auth_type: Mapped[AuthType] = mapped_column(Enum(AuthType), nullable=False)
-    password_hash = Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # Null si usa auth externa
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # Null si usa auth externa
     first_name:Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     gender: Mapped[Gender] = mapped_column(Enum(Gender), nullable=False)
