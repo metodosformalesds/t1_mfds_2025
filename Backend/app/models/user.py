@@ -1,46 +1,38 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum
-from sqlalchemy.orm import relationship
-from datetime import datetime
-import enum
+from sqlalchemy import String, Boolean, Date, Enum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from datetime import date
+from typing import Optional, List
 from app.core.database import Base
-
-
-class UserRole(str, enum.Enum):
-    USER = "user"
-    ADMIN = "admin"
-
+from .enum import UserRole, AuthType, Gender
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "user"
     
-    user_id = Column(Integer, primary_key=True, index=True)
-    role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=True)  # Null si usa auth externa
-    first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
-    gender = Column(String(50), nullable=True)
-    birth_date = Column(DateTime, nullable=True)
-    profile_image_url = Column(String(500), nullable=True)
+    # PK
+    user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
+    # Attributes
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.USER, nullable=False)
+    email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, index=True, nullable=True)
+    auth_type: Mapped[AuthType] = mapped_column(Enum(AuthType), nullable=False)
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # Null si usa auth externa
+    first_name:Mapped[str] = mapped_column(String(100), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    gender: Mapped[Gender] = mapped_column(Enum(Gender), nullable=False)
+    date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
+    profile_picture: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    account_status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+        
+    # Relationships
+    fitness_profile: Mapped[Optional["FitnessProfile"]] = relationship("FitnessProfile", back_populates="user", cascade="all, delete-orphan", uselist=False)
+    addresses: Mapped[List["Address"]] = relationship("Address", back_populates="user", cascade="all, delete-orphan")
+    payment_methods: Mapped[List["PaymentMethod"]] = relationship("PaymentMethod", back_populates="user", cascade="all, delete-orphan")
+    shopping_cart: Mapped[Optional["ShoppingCart"]] = relationship("ShoppingCart", back_populates="user", cascade="all, delete-orphan", uselist=False)
+    orders: Mapped[List["Order"]] = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    reviews: Mapped[List["Review"]] = relationship("Review", back_populates="user", cascade="all, delete-orphan")
+    subscription: Mapped[Optional["Subscription"]] = relationship("Subscription", back_populates="user", cascade="all, delete-orphan", uselist=False)
+    user_loyalty: Mapped[Optional["UserLoyalty"]] = relationship("UserLoyalty", back_populates="user", cascade="all, delete-orphan", uselist=False)
+    user_coupons: Mapped[List["UserCoupon"]] = relationship("UserCoupon", back_populates="user", cascade="all, delete-orphan")
     
-    # Campos para autenticación externa
-    cognito_user_id = Column(String(255), unique=True, nullable=True)
-    auth_provider = Column(String(50), nullable=True)  # 'email', 'google', 'facebook'
-    
-    # Campos de control
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    
-    # Relaciones
-    fitness_profile = relationship("FitnessProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    addresses = relationship("Address", back_populates="user", cascade="all, delete-orphan")
-    payment_methods = relationship("PaymentMethod", back_populates="user", cascade="all, delete-orphan")
-    shopping_cart = relationship("ShoppingCart", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
-    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
-    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
-    
-    def __repr__(self):
-        return f"<User {self.email}>"
+    def __repr__(self) -> str:
+        return f"<User(user_id={self.user_id}, email={self.email}, name={self.first_name} {self.last_name}>"
