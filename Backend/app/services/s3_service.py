@@ -17,23 +17,23 @@ class S3Service:
 
     def upload_profile_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
         try:
-            # tamaño del archivo en MB
+            # Tamaño del archivo en MB
             file_size = len(file_content) / (1024 * 1024)
-            # verificar el tamaño del archivo
             if file_size > max_size_mb:
                 return {"success": False, "error": f"El tamaño del archivo excede el limite de {max_size_mb} MB"}
             
-            # Abrir la imagen para verificar si cumple alguno de los formatos definidos
+            # Abrir la imagen para verificar formato
             try:
                 img = Image.open(io.BytesIO(file_content))
-                img_format = img.format()
+                img_format = img.format
 
                 if img_format not in allowed_formats:
-                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: Use: {", ".join(allowed_formats)}"}
+                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {", ".join(allowed_formats)}"}
+
             except Exception as e:
-                return {"success": False, "error": "El archivo no es una imagen valida"}
+                return {"success": False, "error": f"El archivo no es una imagen válida o está corrupto. Detalle: {str(e)}"}
             
-            # Redimensiona la imagen en caso de ser una grande
+            # Redimensiona la imagen
             max_dimension = 1024
             if max(img.size) > max_dimension:
                 img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
@@ -41,7 +41,7 @@ class S3Service:
                 img.save(output, format=img_format, optimize=True, quality=85)
                 file_content = output.getvalue()
 
-            # Generar un nombre unico para el archivo
+            # Lógica para S3
             file_ext = img_format.lower()
             file_name = f"profile_images/{user_id}/{uuid.uuid4()}.{file_ext}"
 
@@ -50,48 +50,49 @@ class S3Service:
                 'png': 'image/png',
                 'webp': 'image/webp'
             }
-            content_type = content_types.get(img_format, 'image/jpeg')
+            content_type = content_types.get(file_ext, 'image/jpeg') 
 
-            # Subir el archivo a S3
+            # Subir el archivo
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=file_name,
                 Body=file_content, 
                 ContentType=content_type,
-                Metadata={
-                    'user_id': user_id
-                }
+                Metadata={'user_id': user_id}
             )
 
-            # genero la url del archivo subido a s3
             img_url = f"https://{self.bucket_name}.s3.{settings.AWS_REGION}.amazonaws.com/{file_name}"
 
             return {"success": True, "file_url": img_url, "file_name": file_name}
+        
+        # --- CORRECCIÓN FINAL DE SINTAXIS (EXTERNAS) ---
         except ClientError as e:
-            return {"success": False, "error": f"Error al subir a S3: str(e)"}
+            return {"success": False, "error": f"Error al subir a S3: {str(e)}"}
         
         except Exception as e:
-            return {"success": False, "error": f"Error inesperado: str(e)"}
+            return {"success": False, "error": f"Error inesperado: {str(e)}"}
         
     def upload_product_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
+        """Sube una imagen de producto a S3, similar a la de perfil pero con ruta diferente."""
         try:
-            # tamaño del archivo en MB
+            # Tamaño del archivo en MB
             file_size = len(file_content) / (1024 * 1024)
-            # verificar el tamaño del archivo
             if file_size > max_size_mb:
                 return {"success": False, "error": f"El tamaño del archivo excede el limite de {max_size_mb} MB"}
             
-            # Abrir la imagen para verificar si cumple alguno de los formatos definidos
+            # Abrir la imagen para verificar formato
             try:
                 img = Image.open(io.BytesIO(file_content))
-                img_format = img.format()
+                img_format = img.format
 
                 if img_format not in allowed_formats:
-                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: Use: {", ".join(allowed_formats)}"}
-            except Exception as e:
-                return {"success": False, "error": "El archivo no es una imagen valida"}
+                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {", ".join(allowed_formats)}"}
             
-            # Redimensiona la imagen en caso de ser una grande
+            # --- CORRECCIÓN FINAL DE SINTAXIS ---
+            except Exception as e:
+                return {"success": False, "error": f"El archivo no es una imagen válida o está corrupto. Detalle: {str(e)}"}
+            
+            # Redimensiona la imagen
             max_dimension = 1024
             if max(img.size) > max_dimension:
                 img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
@@ -99,37 +100,33 @@ class S3Service:
                 img.save(output, format=img_format, optimize=True, quality=85)
                 file_content = output.getvalue()
 
-            # Generar un nombre unico para el archivo
+            # Lógica para S3
             file_ext = img_format.lower()
-            file_name = f"product_images/{user_id}/{uuid.uuid4()}.{file_ext}"
+            file_name = f"product_images/{user_id}/{uuid.uuid4()}.{file_ext}" # Carpeta diferente
 
             content_types = {
                 'jpeg': 'image/jpeg',
                 'png': 'image/png',
                 'webp': 'image/webp'
             }
-            content_type = content_types.get(img_format, 'image/jpeg')
+            content_type = content_types.get(file_ext, 'image/jpeg') 
 
-            # Subir el archivo a S3
+            # Subir el archivo
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=file_name,
                 Body=file_content, 
                 ContentType=content_type,
-                Metadata={
-                    'user_id': user_id
-                }
+                Metadata={'user_id': user_id}
             )
 
-            # genero la url del archivo subido a s3
             img_url = f"https://{self.bucket_name}.s3.{settings.AWS_REGION}.amazonaws.com/{file_name}"
 
             return {"success": True, "file_url": img_url, "file_name": file_name}
+        
         except ClientError as e:
-            return {"success": False, "error": f"Error al subir a S3: str(e)"}
+            return {"success": False, "error": f"Error al subir a S3: {str(e)}"}
         
         except Exception as e:
-            return {"success": False, "error": f"Error inesperado: str(e)"}
-        
-        
-s3_service = S3Service()
+            return {"success": False, "error": f"Error inesperado: {str(e)}"}
+            
