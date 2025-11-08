@@ -1,3 +1,4 @@
+from app.core.database import Base
 from .enum import *
 from .user import User
 from .fitness_profile import FitnessProfile
@@ -45,4 +46,5 @@ __all__ = [
     "LoyaltyTier",
     "UserLoyalty",
     "PointHistory",
+    "Base",
 ]

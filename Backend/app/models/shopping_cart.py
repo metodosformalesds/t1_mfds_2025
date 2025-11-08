@@ -5,7 +5,7 @@ from typing import List
 from app.core.database import Base
 
 class ShoppingCart(Base):
-    __tablename__ = "shopping_carts"
+    __tablename__ = "shopping_cart"
     
     # Keys
     cart_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

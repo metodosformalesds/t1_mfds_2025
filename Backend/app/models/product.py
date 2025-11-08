@@ -5,11 +5,11 @@ from decimal import Decimal
 from app.core.database import Base
 
 class Product(Base):
-    __tablename__ = "products"
+    __tablename__ = "product"
     
     # Keys
     product_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.category_id"), nullable=False, ondelete ="RESTRICT")
+    category_id: Mapped[int] = mapped_column(ForeignKey("categories.category_id", ondelete ="RESTRICT"), nullable=False)
 
     # Attributes
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
