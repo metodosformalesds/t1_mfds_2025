@@ -9,7 +9,7 @@ class Product(Base):
     
     # Keys
     product_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.category_id", ondelete ="RESTRICT"), nullable=False)
+    category_id: Mapped[int] = mapped_column(ForeignKey("category.category_id", ondelete ="RESTRICT"), nullable=False)
 
     # Attributes
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
