@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
 from datetime import date
 import re
+from app.models.enum import UserRole
 
 """
 Schema para registro de usuario
@@ -13,6 +14,7 @@ class SignUpRequest(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=50)
     gender: Optional[str] = Field(None, pattern="^(M|F|prefer_not_say)$") # M para male y F para female
     birth_date: Optional[date] = None
+    role: UserRole = Field(default=UserRole.USER, description="El rol del usuario (por defecto: USER)")
     
     # Validador basado de cognito para contraseñas
     @validator('password')
