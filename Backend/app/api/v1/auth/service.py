@@ -314,18 +314,69 @@ class CognitoService:
             return {'success': False, 'error': 'La nueva contraseña no cumple con los requisitos'}
         except Exception as e:
             return {'success': False, 'error': str(e)}
+        
+    """
+    Esta funcion es para cuando el usuario inicia sesion con google o facebook
+    """   
+    def sync_federated_user(self, db: Session, id_token: str) -> dict:
+        try:
+            # verificar y decodificar el id de cognito
+            payload = self.verify_token(id_token)
 
-    def is_admin(self, id_token_payload: Dict) -> bool:
-            """
-            Verifica si el payload decodificado del token contiene el rol de administrador.
-            Asume que la configuración de Cognito mapea 'custom:role' al claim 'role'.
-            """
-            user_role = id_token_payload.get('role')
+            if not payload:
+                return {'success': False, 'error': 'Token inválido o expirado. No se puede sincronizar.'}
             
-            if not user_role:
-                user_role = id_token_payload.get('custom:role')
+            # extraer informacion del payload
+            cognito_sub = payload.get('sub')
+            user_email = payload.get('email')
+            first_name = payload.get('given_name', 'Usuario') # Default seguro
+            last_name = payload.get('family_name', 'Federado') # Default seguro
 
-            return user_role == UserRole.ADMIN.value
-    
-# Instancia única del servicio
+            if not cognito_sub or not user_email:
+                return {'success': False, 'error': 'Token incompleto. Faltan sub o email.'}
+            
+            # Buscar si el usuario ya existe en la BD  usando el cognito_sub
+            existing_user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
+                
+            if existing_user:
+                # El usuario ya existe y está sincronizado, no se hace nada
+                return {"success": True, "user_id": str(existing_user.user_id), "message": "Usuario sincronizado (existente)."}
+
+            # Determinar el AuthType del proveedor (Google/Facebook/Amazon/etc.)
+            issuer = payload.get('iss', '').lower() 
+            auth_type_value = AuthType.EMAIL # Valor por defecto si no se identifica
+
+            if 'google' in issuer:
+                auth_type_value = AuthType.GOOGLE
+            elif 'facebook' in issuer:
+                auth_type_value = AuthType.FACEBOOK
+
+            # Cear el registro local 
+            new_db_user = User(
+                cognito_sub=cognito_sub,
+                email=user_email,
+                first_name=first_name,
+                last_name=last_name,
+                auth_type=auth_type_value, 
+                password_hash=None, # IMPORTANTE: Null para federados
+                gender=Gender.PREFER_NOT_SAY, 
+                date_of_birth=datetime.today(),
+                profile_picture=payload.get('picture'),
+                role=UserRole.USER,
+                account_status=True
+            )
+                
+            db.add(new_db_user)
+            db.commit()
+            db.refresh(new_db_user)
+
+            return {
+                "success": True,
+                "user_id": str(new_db_user.user_id),
+                "message": "Usuario creado y sincronizado exitosamente."
+            }
+        except Exception as e:
+            return {'success': False, 'error': f"Error interno durante la sincronización: {str(e)}"}
+
+       
 cognito_service = CognitoService()
