@@ -1,6 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
-import uuid
+#import uuid
 from PIL import Image
 import io
 from app.config import settings
@@ -43,7 +43,9 @@ class S3Service:
 
             # Lógica para S3
             file_ext = img_format.lower()
-            file_name = f"profile_images/{user_id}/{uuid.uuid4()}.{file_ext}"
+            # corregi el nombre del archivo de la imagen aqui
+            # Ahora en S3 sale el 1 del usuario como su carpeta, y posteriormente su imagen con el formato de imagen 
+            file_name = f"profile_images/{user_id}/picture.{file_ext}" 
 
             content_types = {
                 'jpeg': 'image/jpeg',
@@ -64,8 +66,7 @@ class S3Service:
             img_url = f"https://{self.bucket_name}.s3.{settings.AWS_REGION}.amazonaws.com/{file_name}"
 
             return {"success": True, "file_url": img_url, "file_name": file_name}
-        
-        # --- CORRECCIÓN FINAL DE SINTAXIS (EXTERNAS) ---
+ 
         except ClientError as e:
             return {"success": False, "error": f"Error al subir a S3: {str(e)}"}
         
@@ -102,7 +103,7 @@ class S3Service:
 
             # Lógica para S3
             file_ext = img_format.lower()
-            file_name = f"product_images/{user_id}/{uuid.uuid4()}.{file_ext}" # Carpeta diferente
+            file_name = f"product_images/{user_id}/picture{file_ext}" # de igual forma aqui 
 
             content_types = {
                 'jpeg': 'image/jpeg',
