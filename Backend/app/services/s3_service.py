@@ -73,7 +73,7 @@ class S3Service:
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
         
-    def upload_product_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
+    def upload_product_img(self, file_content: bytes, product_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
         """Sube una imagen de producto a S3, similar a la de perfil pero con ruta diferente."""
         try:
             # Tamaño del archivo en MB
@@ -89,7 +89,6 @@ class S3Service:
                 if img_format not in allowed_formats:
                     return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {", ".join(allowed_formats)}"}
             
-            # --- CORRECCIÓN FINAL DE SINTAXIS ---
             except Exception as e:
                 return {"success": False, "error": f"El archivo no es una imagen válida o está corrupto. Detalle: {str(e)}"}
             
@@ -103,7 +102,7 @@ class S3Service:
 
             # Lógica para S3
             file_ext = img_format.lower()
-            file_name = f"product_images/{user_id}/picture{file_ext}" # de igual forma aqui 
+            file_name = f"product_images/{product_id}/picture.{file_ext}" # de igual forma aqui 
 
             content_types = {
                 'jpeg': 'image/jpeg',
@@ -118,7 +117,7 @@ class S3Service:
                 Key=file_name,
                 Body=file_content, 
                 ContentType=content_type,
-                Metadata={'user_id': user_id}
+                Metadata={'product_id': product_id}
             )
 
             img_url = f"https://{self.bucket_name}.s3.{settings.AWS_REGION}.amazonaws.com/{file_name}"
