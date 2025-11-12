@@ -99,7 +99,6 @@ class UserProfileService:
             db.rollback()
             return {"success": False, "error": f"Error al actualizar perfil: {str(e)}"}
         
-    # TODO: Comparar con nueva funcion en S3 service
     def update_profile_image(
         self,
         db: Session,
@@ -181,7 +180,8 @@ class UserProfileService:
                     "user_id": str(user.user_id),
                     "email": user.email,
                     "first_name": user.first_name,
-                    "last_name": user.last_name
+                    "last_name": user.last_name,
+                    "profile_picture": user.profile_picture
                 }
             }
         except Exception as e:
