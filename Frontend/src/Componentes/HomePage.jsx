@@ -352,10 +352,6 @@ const HomeViewClientInternal = () => {
         <PersonalizedPlan />
         <Testimonials />
       </main>
-      
-      <Footer 
-        onLinkClick={onProfileRound1342IconClick} // Reusing the handler as a placeholder
-      />
     </div>
   );
 };

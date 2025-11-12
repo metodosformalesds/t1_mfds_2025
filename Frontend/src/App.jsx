@@ -1,5 +1,6 @@
 import Header from './Componentes/Header.jsx';
 import HomePage from './Componentes/HomePage.jsx';
+import Footer from './Componentes/Footer.jsx';
 import './index.css';
 
 export default function App() {
@@ -7,6 +8,7 @@ export default function App() {
     <div>
       <Header />
       <HomePage /> 
+      <Footer />
     </div>
   );
 }
