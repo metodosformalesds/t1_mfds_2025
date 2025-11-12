@@ -9,8 +9,6 @@ from app.models.order import Order as OrderModel
 from app.models.order_item import OrderItem as OrderItemModel
 from app.models.product import Product as ProductModel
 from app.models.enum import OrderStatus
-from app.models.user import User as UserModel
-from app.models.address import Address as AddressModel
 from app.models.cart_item import CartItem as CartItemModel
 from app.models.shopping_cart import ShoppingCart as ShoppingCartModel
 
@@ -19,9 +17,9 @@ class ShippingService:
     Este metodo crea un nuevo pedido y sus items (productos en el carrito) relacionados, y tambien, valida el stock de los
     productos y calcula los totales
     """
-    def create_order_db(self, db: Session, order_in: CreateOrder) -> OrderModel:
+    def create_order_db(db: Session, order_in: CreateOrder) -> OrderModel:
         # Genero un numero de rastreo de pedido simulado
-        tracking_number = self.generate_tracking_number()
+        tracking_number = ShippingService.generate_tracking_number()
         total_subtotal = Decimal("0.0")
         order_item_models = [] # lista para guardar los items del carrito
         # obtiene el carrito del usuario
@@ -79,9 +77,9 @@ class ShippingService:
             order_date=date.today(),
             order_status=OrderStatus.PENDING, # estado inicial del ENUM
             subtotal=total_subtotal,
-            shipping_cost=10,
-            discount_amount=10,
-            total_amount=10,
+            shipping_cost=10, # valores provisional
+            discount_amount=10, # valor provisional
+            total_amount=10, # valor provisional
             tracking_number=tracking_number
         )
             
@@ -107,7 +105,7 @@ class ShippingService:
     Este metodo es un metodo interno para crear un numero de rastreo
     """
     @staticmethod
-    def generate_tracking_number(self):
+    def generate_tracking_number():
         letters = "".join(random.choices(string.ascii_uppercase, k=2))
         numbers = "".join(random.choices(string.digits, k=10))
         return f"{letters}{numbers}"
@@ -115,7 +113,7 @@ class ShippingService:
     """
     Este metodo obtiene los detalles de un pedido usando joins en la bd
     """
-    def get_details(self, db: Session, pedido_id: int) -> Optional[OrderTrackingResponse]:
+    def get_details(db: Session, pedido_id: int) -> Optional[OrderTrackingResponse]:
         order = db.query(OrderModel).filter(OrderModel.order_id == pedido_id).first()
 
         if not order:
