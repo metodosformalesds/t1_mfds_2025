@@ -1,9 +1,9 @@
-import boto3
+import boto3, re, io
 from botocore.exceptions import ClientError
 #import uuid
 from PIL import Image
-import io
 from app.config import settings
+from typing import Dict
 
 class S3Service:
     def __init__(self):
@@ -15,6 +15,7 @@ class S3Service:
         )
         self.bucket_name = settings.S3_BUCKET_NAME
 
+    """Este metodo sube una foto de perfil al usuario al bucket de s3"""
     def upload_profile_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
         try:
             # Tamaño del archivo en MB
@@ -73,8 +74,8 @@ class S3Service:
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
         
+    """Sube una imagen de producto a S3, similar a la de perfil pero con ruta diferente."""    
     def upload_product_img(self, file_content: bytes, product_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
-        """Sube una imagen de producto a S3, similar a la de perfil pero con ruta diferente."""
         try:
             # Tamaño del archivo en MB
             file_size = len(file_content) / (1024 * 1024)
@@ -130,3 +131,29 @@ class S3Service:
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
             
+    """Este metodo """
+    def delete_profile_img(self, old_url: str, user_id: str) -> Dict:
+        try:
+            # busca el patron del sub de cognito en las carpetas
+            key_match = re.search(r"profile_images/[^/?]+/[^/?]+", old_url)
+            
+            if not key_match:
+                return {"success": True, "message": "URL antigua no válida o vacía, no se requiere eliminación."}
+
+            s3_key_to_delete = key_match.group(0)
+
+            self.s3_client.delete_object(
+                Bucket=self.bucket_name,
+                Key=s3_key_to_delete
+            )
+            
+            return {"success": True, "message": f"Objeto eliminado: {s3_key_to_delete}"}
+            
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'NoSuchKey':
+                return {"success": True, "message": "El objeto no existía, eliminación omitida."}
+            
+            return {"success": False, "error": f"Error al eliminar de S3: {str(e)}"}
+        
+        except Exception as e:
+            return {"success": False, "error": f"Error inesperado al intentar eliminar: {str(e)}"} 
