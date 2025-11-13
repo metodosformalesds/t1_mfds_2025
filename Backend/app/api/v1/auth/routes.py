@@ -3,54 +3,22 @@ from fastapi import (
     HTTPException, 
     Depends, 
     UploadFile, 
-    File, 
     status, 
     Form, 
-    Security
 )
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from typing import Optional, Dict
 from app.api.v1.auth.service import cognito_service
 from app.api.v1.auth import schemas
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.api.deps import get_token_from_header
+
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 security = HTTPBearer()
-
-"""Extrae el token del header Authorization"""
-def get_token_from_header(
-    credentials: HTTPAuthorizationCredentials = Security(security)
-) -> str:
-    if not credentials or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No se proporcionaron credenciales de autenticación",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
-
-"""
-Verifica el token JWT y devuelve el payload del usuario (como dict).
-Si el token es inválido, lanza una excepción HTTP.
-"""
-def get_current_user(token: str = Depends(get_token_from_header)) -> Dict:
-    payload = cognito_service.verify_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    #user_role = payload.get("custom:role")
-    #is_admin = user_role == UserRole.ADMIN.value
-    #payload["is_admin"] = is_admin
-    # El payload es el diccionario decodificado del JWT
-    # Contiene 'sub' (user_id), 'email', 'exp', 'iat', etc.
-    return payload
 
 """
 Registra un nuevo usuario.
