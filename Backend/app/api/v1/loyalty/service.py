@@ -155,6 +155,9 @@ class LoyaltyService:
                 return {
                     "success": True,
                     "points_expired": 0,
+                    "new_total": user_loyalty.total_points,
+                    "tier_reset": False,
+                    "new_tier_level": user_loyalty.loyalty_tier.tier_level,
                     "message": "Usuario no tiene puntos o no tiene fecha de expiración establecida"
                 }
             
