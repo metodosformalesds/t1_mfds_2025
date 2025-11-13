@@ -49,26 +49,34 @@ class CognitoService:
         
         profile_image_url = None
         s3_service_instance = S3Service()
+        profile_img = None # Usado para la URL que va a la DB y al retorno
+        current_time = datetime.now()
 
         try:
             email = user_data.email
-            profile_image_url = None
+            temp_s3_id = None # id temporal para subir cosas al s3 y cumplir el campo obligatorio de cognito
             
             # Generar id temporal ANTES de subir la imagen
             temp_s3_id = str(uuid.uuid4())
 
-            # Subir imagen si se proporciona
             if profile_image:
-                # Validar tamaño de imagen (máximo 5MB)
+                # Validar tamaño de imagen
                 if len(profile_image) > 5 * 1024 * 1024:
                     return {"success": False, "error": "La imagen es demasiado grande (máximo 5MB)"}
-                
-                upload_result = s3_service_instance.upload_profile_img(profile_image, user_id=temp_s3_id)
 
+                temp_s3_id = str(uuid.uuid4())
+
+                upload_result = s3_service_instance.upload_profile_img(
+                    file_content=profile_image,
+                    user_id=temp_s3_id
+                )
+                 
                 if not upload_result["success"]:
                     return {"success": False, "error": upload_result["error"]}
-                
+            
                 profile_image_url = upload_result["file_url"]
+                profile_img = profile_image_url # placeholder inicial de la imagen
+
 
             # Construir atributos para Cognito
             user_attributes = [
@@ -90,6 +98,30 @@ class CognitoService:
             )
 
             cognito_sub = response["UserSub"]
+            # se considera el sub de cognito en lugar de "id" temporal
+            if profile_img and temp_s3_id:
+                transfer_upload_result = s3_service_instance.upload_profile_img(
+                    file_content=profile_image,
+                    user_id=cognito_sub
+                )
+                if transfer_upload_result["success"]:
+                    final_profile_image_url = transfer_upload_result["file_url"]
+                    
+                    # Elimina el archivo temporal 
+                    s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
+                    
+                    # Actualiza cognita con la url final
+                    self.client.admin_update_user_attributes(
+                        UserPoolId=self.user_pool_id,
+                        Username=email, 
+                        UserAttributes=[
+                            {'Name': 'picture', 'Value': final_profile_image_url}
+                        ]
+                    )
+                else:
+                    # Si falla la re-subida, el usuario se queda con la URL temporal en S3 y DB.
+                    pass
+
             # Hashear la contraseña para almacenamiento local
             hashed_password =hash_password(user_data.password)
 
@@ -104,7 +136,8 @@ class CognitoService:
                 date_of_birth=user_data.birth_date,
                 profile_picture=profile_image_url,
                 role=UserRole.USER,
-                account_status=True
+                account_status=True,
+                created_at=current_time
             )
 
             db.add(new_db_user)
