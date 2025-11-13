@@ -1,34 +1,4 @@
 import { useCallback } from 'react';
-// We'll assume react-router-dom is installed and this component is rendered within a <Router>
-// --- MODIFICATION: Remove react-router-dom imports ---
-// import { useNavigate, BrowserRouter as Router } from 'react-router-dom';
-
-// --- Reusable SVG Icons ---
-// Using inline SVGs for portability, as requested.
-
-const SearchIcon = ({ className = "w-6 h-6" }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-  </svg>
-);
-
-const UserIcon = ({ className = "w-6 h-6" }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A1.875 1.875 0 0 1 18.12 22.5H5.88a1.875 1.875 0 0 1-1.379-2.382Z" />
-  </svg>
-);
-
-const HeartIcon = ({ className = "w-6 h-6" }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-  </svg>
-);
-
-const ShoppingCartIcon = ({ className = "w-6 h-6" }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.823-6.823M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.823-6.823a.75.75 0 0 0-.11-.643l-2.115-2.491a.75.75 0 0 0-.586-.26H6.118a.75.75 0 0 0-.587.26L3.42 6.792a.75.75 0 0 0-.11.643l1.823 6.823Z" />
-  </svg>
-);
 
 const StarIcon = ({ className = "w-5 h-5", filled = true }) => (
   <svg className={`${className} ${filled ? 'text-yellow-400' : 'text-gray-300'}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -52,14 +22,14 @@ const Hero = () => (
     />
     <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
       <div className="md:w-1/2 md:pl-8 lg:pl-16">
-        <h1 className="font-bebas-neue text-5xl font-bold tracking-wide text-white md:text-7xl">
+        <h1 className="font-bebas text-6xl font-bold tracking-wide text-white md:text-[64px]">
           Suplementos diseñados <br />para <span className="text-green-400">tu cuerpo</span>
         </h1>
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <button className="rounded-lg bg-blue-800 px-10 py-4 text-2xl font-bold text-white shadow-lg transition hover:bg-blue-700 font-bebas-neue">
-            Explora la suscripcion
+          <button className="font-bebas tracking-[1px] rounded-lg bg-blue-800 px-14 py-4 text-2xl font-regular text-white shadow-lg transition hover:bg-blue-700 font-bebas-neue">
+            Explora la suscripción
           </button>
-          <button className="rounded-lg border-2 border-green-400 px-10 py-4 text-2xl font-bold text-white shadow-lg transition hover:bg-green-400 hover:text-black font-bebas-neue">
+          <button className="font-bebas tracking-[1px] rounded-lg border-2 border-green-400 px-10 py-4 text-2xl font-regular text-white shadow-lg transition hover:bg-green-400 hover:text-black font-bebas-neue">
             Productos
           </button>
         </div>
@@ -163,7 +133,7 @@ const HowItWorks = () => {
   return (
     <section className="bg-floralwhite py-20">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <h2 className="text-center font-bebas-neue text-6xl font-bold text-black">
+        <h2 className="font-bebas tracking-[2px] text-center text-7xl font-regular text-black">
           Cómo funciona BEFIT
         </h2>
         <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">

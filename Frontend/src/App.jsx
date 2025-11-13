@@ -1,14 +1,17 @@
-import Header from './Componentes/Header.jsx';
-import HomePage from './Componentes/HomePage.jsx';
-import Footer from './Componentes/Footer.jsx';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Header from "./Componentes/Header";
+import Home from "./Componentes/HomePage";
+import Footer from "./Componentes/Footer";
 import './index.css';
 
 export default function App() {
   return (
-    <div>
+    <Router>
       <Header />
-      <HomePage /> 
+      <Routes>
+        <Route path="/" element={<Home />} />
+      </Routes>
       <Footer />
-    </div>
+    </Router>
   );
 }
