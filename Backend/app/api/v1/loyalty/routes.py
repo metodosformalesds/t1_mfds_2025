@@ -124,3 +124,27 @@ async def get_my_point_history(
         )
     
     return result["history"]
+
+"""
+Procesa la expiracion de puntos del usuario actual
+Este endpoint puede ser llamado manualmente o por un proceso automatizado
+"""
+@router.post("/me/expire-points", response_model=schemas.ExpirePointsResponse, status_code=status.HTTP_200_OK)
+async def expire_my_points(
+    db: Session = Depends(get_db),
+    current_user: Dict = Depends(get_current_user)
+):
+    cognito_sub = current_user.get("sub")
+    
+    result = loyalty_service.expire_points_for_user(
+        db=db,
+        cognito_sub=cognito_sub
+    )
+    
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.get("error")
+        )
+    
+    return result

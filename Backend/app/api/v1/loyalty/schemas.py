@@ -39,6 +39,7 @@ class UserLoyaltyResponse(BaseModel):
     tier_level: int
     tier_achieved_date: date
     last_points_update: date
+    points_expiration_date: Optional[date] = None
     points_to_next_tier: Optional[int] = None # Estos 3 son auxiliares
     next_tier_level: Optional[int] = None     # que no estan en los modelos
     current_benefits: dict                    # pero ayudan en las vistas (creo) (espero)
@@ -53,6 +54,7 @@ class UserLoyaltyResponse(BaseModel):
                 "tier_level": 2,
                 "tier_achieved_date": "2024-06-15",
                 "last_points_update": "2024-11-10",
+                "points_expiration_date": "2025-05-10",
                 "points_to_next_tier": 1500,
                 "next_tier_level": 3,
                 "current_benefits": {
@@ -64,7 +66,7 @@ class UserLoyaltyResponse(BaseModel):
         }
 
 """
-Schema de resouesta para entrada de puntos
+Schema de respuesta para entrada de puntos
 """
 class PointHistoryResponse(BaseModel):
     point_history_id: int
@@ -73,7 +75,6 @@ class PointHistoryResponse(BaseModel):
     points_change: int
     event_type: str
     event_date: date
-    expiration_date: date
     
     class Config:
         from_attributes = True
@@ -84,8 +85,7 @@ class PointHistoryResponse(BaseModel):
                 "order_id": 123,
                 "points_change": 300,
                 "event_type": "earned",
-                "event_date": "2024-11-10",
-                "expiration_date": "2025-05-10"
+                "event_date": "2024-11-10"
             }
         }
 
@@ -111,3 +111,45 @@ class MessageResponse(BaseModel):
     success: bool
     message: Optional[str] = None
     error: Optional[str] = None
+
+"""
+Schema de respuesta para expiracion de puntos
+"""
+class ExpirePointsResponse(BaseModel):
+    success: bool
+    points_expired: int
+    new_total: int
+    tier_reset: bool
+    new_tier_level: int
+    message: Optional[str] = None
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "points_expired": 1500,
+                "new_total": 0,
+                "tier_reset": True,
+                "new_tier_level": 1,
+                "message": None
+            }
+        }
+
+"""
+Schema de respuesta para agregar puntos
+"""
+class AddPointsResponse(BaseModel):
+    success: bool
+    new_total: int
+    points_added: int
+    expiration_date: Optional[date] = None
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "success": True,
+                "new_total": 500,
+                "points_added": 500,
+                "expiration_date": "2025-05-12"
+            }
+        }

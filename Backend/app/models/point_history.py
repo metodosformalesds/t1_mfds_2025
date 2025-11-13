@@ -17,7 +17,7 @@ class PointHistory(Base):
     points_change: Mapped[int] = mapped_column(Integer, nullable=False)  # Positive for earned - negative for expired
     event_type: Mapped[PointEventType] = mapped_column(Enum(PointEventType), nullable=False)
     event_date: Mapped[date] = mapped_column(Date, nullable=False)
-    expiration_date: Mapped[Optional[date]] = mapped_column(Date, nullable=False)
+    #expiration_date: Mapped[Optional[date]] = mapped_column(Date, nullable=False) / This didnt go here... had to delete T.T - added to user_loyalty
 
     # Relationships
     user_loyalty: Mapped["UserLoyalty"] = relationship("UserLoyalty", back_populates="point_history")
