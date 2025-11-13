@@ -1,25 +1,21 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, extract
-from typing import List, Dict, Any, Optional
+from sqlalchemy import func, and_
+from typing import List, Any, Optional
 from datetime import datetime, timedelta
-from fastapi import HTTPException, status
-
 from app.models.product import Product
-#from app.models.category import Category 
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.user import User
 from app.models.review import Review
-from app.api.v1.analiticas.schemas import AdminDashboardStats, SalesStats, ProductStats, ProductReportItem, TopProduct, ReportParams, BulkActionResponse, BulkProductAction
+from app.api.v1.analytics.schemas import AdminDashboardStats, SalesStats, ProductStats, ProductReportItem, UserStats, SalesReport, SalesReportItem
 
+"""Servicio para estadísticas del administrador"""
 class AdminStatsService:
-    """Servicio para estadísticas del administrador"""
-    
+    """
+    Obtiene todas las estadísticas para el dashboard del admin
+    """
     @staticmethod
     def get_dashboard_stats(db: Session) -> AdminDashboardStats:
-        """
-        Obtiene todas las estadísticas para el dashboard del admin
-        """
         sales_stats = AdminStatsService._get_sales_stats(db)
         
         user_stats = AdminStatsService._get_user_stats(db)
@@ -39,9 +35,9 @@ class AdminStatsService:
             pending_reviews=pending_reviews
         )
     
+    """Obtiene estadísticas de ventas"""
     @staticmethod
     def _get_sales_stats(db: Session) -> SalesStats:
-        """Obtiene estadísticas de ventas"""
         total_sales_query = db.query(
             func.sum(Order.total_amount).label('total'),
             func.count(Order.order_id).label('count')
@@ -54,7 +50,8 @@ class AdminStatsService:
         total_products_sold = db.query(
             func.sum(OrderItem.quantity)
         ).join(Order).filter(
-            Order.status == 'completed'
+            #Order.status == 'completed'
+            Order.status == "pending"
         ).scalar() or 0
         
         average_order_value = total_sales / total_orders if total_orders > 0 else 0.0
@@ -98,10 +95,9 @@ class AdminStatsService:
             average_order_value=round(average_order_value, 2),
             top_selling_products=top_products
         )
-    
+    """Obtiene estadísticas de usuarios"""
     @staticmethod
     def _get_user_stats(db: Session) -> UserStats:
-        """Obtiene estadísticas de usuarios"""
         total_users = db.query(User).count()
         active_users = db.query(User).filter(User.account_status == True).count()
         
@@ -121,15 +117,15 @@ class AdminStatsService:
             users_with_orders=users_with_orders
         )
     
+    """
+    Genera un reporte de ventas para un período específico
+    """
     @staticmethod
     def generate_sales_report(
         db: Session,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
     ) -> SalesReport:
-        """
-        Genera un reporte de ventas para un período específico
-        """
         if not start_date:
             start_date = datetime.now() - timedelta(days=30)
         if not end_date:
@@ -205,13 +201,11 @@ class AdminStatsService:
         query = db.query(
             Product.product_id,
             Product.name,
-            Category.name.label('category_name'),
+            Product.category.label('category_name'),
             func.coalesce(func.sum(OrderItem.quantity), 0).label('total_sold'),
             func.coalesce(func.sum(OrderItem.subtotal), 0).label('revenue'),
             Product.stock,
             Product.average_rating
-        ).outerjoin(
-            Category, Product.category_id == Category.category_id
         ).outerjoin(
             OrderItem, Product.product_id == OrderItem.product_id
         ).outerjoin(
@@ -223,7 +217,7 @@ class AdminStatsService:
             )
         ).group_by(
             Product.product_id,
-            Category.name
+            Product.category
         ).order_by(
             func.sum(OrderItem.quantity).desc()
         )
@@ -242,61 +236,14 @@ class AdminStatsService:
         
         return report
     
+    """
+    Obtiene productos con stock bajo
+     """
     @staticmethod
     def get_low_stock_products(db: Session, threshold: int = 10) -> List[Product]:
-        """
-        Obtiene productos con stock bajo
-        """
         return db.query(Product).filter(
             and_(
                 Product.is_active == True,
                 Product.stock < threshold
             )
         ).order_by(Product.stock.asc()).all()
-
-
-class AdminProductService:
-    """Servicio para operaciones administrativas de productos"""
-    
-    @staticmethod
-    def bulk_update_products(
-        db: Session,
-        action_data: BulkProductAction
-    ) -> BulkActionResponse:
-        """
-        Realiza operaciones en lote sobre productos
-        """
-        success = 0
-        failed = 0
-        errors = []
-        
-        for product_id in action_data.product_ids:
-            try:
-                product = db.query(Product).filter(
-                    Product.product_id == product_id
-                ).first()
-                
-                if not product:
-                    errors.append(f"Producto {product_id} no encontrado")
-                    failed += 1
-                    continue
-                
-                if action_data.action == "activate":
-                    product.is_active = True
-                elif action_data.action == "deactivate":
-                    product.is_active = False
-                elif action_data.action == "delete":
-                    db.delete(product)
-                
-                success += 1
-            except Exception as e:
-                errors.append(f"Error en producto {product_id}: {str(e)}")
-                failed += 1
-        
-        db.commit()
-        
-        return BulkActionResponse(
-            success=success,
-            failed=failed,
-            errors=errors
-        )
