@@ -1,3 +1,10 @@
+# Autor: Gabriel Vilchis
+# Fecha: 09/11/2025
+# Descripción:
+# Este archivo define la clase Settings utilizando Pydantic Settings para la carga
+# y gestión centralizada de variables de entorno provenientes del archivo .env.
+# Su propósito es centralizar parámetros sensibles y configuraciones relacionadas
+# con la base de datos, AWS, Cognito, S3, JWT, Stripe y PayPal.
 import os
 from typing import Optional
 from dotenv import load_dotenv

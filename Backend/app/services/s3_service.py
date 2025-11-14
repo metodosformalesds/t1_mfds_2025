@@ -1,3 +1,7 @@
+# Autor: Gabriel Vilchis
+# Fecha: 13/11/2025
+# Descripción: Este servicio define la clase S3Service, la cual proporciona métodos para manejar
+# imágenes dentro de un bucket de Amazon S3
 import boto3, re, io
 from botocore.exceptions import ClientError
 #import uuid
@@ -15,8 +19,25 @@ class S3Service:
         )
         self.bucket_name = settings.S3_BUCKET_NAME
 
-    """Este metodo sube una foto de perfil al usuario al bucket de s3"""
     def upload_profile_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
+        """
+        Autor: Gabriel Vilchis
+        Sube una imagen de perfil al bucket de S3 con validación de tamaño, formato,
+        redimensionamiento y asignación de ruta única asociada al usuario.
+
+        Args:
+            file_content (bytes): Contenido binario del archivo de imagen.
+            user_id (str): ID del usuario que será dueño de la imagen.
+            max_size_mb (int, opcional): Límite máximo permitido en MB. Default = 5.
+            allowed_formats (tuple, opcional): Formatos de imagen permitidos. Default = ('JPEG', 'PNG', 'WEBP').
+
+        Returns:
+            dict: Resultado del proceso de carga. Contiene:
+                - success (bool): Indica si el proceso fue exitoso.
+                - file_url (str, opcional): URL pública generada.
+                - file_name (str, opcional): Ruta completa dentro del bucket.
+                - error (str, opcional): Mensaje en caso de fallo.
+        """
         try:
             # Tamaño del archivo en MB
             file_size = len(file_content) / (1024 * 1024)
@@ -73,9 +94,27 @@ class S3Service:
         
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
-        
-    """Sube una imagen de producto a S3, similar a la de perfil pero con ruta diferente."""    
+         
     def upload_product_img(self, file_content: bytes, product_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
+        """
+        Autor: Gabriel Vilchis
+        Sube una imagen de producto a S3 siguiendo el mismo proceso de validación
+        y redimensionamiento que las imágenes de perfil, pero usando una ruta
+        distinta asociada al producto.
+
+        Args:
+            file_content (bytes): Contenido binario de la imagen.
+            product_id (str): ID del producto asociado a la imagen.
+            max_size_mb (int, opcional): Tamaño máximo permitido en MB. Default = 5.
+            allowed_formats (tuple, opcional): Formatos permitidos. Default = ('JPEG', 'PNG', 'WEBP').
+
+        Returns:
+            dict: Resultado de la subida. Contiene:
+                - success (bool)
+                - file_url (str, opcional)
+                - file_name (str, opcional)
+                - error (str, opcional)
+        """
         try:
             # Tamaño del archivo en MB
             file_size = len(file_content) / (1024 * 1024)
@@ -131,8 +170,24 @@ class S3Service:
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
             
-    """Este metodo """
     def delete_profile_img(self, old_url: str, user_id: str) -> Dict:
+        """
+        Autor: Gabriel Vilchis
+        Elimina una imagen de perfil antigua del bucket de S3 buscando su ruta
+        dentro del URL mediante un patrón regex. Si la imagen no existe o el enlace
+        es inválido, la operación se omite sin error crítico.
+
+        Args:
+            old_url (str): URL antiguo de la imagen almacenada en S3.
+            user_id (str): ID del usuario dueño del recurso (usado únicamente como referencia lógica).
+
+        Returns:
+            Dict: Resultado del proceso:
+                - success (bool)
+                - message (str, opcional): Detalles del resultado.
+                - error (str, opcional): Mensaje de error si ocurre un fallo inesperado.
+        """
+
         try:
             # busca el patron del sub de cognito en las carpetas
             key_match = re.search(r"profile_images/[^/?]+/[^/?]+", old_url)
