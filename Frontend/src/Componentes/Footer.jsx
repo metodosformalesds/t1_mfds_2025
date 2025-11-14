@@ -54,10 +54,10 @@ const Footer = () => {
                 </div>
             </div>
 
-            {/* 🔹 LÍNEA DIVISORA */}
-            <div className="border-t border-white/40"></div>
+                {/* 🔹 LÍNEA DIVISORA */}
+                <div className="border-t border-white/40"></div>
 
-            {/* 🔹 COPYRIGHT */}
+                {/* 🔹 COPYRIGHT */}
             <div className="p-4 text-lg font-bold text-black">
                 2025 Befit. Todos los derechos reservados.
             </div>
