@@ -17,6 +17,7 @@ class User(Base):
     auth_type: Mapped[AuthType] = mapped_column(Enum(AuthType), nullable=False)
     password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # Null si usa auth externa
     cognito_sub: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False) # Cognito related user
+    stripe_customer_id: Mapped[str] = mapped_column(String(255), nullable=True) # Necessary if stripe is used
     first_name:Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     gender: Mapped[Gender] = mapped_column(Enum(Gender), nullable=False)
