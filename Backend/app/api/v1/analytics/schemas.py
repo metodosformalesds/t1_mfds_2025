@@ -1,3 +1,8 @@
+# Autor: Gabriel Vilchis
+# Fecha 14/11/2025
+# Descripcion: Este codigo define los esquemas (schemas) de Pydantic utilizados para la
+# validación de datos de entrada y la estructura de las respuestas (payloads)
+# en los endpoints de analíticas, reportes y métricas del dashboard administrativo.
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
