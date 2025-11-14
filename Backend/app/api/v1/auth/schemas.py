@@ -1,3 +1,7 @@
+# Autor: Gabriel Vilchis
+# Fecha: 09/11/2025
+# Descripción: Este codigo define los esquemas de datos para la gestion de la autenticacion y
+# autorizacion de usuarios
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
 from datetime import date
