@@ -180,13 +180,6 @@ class PaymentMethodService:
             pm_data = pm_result['payment_method']
             card = pm_data['card']
             
-            # Estabelce como default si lo indica
-            if is_default:
-                db.query(PaymentMethod).filter(
-                    PaymentMethod.user_id == user.user_id,
-                    PaymentMethod.is_default == True
-                ).update({"is_default": False})
-            
             # establece tipo de tarjeta
             funding_type = card.get('funding', 'credit')
             if funding_type == 'debit':
@@ -204,12 +197,20 @@ class PaymentMethodService:
                 provider_ref=payment_method_id,  # pm_xxxxx
                 last_four=card['last4'],
                 expiration_date=f"{card['exp_month']:02d}/{str(card['exp_year'])[2:]}",
-                is_default=is_default
+                is_default=False
             )
             
             db.add(new_payment)
             db.commit()
             db.refresh(new_payment)
+
+            # Hace uso de la otra funcion para establecer default y borrar los demas si hay
+            if is_default:
+                return self.set_default_payment_method(
+                    db=db,
+                    cognito_sub=cognito_sub,
+                    payment_id=new_payment.payment_id
+                )
             
             return {
                 "success": True,
