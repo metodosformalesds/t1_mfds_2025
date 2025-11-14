@@ -1,3 +1,9 @@
+# Autor: Gabriel Vilchis
+# Fecha: 12/11/2025
+# Descripción: Este archivo define los esquemas (schemas) de Pydantic para la gestión
+# de pedidos y órdenes en la API. Incluye modelos para la creación de órdenes, 
+# la estructura de los items dentro de una orden y la respuesta completa de la API
+# para el historial y el rastreo de pedidos.
 from pydantic import BaseModel, Field
 from datetime import date
 from typing import Optional, List

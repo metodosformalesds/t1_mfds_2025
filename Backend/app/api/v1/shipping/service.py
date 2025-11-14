@@ -1,3 +1,9 @@
+# Autor: Gabriel Vilchis
+# Fecha: 12/11/2025
+# Descripción: Este servicio contiene la lógica de negocio para la gestión de pedidos
+# (shipping). Incluye métodos para crear nuevas órdenes, validar el stock de productos,
+# calcular los totales de la orden, generar números de rastreo simulados, y obtener
+# los detalles de rastreo de un pedido existente.
 import random, string
 from typing import Optional
 from datetime import date
@@ -14,8 +20,9 @@ from app.models.shopping_cart import ShoppingCart as ShoppingCartModel
 
 class ShippingService:
     """
-    Este metodo crea un nuevo pedido y sus items (productos en el carrito) relacionados, y tambien, valida el stock de los
-    productos y calcula los totales
+    Autor; Gabriel Vilchis
+    Clase de servicio que encapsula la lógica de negocio para la creación y gestión
+    de pedidos (órdenes de compra).
     """
     def create_order_db(db: Session, order_in: CreateOrder) -> OrderModel:
         # Genero un numero de rastreo de pedido simulado
@@ -101,19 +108,34 @@ class ShippingService:
 
         return new_order
     
-    """
-    Este metodo es un metodo interno para crear un numero de rastreo
-    """
     @staticmethod
     def generate_tracking_number():
+        """
+        Autor: Gabriel Vilchis
+        Método utilitario para generar un número de rastreo de pedido simulado.
+
+        Returns:
+            str: Una cadena alfanumérica única (Ej: AB1234567890).
+        """
         letters = "".join(random.choices(string.ascii_uppercase, k=2))
         numbers = "".join(random.choices(string.digits, k=10))
         return f"{letters}{numbers}"
     
-    """
-    Este metodo obtiene los detalles de un pedido usando joins en la bd
-    """
     def get_details(db: Session, pedido_id: int) -> Optional[OrderTrackingResponse]:
+        """
+        Autor: Gabriel Vilchis
+        Obtiene los detalles clave para el rastreo de un pedido específico.
+
+        Realiza consultas a la base de datos para obtener el estado del pedido,
+        el número de rastreo y una lista de los nombres de los productos incluidos.
+
+        Args:
+            db (Session): Sesión de SQLAlchemy.
+            pedido_id (int): El ID único del pedido a consultar.
+
+        Returns:
+            Optional[OrderTrackingResponse]: Los detalles de rastreo si el pedido existe, o `None` si no se encuentra.
+        """
         order = db.query(OrderModel).filter(OrderModel.order_id == pedido_id).first()
 
         if not order:

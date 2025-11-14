@@ -1,3 +1,9 @@
+# Autor: Gabriel Vilchis
+# Fecha: 09/11/2025
+# Descripción: Servicio centralizado para la gestión de usuarios y autenticación
+# utilizando AWS Cognito. Maneja la lógica de negocio para el registro, login,
+# recuperación de contraseñas, validación de tokens y sincronización de usuarios locales (DB)
+# con Cognito, incluyendo la subida de imágenes de perfil a S3.
 import boto3
 from jose import jwt, JWTError
 from typing import Dict, Optional
@@ -13,6 +19,14 @@ from app.core.security import hash_password
 from app.api.v1.auth.schemas import SignUpRequest
 
 class CognitoService:
+    """
+    Autor: Gabriel VIlchis
+    Clase de servicio que gestiona la interacción con AWS Cognito para todas
+    las operaciones de autenticación y autorización de usuarios. 
+    
+    Implementa caché para las claves públicas (JWKS) de Cognito y coordina
+    la sincronización de datos con la base de datos local (SQLAlchemy) y S3.
+    """
     # Cache de JWKS a nivel de clase
     _jwks_cache = None
     _jwks_cache_time = None
@@ -30,7 +44,8 @@ class CognitoService:
         self.jwks = self._get_jwks()
     
     def _get_jwks(self):
-        """Obtiene las claves públicas de Cognito con cache"""
+        """ Obtiene las claves públicas (JWKS) del User Pool de Cognito.
+        Implementa un mecanismo de caché para reducir las peticiones a AWS."""
         now = datetime.now()
         
         if (CognitoService._jwks_cache is None or 
@@ -45,8 +60,19 @@ class CognitoService:
         return CognitoService._jwks_cache
     
     def sign_up(self, db: Session, user_data: SignUpRequest, profile_image: Optional[bytes] = None) -> Dict:
-        """Registra un nuevo usuario y sube su imagen de perfil si se proporciona."""
+        """
+        Autor: Gabriel Vilchis
+        Registra un nuevo usuario en AWS Cognito y lo sincroniza en la base de datos local.
+        Gestiona la subida de la imagen de perfil a S3 y el hash de la contraseña local.
         
+        Args:
+            db (Session): Sesión de SQLAlchemy para la persistencia local.
+            user_data (SignUpRequest): Datos del usuario a registrar (email, password, etc.).
+            profile_image (Optional[bytes]): Contenido binario de la imagen de perfil (opcional).
+
+        Returns:
+            Dict: Resultado con `success` (bool), `user_sub` (str), `user_id` (str), y mensaje o error.
+        """
         profile_image_url = None
         s3_service_instance = S3Service()
         profile_img = None # Usado para la URL que va a la DB y al retorno
@@ -160,7 +186,17 @@ class CognitoService:
             return {"success": False, "error": str(e)}
                 
     def confirm_sign_up(self, email: str, code: str) -> Dict:
-        """Confirma el registro con el código enviado al email"""
+        """
+        Autor: Gabriel Vilchis
+        Confirma el registro de un usuario en Cognito usando el código de verificación.
+        
+        Args:
+            email (str): El correo electrónico del usuario.
+            code (str): El código de confirmación de 6 dígitos.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y `message` o `error`.
+        """
         try:
             self.client.confirm_sign_up(
                 ClientId=self.client_id,
@@ -177,7 +213,16 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def resend_confirmation_code(self, email: str) -> Dict:
-        """Reenvía el código de confirmación"""
+        """
+        Autor: Gabriel Vilchis
+        Solicita a Cognito que reenvíe el código de confirmación de registro al usuario.
+        
+        Args:
+            email (str): El correo electrónico del usuario.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y `message` o `error`.
+        """
         try:
             self.client.resend_confirmation_code(
                 ClientId=self.client_id,
@@ -188,7 +233,18 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def sign_in(self, email: str, password: str) -> Dict:
-        """Inicia sesión con email y contraseña"""
+        """
+        Autor: Gabriel Vilchis
+        Inicia sesión del usuario en Cognito mediante el flujo de autenticación estándar.
+        
+        Args:
+            email (str): El correo electrónico (Username) del usuario.
+            password (str): La contraseña del usuario.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y los tokens (`access_token`, `id_token`, 
+                  `refresh_token`, `expires_in`) o `error`.
+        """
         try:
             response = self.client.initiate_auth(
                 ClientId=self.client_id,
@@ -214,7 +270,16 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def sign_out(self, access_token: str) -> Dict:
-        """Cierra la sesión del usuario (invalida el token)"""
+        """
+        Autor: Gabriel Vilchis
+        Cierra globalmente la sesión del usuario, invalidando el Access Token en Cognito.
+        
+        Args:
+            access_token (str): El Access Token del usuario.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y `message` o `error`.
+        """
         try:
             self.client.global_sign_out(AccessToken=access_token)
             return {'success': True, 'message': 'Sesión cerrada correctamente'}
@@ -222,7 +287,16 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def refresh_token(self, refresh_token: str) -> Dict:
-        """Refresca el access token"""
+        """
+        Autor: Gabriel Vilchis
+        Obtiene un nuevo Access Token e ID Token utilizando el Refresh Token existente.
+        
+        Args:
+            refresh_token (str): El Refresh Token del usuario.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y los nuevos tokens o `error`.
+        """
         try:
             response = self.client.initiate_auth(
                 ClientId=self.client_id,
@@ -242,7 +316,17 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def verify_token(self, token: str) -> Optional[Dict]:
-        """Verifica y decodifica un JWT token"""
+        """
+        Autor: Gabriel Vilchis
+        Verifica la firma, emisor y validez de un JWT (Access Token o ID Token) 
+        contra las claves públicas de Cognito (JWKS).
+        
+        Args:
+            token (str): El JWT a verificar.
+
+        Returns:
+            Optional[Dict]: El payload decodificado del token si es válido, o `None` en caso de fallo.
+        """
         try:
             # Decodificar el header para obtener el kid
             headers = jwt.get_unverified_header(token)
@@ -275,7 +359,16 @@ class CognitoService:
             return None
     
     def get_user_info(self, access_token: str) -> Dict:
-        """Obtiene información del usuario usando el access token"""
+        """
+        Autor: Gabriel Vilchis
+        Obtiene los atributos detallados del usuario autenticado directamente desde Cognito.
+        
+        Args:
+            access_token (str): El Access Token del usuario.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y la información del usuario en el campo `user` o `error`.
+        """
         try:
             response = self.client.get_user(AccessToken=access_token)
             
@@ -301,7 +394,16 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def forgot_password(self, email: str) -> Dict:
-        """Inicia el proceso de recuperación de contraseña"""
+        """
+        Autor: Gabriel Vilchis
+        Inicia el proceso de recuperación de contraseña, enviando un código de verificación al correo.
+        
+        Args:
+            email (str): El correo electrónico del usuario.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y `message` o `error`.
+        """
         try:
             self.client.forgot_password(
                 ClientId=self.client_id,
@@ -314,7 +416,18 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def confirm_forgot_password(self, email: str, code: str, new_password: str) -> Dict:
-        """Confirma el cambio de contraseña con el código recibido"""
+        """
+        Autor: Gabriel Vilchis
+        Confirma el restablecimiento de la contraseña usando el código y establece la nueva contraseña.
+        
+        Args:
+            email (str): El correo electrónico del usuario.
+            code (str): El código de verificación.
+            new_password (str): La nueva contraseña.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y `message` o `error`.
+        """
         try:
             self.client.confirm_forgot_password(
                 ClientId=self.client_id,
@@ -333,7 +446,18 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def change_password(self, access_token: str, old_password: str, new_password: str) -> Dict:
-        """Cambia la contraseña del usuario autenticado"""
+        """
+        Autor: Gabriel Vilchis
+        Permite al usuario autenticado cambiar su contraseña, requiriendo la contraseña actual.
+        
+        Args:
+            access_token (str): El Access Token del usuario.
+            old_password (str): La contraseña actual.
+            new_password (str): La nueva contraseña a establecer.
+
+        Returns:
+            Dict: Diccionario con `success` (bool) y `message` o `error`.
+        """
         try:
             self.client.change_password(
                 AccessToken=access_token,
@@ -348,10 +472,19 @@ class CognitoService:
         except Exception as e:
             return {'success': False, 'error': str(e)}
         
-    """
-    Esta funcion es para cuando el usuario inicia sesion con google o facebook
-    """   
     def sync_federated_user(self, db: Session, id_token: str) -> dict:
+        """
+        Autor: Gabriel Vilchis
+        Sincroniza un usuario federado (ej. Google, Facebook) por primera vez con la base de datos local. 
+        Si ya existe, retorna su ID.
+        
+        Args:
+            db (Session): Sesión de SQLAlchemy para la persistencia local.
+            id_token (str): El ID Token de Cognito que contiene el payload del usuario.
+
+        Returns:
+            Dict: Diccionario con `success` (bool), `user_id` (str) y `message` o `error`.
+        """
         try:
             # verificar y decodificar el id de cognito
             payload = self.verify_token(id_token)
