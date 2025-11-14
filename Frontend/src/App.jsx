@@ -3,6 +3,7 @@ import Header from "./Componentes/Header";
 import Home from "./Home/HomePage";
 import Footer from "./Componentes/Footer";
 import Login from "./Login/LoginPage";
+import Register from "./Login/RegisterPage";
 import './index.css';
 
 export default function App() {
@@ -20,17 +21,7 @@ export default function App() {
             </>
           } 
         />
-        <Route 
-          path="/proteinas" 
-          element={
-            <>
-              <Header />
-              <div className="h-screen flex justify-center items-center">Página de Proteínas (En construcción)</div>
-              <Footer />
-            </>
-          } 
-        />
-
+        <Route path="/RegisterPage" element={<Register />}/>
       </Routes>
     </Router>
   );
