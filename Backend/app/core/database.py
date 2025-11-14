@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # obtenemos el url de la bd desde las variables de entorno ubicados en .env
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 
 # parametros de conexion a sqlite
 engine = create_engine(
