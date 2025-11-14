@@ -1,3 +1,8 @@
+# Autor: Luis Flores
+# Fecha: 13/11/2025
+# Descripción: Servicios de lógica de negocio para el carrito de compras. Implementa
+#              operaciones CRUD del carrito, validación de stock y cálculos de totales.
+
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_
 from fastapi import HTTPException, status
@@ -9,15 +14,27 @@ from app.api.v1.cart import schemas
 
 
 class CartService:
-    """Servicio para gestión del carrito de compras"""
+    """
+    Autor: Luis Flores
+    Descripción: Clase de servicio para gestión del carrito de compras.
+                 Contiene métodos estáticos para todas las operaciones relacionadas
+                 con el carrito.
+    """
     
     @staticmethod
     def get_or_create_cart(db: Session, user_id: int) -> ShoppingCart:
         """
-        Obtiene el carrito del usuario o lo crea si no existe
+        Autor: Luis Flores
+        Descripción: Obtiene el carrito del usuario o lo crea si no existe.
+                     Garantiza que cada usuario tenga un carrito activo.
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            user_id (int): ID del usuario.
+        Retorna:
+            ShoppingCart: Carrito del usuario (existente o recién creado).
         """
         cart = db.query(ShoppingCart).options(
-            joinedload(ShoppingCart.cart_items).joinedload(CartItem.product)  
+            joinedload(ShoppingCart.cart_items).joinedload(CartItem.product)
         ).filter(ShoppingCart.user_id == user_id).first()
         
         if not cart:
@@ -31,10 +48,19 @@ class CartService:
     @staticmethod
     def get_cart(db: Session, user_id: int) -> ShoppingCart:
         """
-        Obtiene el carrito completo del usuario con todos los items
+        Autor: Luis Flores
+        Descripción: Obtiene el carrito completo del usuario con todos los items
+                     y sus relaciones (producto, imágenes).
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            user_id (int): ID del usuario.
+        Retorna:
+            ShoppingCart: Carrito completo con items y productos.
+        Excepciones:
+            HTTPException 404: Si el carrito no existe.
         """
         cart = db.query(ShoppingCart).options(
-            joinedload(ShoppingCart.cart_items).joinedload(CartItem.product).joinedload(Product.product_images)  
+            joinedload(ShoppingCart.cart_items).joinedload(CartItem.product).joinedload(Product.product_images)
         ).filter(ShoppingCart.user_id == user_id).first()
         
         if not cart:
@@ -52,7 +78,18 @@ class CartService:
         item_data: schemas.CartItemAdd
     ) -> CartItem:
         """
-        Agrega un producto al carrito o actualiza la cantidad si ya existe
+        Autor: Luis Flores
+        Descripción: Agrega un producto al carrito o actualiza la cantidad si ya existe.
+                     Verifica disponibilidad del producto y suficiencia de stock.
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            user_id (int): ID del usuario.
+            item_data (CartItemAdd): Datos del item a agregar (product_id y quantity).
+        Retorna:
+            CartItem: Item del carrito creado o actualizado.
+        Excepciones:
+            HTTPException 404: Si el producto no existe o no está disponible.
+            HTTPException 400: Si no hay stock suficiente.
         """
         # Obtener o crear carrito
         cart = CartService.get_or_create_cart(db, user_id)
@@ -123,12 +160,24 @@ class CartService:
         update_data: schemas.CartItemUpdate
     ) -> CartItem:
         """
-        Actualiza la cantidad de un item en el carrito
+        Autor: Luis Flores
+        Descripción: Actualiza la cantidad de un item específico en el carrito.
+                     Verifica que el item pertenezca al usuario y que haya stock suficiente.
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            user_id (int): ID del usuario.
+            cart_item_id (int): ID del item del carrito a actualizar.
+            update_data (CartItemUpdate): Nueva cantidad del item.
+        Retorna:
+            CartItem: Item del carrito actualizado.
+        Excepciones:
+            HTTPException 404: Si el item o producto no existe.
+            HTTPException 400: Si no hay stock suficiente.
         """
         # Obtener el item y verificar que pertenece al usuario
         cart_item = db.query(CartItem).join(ShoppingCart).filter(
             and_(
-                CartItem.cart_item_id == cart_item_id,  
+                CartItem.cart_item_id == cart_item_id,
                 ShoppingCart.user_id == user_id
             )
         ).first()
@@ -167,14 +216,23 @@ class CartService:
     def remove_item_from_cart(
         db: Session,
         user_id: int,
-        cart_item_id: int 
+        cart_item_id: int
     ) -> bool:
         """
-        Elimina un item del carrito
+        Autor: Luis Flores
+        Descripción: Elimina un item específico del carrito del usuario.
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            user_id (int): ID del usuario.
+            cart_item_id (int): ID del item del carrito a eliminar.
+        Retorna:
+            bool: True si la eliminación fue exitosa.
+        Excepciones:
+            HTTPException 404: Si el item no existe en el carrito del usuario.
         """
         cart_item = db.query(CartItem).join(ShoppingCart).filter(
             and_(
-                CartItem.cart_item_id == cart_item_id,  
+                CartItem.cart_item_id == cart_item_id,
                 ShoppingCart.user_id == user_id
             )
         ).first()
@@ -193,7 +251,15 @@ class CartService:
     @staticmethod
     def clear_cart(db: Session, user_id: int) -> bool:
         """
-        Vacía completamente el carrito del usuario
+        Autor: Luis Flores
+        Descripción: Vacía completamente el carrito del usuario eliminando todos los items.
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            user_id (int): ID del usuario.
+        Retorna:
+            bool: True si la limpieza fue exitosa.
+        Excepciones:
+            HTTPException 404: Si el carrito no existe.
         """
         cart = db.query(ShoppingCart).filter(
             ShoppingCart.user_id == user_id
@@ -214,11 +280,17 @@ class CartService:
     @staticmethod
     def get_cart_summary(db: Session, user_id: int) -> dict:
         """
-        Obtiene un resumen rápido del carrito (total items y precio)
+        Autor: Luis Flores
+        Descripción: Obtiene un resumen rápido del carrito con total de items y precio total.
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            user_id (int): ID del usuario.
+        Retorna:
+            dict: Diccionario con 'total_items' y 'total_price'.
         """
         cart = CartService.get_cart(db, user_id)
         
-        total_items = sum(item.quantity for item in cart.cart_items)  
+        total_items = sum(item.quantity for item in cart.cart_items)
         total_price = sum(item.quantity * item.product.price for item in cart.cart_items)
         
         return {
@@ -229,19 +301,25 @@ class CartService:
     @staticmethod
     def validate_cart_stock(db: Session, user_id: int) -> dict:
         """
-        Valida que todos los productos en el carrito tengan stock suficiente.
-        Retorna información sobre productos sin stock o con stock insuficiente.
+        Autor: Luis Flores
+        Descripción: Valida que todos los productos en el carrito tengan stock suficiente.
+                     Retorna información sobre productos sin stock o con stock insuficiente.
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            user_id (int): ID del usuario.
+        Retorna:
+            dict: Diccionario con 'valid' (bool) y lista de 'issues' con problemas encontrados.
         """
         cart = CartService.get_cart(db, user_id)
         
         issues = []
         
-        for item in cart.cart_items:  
+        for item in cart.cart_items:
             product = item.product
             
             if not product.is_active:
                 issues.append({
-                    "cart_item_id": item.cart_item_id,  
+                    "cart_item_id": item.cart_item_id,
                     "product_id": product.product_id,
                     "product_name": product.name,
                     "issue": "Producto no disponible",
@@ -250,7 +328,7 @@ class CartService:
                 })
             elif product.stock < item.quantity:
                 issues.append({
-                    "cart_item_id": item.cart_item_id,  
+                    "cart_item_id": item.cart_item_id,
                     "product_id": product.product_id,
                     "product_name": product.name,
                     "issue": "Stock insuficiente",
