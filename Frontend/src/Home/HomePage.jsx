@@ -131,7 +131,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="bg-floralwhite py-20">
+    <section className="bg-[#FFFCF2] py-20">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="font-bebas tracking-[2px] text-center text-7xl font-regular text-black">
           Cómo funciona BEFIT
@@ -156,7 +156,7 @@ const PersonalizedPlan = () => {
   ];
 
   return (
-    <section className="bg-floralwhite py-20">
+    <section className="bg-[#FFFCF2] py-20">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <h2 className="text-center font-bebas-neue text-6xl font-bold text-black">
           Tu Plan Personalizado
@@ -305,7 +305,7 @@ const HomeViewClientInternal = () => {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-floralwhite font-poppins text-black">
+    <div className="flex min-h-screen w-full flex-col bg-[#FFFCF2] font-poppins text-black">
       <Header 
         onLogoClick={onBefitWhiteClick} 
         onProfileClick={onProfileRound1342IconClick}
