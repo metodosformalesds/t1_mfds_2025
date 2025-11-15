@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate, Link } from "react-router-dom";
-import './login.css';
 import Home from "../Home/HomePage";
 import CreatinaIMG from '../assets/Creatina.png';
 import ScoopIMG from '../assets/Scoop.png';
@@ -63,9 +62,9 @@ const LoginPage = () => {
 
             {/* Olvidaste contraseña */}
             <div className="text-right">
-              <a href="#" className="text-xs font-medium text-gray-600 hover:text-black hover:underline">
+              <Link to= "/RecoverySelect" href="#" className="text-xs font-medium text-gray-600 hover:text-black hover:underline">
                 ¿Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
 
             {/* Boton Login */}

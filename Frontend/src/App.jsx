@@ -4,6 +4,7 @@ import Home from "./Home/HomePage";
 import Footer from "./Componentes/Footer";
 import Login from "./Login/LoginPage";
 import Register from "./Login/RegisterPage";
+import RSelect from "./Login/RecoverySelect"
 import './index.css';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
           } 
         />
         <Route path="/RegisterPage" element={<Register />}/>
+        <Route path="/RecoverySelect" element={<RSelect />}/>
       </Routes>
     </Router>
   );
