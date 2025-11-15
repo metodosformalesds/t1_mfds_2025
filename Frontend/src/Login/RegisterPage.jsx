@@ -62,21 +62,22 @@ const RegisterPage = () => {
 
             {/* Olvidaste contraseña */}
             <div className="text-right">
-              <a href="#" className="text-xs font-medium text-gray-600 hover:text-black hover:underline">
+              <Link to="/RecoverySelect" className="text-xs font-medium text-gray-600 hover:text-black hover:underline">
                 ¿Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
 
             {/* Boton Register */}
-            <button 
+
+            <Link to="/SetupProfile" 
                 type="button"
                 className=" font-bebas tracking-[3px] w-full rounded-md  bg-[#3b4d82] py-3 font-medium text-white text-center shadow-md transition-all duration-150 border border-transparent hover:bg-transparent hover:border-[#3b4d82] hover:text-black">
                 Registrarse
-            </button>
+            </Link>
 
             {/* Registro */}
             <div className="text-center text-xs text-gray-600">
-              ¿Ya tienes cuenta? <a href="#" className="font-bold text-[#5DA586] hover:underline">Inicia Sesión</a>
+              ¿Ya tienes cuenta? <Link to="/" className="font-bold text-[#5DA586] hover:underline">Inicia Sesión</Link>
             </div>
 
             {/* Divisor "o" */}
