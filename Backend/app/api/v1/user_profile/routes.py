@@ -14,7 +14,7 @@ from app.core.database import get_db
 from app.api.v1.user_profile import schemas
 from app.api.v1.user_profile.service import user_profile_service
 
-router = APIRouter(prefix="/profile", tags=["User Profile"])
+router = APIRouter()
 
 security = HTTPBearer()
 

@@ -13,7 +13,7 @@ from app.core.database import get_db
 from app.api.v1.loyalty import schemas
 from app.api.v1.loyalty.service import loyalty_service
 
-router = APIRouter(prefix="/loyalty", tags=["Loyalty Program"])
+router = APIRouter()
 
 security = HTTPBearer()
 

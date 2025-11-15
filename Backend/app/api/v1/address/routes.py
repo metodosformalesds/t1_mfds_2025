@@ -12,7 +12,7 @@ from app.core.database import get_db
 from app.api.v1.address import schemas
 from app.api.v1.address.service import address_service
 
-router = APIRouter(prefix="/addresses", tags=["Addresses"])
+router = APIRouter()
 
 security = HTTPBearer()
 

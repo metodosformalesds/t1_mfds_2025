@@ -1,39 +1,38 @@
-from pydantic import BaseModel, Field, field_validator
+# Autor: Lizbeth Barajas
+# Fecha: 11-11-25
+# Descripción: Esquemas de Pydantic para los métodos de pago en la API.
+
+from pydantic import BaseModel, Field
 from typing import Optional
-from app.models.enum import PaymentType
-import re
 
 """
-Schema para crear un nuevo metodo de pago
+Schema para crear un Setup Intent (para guardar nueva tarjeta)
 """
-class CreatePaymentMethodRequest(BaseModel):
-    payment_type: PaymentType
-    provider_ref: str = Field(..., description="Token o referencia del proveedor (Stripe/PayPal)")
-    last_four: str = Field(..., min_length=4, max_length=4, description="Últimos 4 dígitos para identificación")
-    expiration_date: Optional[str] = Field(None, description="Fecha de expiración (MM/YY)")
-    is_default: bool = False
-    
-    @field_validator('last_four')
-    def validate_last_four(cls, v):
-        if not v.isdigit():
-            raise ValueError('Los últimos 4 dígitos deben ser numéricos')
-        return v
-    
-    @field_validator('expiration_date')
-    def validate_expiration(cls, v):
-        if v is None:
-            return v
-        if not re.match(r'^\d{2}/\d{2}$', v):
-            raise ValueError('Formato de fecha de expiración inválido (debe ser MM/YY)')
-        return v
+class SetupIntentResponse(BaseModel):
+    success: bool
+    client_secret: str = Field(..., description="Client secret para usar en Stripe.js")
+    setup_intent_id: str = Field(..., description="ID del Setup Intent")
     
     class Config:
         json_schema_extra = {
             "example": {
-                "payment_type": "credit_card",
-                "provider_ref": "tok_1234567890abcdef",
-                "last_four": "4532",
-                "expiration_date": "12/29",
+                "success": True,
+                "client_secret": "seti_1Abc...XYZ_secret_123",
+                "setup_intent_id": "seti_1Abc...XYZ"
+            }
+        }
+
+"""
+Schema para guardar un payment method después del Setup Intent
+"""
+class SavePaymentMethodRequest(BaseModel):
+    payment_method_id: str = Field(..., description="ID del payment method de Stripe (pm_xxxxx)")
+    is_default: bool = Field(False, description="Establecer como método de pago por defecto")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "payment_method_id": "pm_1234567890abcdef",
                 "is_default": True
             }
         }
