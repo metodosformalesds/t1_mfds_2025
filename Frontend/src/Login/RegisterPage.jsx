@@ -1,24 +1,15 @@
 import React from 'react';
-import { useNavigate, Link } from "react-router-dom";
-import Home from "../Home/HomePage";
-import CreatinaIMG from '../assets/Creatina.png';
-import ScoopIMG from '../assets/Scoop.png';
+import Man from '../assets/FitnessMen.png';
+import { Link } from 'react-router-dom';
 
-const LoginPage = () => {
-  const navigate = useNavigate();
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    navigate('/Home'); //
-  };
+const RegisterPage = () => {
   return (
-    <form onSubmit={handleLogin} className="flex flex-col space-y-2">
     <div className="flex min-h-screen w-full font-sans">
       {/* --- SECCION IZQUIERDA (Formulario) --- */}
       <div className="relative flex w-full flex-col justify-center bg-[#FFFCF2] p-8 md:w-1/2 lg:px-20">
         
         {/* Texto de fondo */}
-        <div className="w-[669px] h-0">
+        <div className="pointer-events-none absolute bottom-0 left-0 w-full overflow-hidden">
           <span className="fixed top-[560px] -left-px text-[150px] font-bold text-gray-200 opacity-60 md:text-[180px] font-bebas tracking-[40.00px] leading-[normal]">
             B E F I T
           </span>
@@ -31,7 +22,7 @@ const LoginPage = () => {
         <div className="mb-12 flex w-full justify-center">
           <div className="relative mb-0 text-center inline-block">
             <h1 className="font-bebas text-8xl font-Regular tracking-[0.3em] text-black">
-              LOGIN
+              REGISTER
             </h1>
             {/* Estrella */}
             <div className="absolute -right-8 -top-14 animate-pulse">
@@ -42,6 +33,7 @@ const LoginPage = () => {
           </div>
         </div>
 
+          <form className="flex flex-col space-y-2">
             {/* Input Email */}
             <div className="flex flex-col">
               <label className="font-oswald mb-1 text-s font-semibold text-gray-600">Correo</label>
@@ -59,6 +51,14 @@ const LoginPage = () => {
                 className="border-b border-gray-300 bg-transparent py-1 text-gray-900 outline-none transition-colors focus:border-black"
               />
             </div>
+            
+            <div className="flex flex-col">
+              <label className="font-oswald mb-1 text-s font-semibold text-gray-600">Confirma tu Contraseña</label>
+              <input 
+                type="password" 
+                className="border-b border-gray-300 bg-transparent py-1 text-gray-900 outline-none transition-colors focus:border-black"
+              />
+            </div>
 
             {/* Olvidaste contraseña */}
             <div className="text-right">
@@ -67,16 +67,16 @@ const LoginPage = () => {
               </a>
             </div>
 
-            {/* Boton Login */}
+            {/* Boton Register */}
             <button 
-            type="submit"
-                  className="font-bebas tracking-[3px] w-full rounded-md  bg-[#3b4d82] py-3 font-medium text-white text-center shadow-md transition-all duration-150 border border-transparent hover:bg-transparent hover:border-[#3b4d82] hover:text-black">
-                  Iniciar Sesión
+                type="button"
+                className=" font-bebas tracking-[3px] w-full rounded-md  bg-[#3b4d82] py-3 font-medium text-white text-center shadow-md transition-all duration-150 border border-transparent hover:bg-transparent hover:border-[#3b4d82] hover:text-black">
+                Registrarse
             </button>
 
             {/* Registro */}
             <div className="text-center text-xs text-gray-600">
-              ¿Aún no tienes una cuenta? <Link to="/RegisterPage" className="font-bold text-[#5DA586] hover:underline">Regístrate</Link>
+              ¿Ya tienes cuenta? <a href="#" className="font-bold text-[#5DA586] hover:underline">Inicia Sesión</a>
             </div>
 
             {/* Divisor "o" */}
@@ -105,6 +105,7 @@ const LoginPage = () => {
                 Continua con Facebook
               </button>
             </div>
+          </form>
         </div>
       </div>
 
@@ -112,21 +113,14 @@ const LoginPage = () => {
       <div className="hidden h-screen w-1/2 items-center justify-center bg-[#70AA77] md:flex">
       <div className="relative flex items-center justify-center">
         <img 
-          src={CreatinaIMG} 
+          src={Man} 
           alt="Creatina Product" 
-          className="max-w-[80%] drop-shadow-2xl transition-transform hover:scale-105 duration-500"
-        />
-
-        <img 
-          src={ScoopIMG}
-          alt="Scoop IMG" 
-          className="absolute -bottom-28 -left-20 z-50 w-600 max-w-[100%] drop-shadow-2xl transition-transform hover:scale-105 duration-500"
+          className="max-w-[73%] drop-shadow-2xl transition-transform hover:scale-105 duration-500"
         />
       </div>
       </div>
     </div>
-    </form>
   );
 };
 
-export default LoginPage;
+export default RegisterPage;
