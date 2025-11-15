@@ -158,25 +158,50 @@ def predict_plan(input_data: dict) -> dict:
 
         # Diccionario de Plan y Descripción respectivamente
         plan_descriptions = {
-            "BeStrong": "Plan enfocado en el aumento de masa muscular y fuerza.",
-            "BeLean": "Plan centrado en la pérdida de grasa y tonificación.",
-            "BeBalance": "Plan equilibrado para mantener un estado físico estable.",
-            "BeDefine": "Plan de definición muscular con enfoque en detalle y tono.",
-            "BeNutri": "Plan basado en nutrición integral y balance alimenticio.",
+            "BeStrong": {
+                "description": "Plan enfocado en el aumento de masa muscular y fuerza.",
+                "recommended_products": ["Proteína aislada", "Creatina", "Pre-entreno"]
+            },
+            "BeLean": {
+                "description": "Plan centrado en la pérdida de grasa y tonificación.",
+                "recommended_products": ["Proteína ligera", "Termogénicos", "Omega 3"]
+            },
+            "BeBalance": {
+                "description": "Plan equilibrado para mantener un estado físico estable.",
+                "recommended_products": ["Multivitamínico", "Colágeno", "Proteína media"]
+            },
+            "BeDefine": {
+                "description": "Plan de definición muscular con enfoque en detalle y tono.",
+                "recommended_products": ["L-Carnitina", "BCAA", "Proteína ligera"]
+            },
+            "BeNutri": {
+                "description": "Plan basado en nutrición integral y balance alimenticio.",
+                "recommended_products": ["Batidos meal replacement", "Fibra", "Omega 3"]
+            },
         }
 
-        description = plan_descriptions.get(plan, "Plan personalizado")
-        
+        plan_data = plan_descriptions.get(plan)
+        if plan_data is None:
+            plan_data = {
+                "description": "Plan personalizado: No se encontró una recomendación específica.",
+                "recommended_products": []
+            }
+       # description = plan_descriptions.get(plan, "Plan personalizado")
+#        recommended_products = plan_data.get("recommended_products", [])
+
+        description = plan_data
         logger.info(f"Predicción exitosa: {plan}")
         
         return {
             "recommended_plan": plan,
             "description": description,
-            "attributes": filtered_data 
+            "attributes": filtered_data,
+            #"recommended_products": recommended_products
         }
         
     except (ModelLoadError, InvalidInputError, PredictionError):
-
+        raise
+    except Exception as e:
         # Capturar cualquier error inesperado
         logger.error(f"Error inesperado en predict_plan: {str(e)}", exc_info=True)
         raise PredictionError(f"Error inesperado al procesar el test: {str(e)}")

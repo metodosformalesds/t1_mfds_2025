@@ -38,14 +38,14 @@ class PlacementTestInput(BaseModel):
         json_schema_extra = {
             "example": {
                 "age": 25,
-                "gender": "male",
+                "gender": "M",
                 "exercise_freq": 4,
-                "activity_type": "strength",
-                "activity_intensity": "high",
-                "diet_type": "balanced",
-                "diet_special": "none",
-                "supplements": "protein",
-                "goal_declared": "muscle_gain",
+                "activity_type": "Strength",
+                "activity_intensity": "High",
+                "diet_type": "Balanced",
+                "diet_special": "Keto",
+                "supplements": "Yes",
+                "goal_declared": "Gain Muscle",
                 "sleep_hours": 7
             }
         }
@@ -53,24 +53,27 @@ class PlacementTestInput(BaseModel):
 class PlacementTestOutput(BaseModel):
     """Schema para el resultado del test de posicionamiento."""
     recommended_plan: str = Field(..., description="Nombre del plan recomendado")
-    description: str = Field(..., description="Descripción del plan")
+    description: Dict[str, Any] = Field(..., description="Diccionario con la descripción y productos.") #
     attributes: Dict[str, Any] = Field(..., description="Atributos del test (solo respuestas)")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "recommended_plan": "BeStrong",
-                "description": "Plan enfocado en el aumento de masa muscular y fuerza.",
+                "description": { 
+                    "description": "Plan enfocado en el aumento de masa muscular y fuerza.",
+                    "recommended_products": ["Proteína aislada", "Creatina", "Pre-entreno"]
+                },
                 "attributes": {
                     "age": 25,
-                    "gender": "male",
+                    "gender": "M",
                     "exercise_freq": 4,
-                    "activity_type": "strength",
-                    "activity_intensity": "high",
-                    "diet_type": "balanced",
-                    "diet_special": "none",
-                    "supplements": "protein",
-                    "goal_declared": "muscle_gain",
+                    "activity_type": "Strength",
+                    "activity_intensity": "High",
+                    "diet_type": "Balanced",
+                    "diet_special": "Keto",
+                    "supplements": "Yes",
+                    "goal_declared": "Gain Muscle",
                     "sleep_hours": 7
                 }
             }
