@@ -41,6 +41,10 @@ function Header() {
     {name: "Aminoácidos", link: "/aminoacidos" },
   ];
 
+  const handleProfileClick = () => {
+    navigate("/profile");
+  };
+
   return (
     <>
       <header 
@@ -102,6 +106,7 @@ function Header() {
             <button 
               type="button" 
               aria-label="User profile"
+              onClick={handleProfileClick}
               className="hover:opacity-80 transition-opacity"
             >
               <img className="w-8 h-8" alt="Profile" src={usuario} />
@@ -203,7 +208,8 @@ function Header() {
 
               {/* Navegación móvil */}
               <div className="flex items-center justify-around py-3 border-t border-white/20">
-                <button
+                <button 
+                  onClick={handleProfileClick}
                   className="flex flex-col items-center gap-1 text-white"
                   aria-label="User profile"
                 >
