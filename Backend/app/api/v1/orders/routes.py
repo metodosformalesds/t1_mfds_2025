@@ -17,7 +17,7 @@ from app.core.database import get_db
 from app.api.v1.orders import schemas
 from app.api.v1.orders.service import order_service
 
-router = APIRouter(prefix="/orders", tags=["Orders"])
+router = APIRouter()
 
 security = HTTPBearer()
 

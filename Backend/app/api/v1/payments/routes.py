@@ -21,7 +21,7 @@ from app.api.v1.payments.service import payment_process_service
 from app.services.stripe_service import stripe_service
 from app.config import settings
 
-router = APIRouter(prefix="/checkout", tags=["Payment Process"])
+router = APIRouter()
 
 @router.post(
     "/summary", 

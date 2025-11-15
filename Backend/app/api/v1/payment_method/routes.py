@@ -17,7 +17,7 @@ from app.core.database import get_db
 from app.api.v1.payment_method import schemas
 from app.api.v1.payment_method.service import payment_method_service
 
-router = APIRouter(prefix="/payment-methods", tags=["Payment Methods"])
+router = APIRouter()
 
 security = HTTPBearer()
 
