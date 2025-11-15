@@ -44,7 +44,7 @@ function Header() {
   return (
     <>
       <header 
-        className={`bg-[#70AA77] w-full h-20 font-['Poppins',sans-serif] fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
+        className={`bg-[#70AA77] w-full h-20 font-montserrat fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
           isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >

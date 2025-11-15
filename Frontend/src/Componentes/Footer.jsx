@@ -3,17 +3,17 @@ import React from "react";
 import logo from '../assets/Befitwhite.png';
 const Footer = () => {
     return (
-        <footer className="bg-[#76A57D] text-white font-poppins">
+        <footer className="bg-[#76A57D] text-white font-montserrat">
             {/* 🔹 CONTENIDO PRINCIPAL */}
-            <div className="max-w-7xl mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
+            <div className="max-w-7xl mx-auto py-10 px-6 grid grid-cols-2 md:grid-cols-3 gap-10 items-start">
 
                 {/* LOGO Y DESCRIPCIÓN */}
-                <div>
+                <div className="col-span-2 sm:col-span-1">
                     <div className="flex items-center">
                         <img
                             src={logo}
                             alt="Befit logo"
-                            className="w-[50%] -m-10"
+                            className="w-32 mb-6"
                         />
                     </div>
                     <p className="text-white font-bold text-sm leading-relaxed max-w-[220px]">
@@ -58,7 +58,7 @@ const Footer = () => {
                 <div className="border-t border-white/40"></div>
 
                 {/* 🔹 COPYRIGHT */}
-            <div className="p-4 text-lg font-bold text-black">
+            <div className="p-4 text-sm md:text-base font-bold text-black">
                 2025 Befit. Todos los derechos reservados.
             </div>
         </footer>
