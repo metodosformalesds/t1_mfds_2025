@@ -62,9 +62,9 @@ const RegisterPage = () => {
 
             {/* Olvidaste contraseña */}
             <div className="text-right">
-              <a href="#" className="text-xs font-medium text-gray-600 hover:text-black hover:underline">
+              <Link to="/RecoverySelect" className="text-xs font-medium text-gray-600 hover:text-black hover:underline">
                 ¿Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
 
             {/* Boton Register */}
@@ -76,7 +76,7 @@ const RegisterPage = () => {
 
             {/* Registro */}
             <div className="text-center text-xs text-gray-600">
-              ¿Ya tienes cuenta? <a href="#" className="font-bold text-[#5DA586] hover:underline">Inicia Sesión</a>
+              ¿Ya tienes cuenta? <Link to="/" className="font-bold text-[#5DA586] hover:underline">Inicia Sesión</Link>
             </div>
 
             {/* Divisor "o" */}

@@ -6,6 +6,7 @@ import Login from "./Login/LoginPage";
 import Register from "./Login/RegisterPage";
 import RSelect from "./Login/RecoverySelect"
 import RCode from "./Login/RecoveryCode"
+import RPassword from "./Login/RecoveryPassword"
 import './index.css';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/RegisterPage" element={<Register />}/>
         <Route path="/RecoverySelect" element={<RSelect />}/>
         <Route path="/RecoveryCode" element={<RCode />}/>
+        <Route path="/RecoveryPassword" element={<RPassword />}/>
       </Routes>
     </Router>
   );
