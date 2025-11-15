@@ -1,5 +1,4 @@
 import React from 'react';
-import './login.css';
 import Man from '../assets/FitnessMen.png';
 import { Link } from 'react-router-dom';
 

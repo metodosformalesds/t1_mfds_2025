@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate, Link } from "react-router-dom";
-import './login.css';
 import Home from "../Home/HomePage";
 import CreatinaIMG from '../assets/Creatina.png';
 import ScoopIMG from '../assets/Scoop.png';
