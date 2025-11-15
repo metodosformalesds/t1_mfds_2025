@@ -21,7 +21,7 @@ from app.models.enum import OrderStatus, PaymentType
 import stripe
 from app.services.stripe_service import stripe_service
 from app.services.paypal_service import paypal_service
-#from app.api.v1.order.service import order_service
+from app.api.v1.orders.service import order_service
 from app.api.v1.loyalty.service import loyalty_service
 from app.config import settings
 

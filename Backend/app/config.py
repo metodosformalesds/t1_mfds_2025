@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     # Stripe
     STRIPE_API_KEY: str
     STRIPE_SECRET_KEY: str
+    STRIPE_WEBHOOK_SECRET: str
     
     # PayPal
     PAYPAL_CLIENT_ID: str
