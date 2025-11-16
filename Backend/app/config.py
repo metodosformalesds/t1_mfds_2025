@@ -6,7 +6,7 @@
 # Su propósito es centralizar parámetros sensibles y configuraciones relacionadas
 # con la base de datos, AWS, Cognito, S3, JWT, Stripe y PayPal.
 import os
-from typing import Optional
+from typing import Optional, List
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
@@ -47,8 +47,8 @@ class Settings(BaseSettings):
     
     # CORS
     #BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
-    BACKEND_CORS_ORIGINS: list = [str]
-
+    BACKEND_CORS_ORIGINS: List[str] = []
+    APP_URL: str # "https://frontend.d34s9corpodswj.amplifyapp.com"
      # En lugar de se el local host, debe de ser la url del frontend para que funcione las redirecciones
     # de success y cancel
     #APP_URL: str = "http://localhost:8000"

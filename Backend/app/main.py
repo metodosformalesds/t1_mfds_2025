@@ -3,6 +3,7 @@ from app.services.scheduler import start_scheduler, stop_scheduler
 from contextlib import asynccontextmanager
 import logging
 from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,14 +45,7 @@ app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     #allow_origins=["*"],
-    allow_origins=[
-        # Desarrollo
-        "http://localhost:3000", # react
-        "http://localhost:8000", # backend api
-        # Producción
-        #"https://app.midominio.com", # ec2 + dominio y elastic ip + nginx
-        #"https://frontend.d34s9corpodswj.amplifyapp.com" # frontend
-    ],
+    allow_origins=settings.BACKEND_CORS_ORIGINS, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
