@@ -10,7 +10,8 @@ import os
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(basedir, "../../.env"))  # ajusta la ruta si tu .env está en la raíz
+load_dotenv()
+#load_dotenv(os.path.join(basedir, "../../.env"))  # ajusta la ruta si tu .env está en la raíz
 # obtenemos el url de la bd desde las variables de entorno ubicados en .env
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
