@@ -181,7 +181,6 @@ export default function App() {
                 <option value="" disabled>Selecciona una opción</option>
                 <option value="masculino">Masculino</option>
                 <option value="femenino">Femenino</option>
-                <option value="otro">Otro</option>
                 <option value="no-decir">Prefiero no decirlo</option>
               </select>
             </div>

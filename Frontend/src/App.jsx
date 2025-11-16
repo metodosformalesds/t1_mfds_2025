@@ -20,6 +20,8 @@ import ProfileUser from "./Profile/UserProfile";
 // Componentes de Productos
 import Tienda from "./Componentes/Tienda";
 import ProductDetail from "./Products/ProductDetails";
+import CartPage from "./Products/CartPage";
+import CheckoutPage from "./Products/CheckoutPage";
 import PaymentMethods from "./Payments/PaymentMethods";
 import FitnessProfile from "./Profile/FitnessProfile";
 
@@ -93,7 +95,7 @@ const MainLayout = () => {
       />
 
       {/* Outlet provee el contexto del carrito a Home, Tienda, Perfil, etc. */}
-      <Outlet context={{ cartItems, addToCart, setIsCartOpen, allProducts: ALL_PRODUCTS }} />
+      <Outlet context={{ cartItems, addToCart, removeFromCart, updateQuantity, setIsCartOpen, allProducts: ALL_PRODUCTS }} />
 
       <Footer />
     </>
@@ -120,6 +122,8 @@ export default function App() {
           {/* Rutas de la Tienda */}
           <Route path="/Productos" element={<Tienda />} />
           <Route path="/:productName/:id" element={<ProductDetail />}/>
+          <Route path="/CartPage" element={<CartPage />} />
+          <Route path="/CheckoutPage" element={<CheckoutPage />} />
           <Route path="/profile" element={<FitnessProfile />}/>
           {/* Perfil Fitness */}
           <Route path="/fitness-profile" element={<FitnessProfile />}/>
