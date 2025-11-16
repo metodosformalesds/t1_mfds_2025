@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import Header from "./Componentes/Header";
 import Home from "./Home/HomePage";
 import Footer from "./Componentes/Footer";
@@ -9,7 +11,12 @@ import RCode from "./Login/RecoveryCode"
 import RPassword from "./Login/RecoveryPassword"
 import SetupP from "./Login/SetupProfile"
 import ProfileUser from "./Profile/UserProfile";
+import PaymentMethods from "./Payments/PaymentMethods";
+import FitnessProfile from "./Profile/FitnessProfile";
 import './index.css';
+
+// Inicializar Stripe con tu clave pública
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
 
 export default function App() {
   return (
@@ -37,6 +44,26 @@ export default function App() {
           <>
             <Header />
             <ProfileUser />
+            <Footer />
+          </>
+        }/>
+
+        {/* Perfil Fitness */}
+        <Route path="/fitness-profile" element={
+          <>
+            <Header />
+            <FitnessProfile />
+            <Footer />
+          </>
+        }/>
+
+        {/* Métodos de pago */}
+        <Route path="/payment-methods" element={
+          <>
+            <Header />
+            <Elements stripe={stripePromise}>
+              <PaymentMethods />
+            </Elements>
             <Footer />
           </>
         }/>
