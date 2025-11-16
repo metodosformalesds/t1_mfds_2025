@@ -3,7 +3,7 @@ import React from "react";
 import logo from '../assets/Befitwhite.png';
 const Footer = () => {
     return (
-        <footer className="bg-[#76A57D] text-white font-montserrat">
+        <footer className="bg-[#70AA77] text-white font-montserrat">
             {/* 🔹 CONTENIDO PRINCIPAL */}
             <div className="max-w-7xl mx-auto py-10 px-6 grid grid-cols-2 md:grid-cols-3 gap-10 items-start">
 

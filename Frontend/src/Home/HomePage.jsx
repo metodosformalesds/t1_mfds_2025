@@ -327,7 +327,7 @@ const HomeViewClientInternal = () => {
 };
 
 // --- MODIFICATION: Create a new App component to provide Router context ---
-const App = () => {
+const Home = () => {
   return (
     // --- MODIFICATION: Remove Router wrapper ---
     <HomeViewClientInternal />
@@ -335,4 +335,4 @@ const App = () => {
 };
 
 // --- MODIFICATION: Export App as the default ---
-export default App;
+export default Home;
