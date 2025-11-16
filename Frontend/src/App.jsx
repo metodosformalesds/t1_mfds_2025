@@ -30,6 +30,7 @@ import LoyaltyProgram from "./Profile/LoyaltyProgram.jsx";
 import SubscriptionPage from "./Profile/Subscription.jsx";
 import OrderHistory from "./Profile/OrderHistory";
 import DoReviews from "./Products/Reviews";
+import PlacementTest from "./PositioningTest/Test";
 
 // Inicializar Stripe con tu clave pública
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
@@ -139,6 +140,8 @@ export default function App() {
           <Route path="/order-history" element={<OrderHistory />} />
           {/* Hacer Reseñas de productos*/}
           <Route path="/reviews/:orderId" element={<DoReviews />} />
+          {/* Test de Posicionamiento Fitness */}
+          <Route path="/placement-test" element={<PlacementTest />} />
 
           {/* Información Personal */}
           <Route path="/personal-info" element={<PersonalInfo />}/>

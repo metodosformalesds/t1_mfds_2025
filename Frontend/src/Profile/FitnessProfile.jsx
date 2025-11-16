@@ -338,8 +338,8 @@ const FitnessProfile = () => {
         }
         */
 
-        alert("Redirigiendo al test fitness (simulación)");
-        // navigate("/placement-test"); // Descomentar cuando exista la ruta
+        // Redirigir al test fitness
+        navigate("/placement-test");
     }
 
     // ============================================================================
