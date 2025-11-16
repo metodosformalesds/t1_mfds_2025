@@ -102,9 +102,9 @@ export default function PerfilUsuario() {
         navigate("/payment-methods");
     };
 
-    const handleNavigateToOrders = () => {
+    const handleNavigateToOrderHistory = () => {
         // TODO: Navegar a la gestión de ordenes
-        navigate("/orders");
+        navigate("/order-history");
     };
 
     const handleNavigateToAddresses = () => {
@@ -346,6 +346,7 @@ export default function PerfilUsuario() {
                         <SmallCard 
                             title="Historial" 
                             icon={<ClockIcon />}
+                            onClick={handleNavigateToOrderHistory}
                             bgColor="bg-[#69AEA2]"
                         />
                         <SmallCard 
