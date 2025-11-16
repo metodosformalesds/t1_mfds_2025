@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 // import { getUserProfile, deleteUserAccount, logout, getLoyaltyStatus } from "../utils/api";
+// import { getSubscriptionOrders } from "../utils/api";
 
 // --- Datos Mock para Desarrollo ---
 const MOCK_USER_DATA = {
@@ -34,13 +35,25 @@ const MOCK_LOYALTY_DATA = {
     }
 };
 
+const MOCK_SUBSCRIPTION_DATA = {
+    subscription_id: 1,
+    status: "active", // puede ser: "active", "paused", "cancelled"
+    next_billing_date: "2025-12-16",
+    plan_name: "Premium Monthly"
+};
+
 export default function PerfilUsuario() {
     const navigate = useNavigate();
     const [userData, setUserData] = useState(null);
     const [loyaltyData, setLoyaltyData] = useState(null);
+    const [subscriptionData, setSubscriptionData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [confirmAction, setConfirmAction] = useState(null);
+    const [processingSubscription, setProcessingSubscription] = useState(false);
 
     // Cargar datos del usuario y lealtad al montar el componente
     useEffect(() => {
@@ -53,17 +66,20 @@ export default function PerfilUsuario() {
             setError(null);
 
             // TODO: Descomentar cuando el backend esté listo
-            // const [userProfile, loyaltyStatus] = await Promise.all([
+            // const [userProfile, loyaltyStatus, subscriptionStatus] = await Promise.all([
             //     getUserProfile(),
-            //     getLoyaltyStatus()
+            //     getLoyaltyStatus(),
+            //     getSubscriptionOrders()
             // ]);
             
             // Mock data para desarrollo
             const userProfile = MOCK_USER_DATA;
             const loyaltyStatus = MOCK_LOYALTY_DATA;
+            const subscriptionStatus = MOCK_SUBSCRIPTION_DATA;
             
             setUserData(userProfile);
             setLoyaltyData(loyaltyStatus);
+            setSubscriptionData(subscriptionStatus);
         } catch (err) {
             console.error("Error loading user data:", err);
             setError("Error al cargar la información del usuario.");
@@ -100,6 +116,62 @@ export default function PerfilUsuario() {
     const handleNavigateToLLoyalties = () => {
         // TODO: Navegar a la gestión de soporte
         navigate("/loyalty-program");
+    };
+
+    const handleManageSubscription = () => {
+        setShowSubscriptionModal(true);
+    };
+
+    const handleSubscriptionAction = (action) => {
+        setConfirmAction(action);
+        setShowSubscriptionModal(false);
+        setShowConfirmModal(true);
+    };
+
+    const confirmSubscriptionAction = async () => {
+        try {
+            setProcessingSubscription(true);
+            setError(null);
+
+            // TODO: Descomentar cuando el backend esté listo
+            // Dependiendo de la acción, llamar al endpoint correspondiente
+            // switch(confirmAction) {
+            //     case 'pause':
+            //         await pauseSubscription(subscriptionId);
+            //         break;
+            //     case 'resume':
+            //         await resumeSubscription(subscriptionId);
+            //         break;
+            //     case 'cancel':
+            //         await cancelSubscription(subscriptionId);
+            //         break;
+            // }
+
+            // Mock para desarrollo
+            console.log(`Ejecutando acción de suscripción: ${confirmAction}`);
+            
+            // Simular delay de API
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Actualizar el estado de la suscripción localmente
+            setSubscriptionData(prev => ({
+                ...prev,
+                status: confirmAction === 'pause' ? 'paused' : 
+                        confirmAction === 'resume' ? 'active' : 
+                        'cancelled'
+            }));
+
+            setShowConfirmModal(false);
+            setConfirmAction(null);
+            
+            // Mostrar mensaje de éxito (puedes agregar un estado para esto)
+            alert(`Suscripción ${confirmAction === 'pause' ? 'pausada' : confirmAction === 'resume' ? 'reanudada' : 'cancelada'} exitosamente`);
+        } catch (err) {
+            console.error(`Error ${confirmAction}ing subscription:`, err);
+            setError(`Error al ${confirmAction === 'pause' ? 'pausar' : confirmAction === 'resume' ? 'reanudar' : 'cancelar'} la suscripción.`);
+        } finally {
+            setProcessingSubscription(false);
+        }
     };
 
     const handleLogout = async () => {
@@ -157,7 +229,7 @@ export default function PerfilUsuario() {
     }
 
     // Renderizado condicional si hay error o no se encuentra el usuario
-    if (!userData || !loyaltyData) {
+    if (!userData || !loyaltyData || !subscriptionData) {
         return (
             <div className="min-h-screen bg-[#F7F3E7] flex items-center justify-center p-4">
                 <div className="text-center">
@@ -317,10 +389,16 @@ export default function PerfilUsuario() {
                                     <div className="flex-1">
                                         <h4 className="text-xl font-semibold font-popins tracking-wide">Membresía Activa</h4>
                                         <div className="mt-3 flex flex-col text-sm gap-2">
-                                            <button className="underline text-white hover:text-gray-100 text-left">
+                                            <button 
+                                                onClick={handleNavigateToOrders}
+                                                className="underline text-white hover:text-gray-100 text-left"
+                                            >
                                                 Ver membresía
                                             </button>
-                                            <button className="underline text-white hover:text-gray-100 text-left">
+                                            <button 
+                                                onClick={handleManageSubscription}
+                                                className="underline text-white hover:text-gray-100 text-left"
+                                            >
                                                 Gestionar membresía
                                             </button>
                                         </div>
@@ -353,6 +431,28 @@ export default function PerfilUsuario() {
                 <DeleteAccountModal 
                     onClose={() => setShowDeleteModal(false)}
                     onConfirm={confirmDeleteAccount}
+                />
+            )}
+
+            {/* Modal de gestión de suscripción */}
+            {showSubscriptionModal && (
+                <SubscriptionManagementModal
+                    onClose={() => setShowSubscriptionModal(false)}
+                    onAction={handleSubscriptionAction}
+                    subscriptionStatus={subscriptionData.status}
+                />
+            )}
+
+            {/* Modal de confirmación de acción de suscripción */}
+            {showConfirmModal && confirmAction && (
+                <ConfirmSubscriptionActionModal
+                    action={confirmAction}
+                    onClose={() => {
+                        setShowConfirmModal(false);
+                        setConfirmAction(null);
+                    }}
+                    onConfirm={confirmSubscriptionAction}
+                    isProcessing={processingSubscription}
                 />
             )}
         </div>
@@ -438,6 +538,154 @@ function ChatIcon() {
         <svg className="size-10 md:size-12" viewBox="0 0 58 52" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M2.5 49.5L6.3248 38.0588C3.01913 33.1839 1.82328 27.4109 2.95962 21.8132C4.09595 16.2155 7.48714 11.174 12.5026 7.62609C17.5181 4.07815 23.8167 2.26523 30.2271 2.52439C36.6376 2.78356 42.7237 5.09718 47.354 9.03507C51.9842 12.973 54.8435 18.2672 55.4001 23.9333C55.9568 29.5995 54.1729 35.252 50.3803 39.8399C46.5876 44.4278 41.0442 47.6389 34.7807 48.8762C28.5173 50.1134 21.96 49.2926 16.3281 46.5664L2.5 49.5Z" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
+    );
+}
+
+// Modal de gestión de suscripción
+function SubscriptionManagementModal({ onClose, onAction, subscriptionStatus }) {
+    const isPaused = subscriptionStatus === 'paused';
+    const isActive = subscriptionStatus === 'active';
+    const isCancelled = subscriptionStatus === 'cancelled';
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-r from-[#E0C77B] to-[#B99C42] rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-semibold text-white font-popins">
+                        Gestionar Membresía
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="text-white hover:text-gray-200 transition-colors"
+                    >
+                        <svg className="size-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+
+                {isCancelled ? (
+                    <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4">
+                        <p className="text-white text-center">
+                            Tu suscripción ha sido cancelada. No hay acciones disponibles.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-3">
+                        {isActive && (
+                            <button
+                                onClick={() => onAction('pause')}
+                                className="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-xl transition-colors backdrop-blur-sm"
+                            >
+                                Pausar Suscripción
+                            </button>
+                        )}
+                        {isPaused && (
+                            <button
+                                onClick={() => onAction('resume')}
+                                className="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-xl transition-colors backdrop-blur-sm"
+                            >
+                                Reanudar Suscripción
+                            </button>
+                        )}
+                        {!isCancelled && (
+                            <button
+                                onClick={() => onAction('cancel')}
+                                className="bg-red-500/80 hover:bg-red-600/80 text-white font-semibold py-3 px-6 rounded-xl transition-colors backdrop-blur-sm"
+                            >
+                                Cancelar Suscripción
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                <button
+                    onClick={onClose}
+                    className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-4 rounded-xl transition-colors"
+                >
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// Modal de confirmación de acción de suscripción
+function ConfirmSubscriptionActionModal({ action, onClose, onConfirm, isProcessing }) {
+    const getActionText = () => {
+        switch(action) {
+            case 'pause':
+                return {
+                    title: '¿Pausar suscripción?',
+                    description: 'Tu suscripción será pausada y no se realizarán cobros hasta que la reactives.',
+                    confirmButton: 'Pausar',
+                    color: 'bg-yellow-500'
+                };
+            case 'resume':
+                return {
+                    title: '¿Reanudar suscripción?',
+                    description: 'Tu suscripción será reactivada y se reanudarán los cobros según tu plan.',
+                    confirmButton: 'Reanudar',
+                    color: 'bg-green-500'
+                };
+            case 'cancel':
+                return {
+                    title: '¿Cancelar suscripción?',
+                    description: 'Tu suscripción será cancelada. Perderás acceso a los beneficios exclusivos de tu membresía.',
+                    confirmButton: 'Cancelar suscripción',
+                    color: 'bg-red-500'
+                };
+            default:
+                return {};
+        }
+    };
+
+    const actionText = getActionText();
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-r from-[#E0C77B] to-[#B99C42] rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+                <div className="flex items-start gap-4 mb-4">
+                    <div className="flex-shrink-0">
+                        <svg className="size-10 text-white" viewBox="0 0 33 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16.5005 11.0012V17.003M16.5005 21.5043H16.5155M14.0447 2.88524L1.88478 23.1922C1.6341 23.6264 1.50145 24.1187 1.50001 24.6201C1.49858 25.1215 1.62841 25.6145 1.87659 26.0502C2.12478 26.4858 2.48267 26.8489 2.91467 27.1032C3.34666 27.3576 3.83771 27.4944 4.33897 27.5H28.6619C29.1629 27.4942 29.6537 27.3574 30.0855 27.1031C30.5173 26.8488 30.875 26.486 31.1232 26.0506C31.3713 25.6152 31.5012 25.1224 31.5 24.6212C31.4987 24.12 31.3664 23.6279 31.1161 23.1937L18.9561 2.88374C18.7003 2.46137 18.3399 2.11213 17.9097 1.86974C17.4796 1.62734 16.9942 1.5 16.5004 1.5C16.0067 1.5 15.5213 1.62734 15.0911 1.86974C14.661 2.11213 14.3006 2.46137 14.0447 2.88374V2.88524Z" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 className="text-xl md:text-2xl font-semibold text-white font-popins leading-tight mb-2">
+                            {actionText.title}
+                        </h3>
+                        <p className="text-white/90 text-sm md:text-base">
+                            {actionText.description}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                    <button
+                        onClick={onClose}
+                        disabled={isProcessing}
+                        className="flex-1 px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-xl transition-colors font-popins disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={isProcessing}
+                        className={`flex-1 px-6 py-3 ${actionText.color} hover:opacity-90 text-white rounded-xl transition-colors font-popins disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                    >
+                        {isProcessing ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Procesando...
+                            </>
+                        ) : (
+                            actionText.confirmButton
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }
 
