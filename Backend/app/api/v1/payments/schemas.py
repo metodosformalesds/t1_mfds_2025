@@ -46,14 +46,12 @@ Schema para el checkout de PayPal
 class PayPalCheckoutRequest(BaseModel):
     address_id: int = Field(..., description="ID de dirección")
     coupon_code: Optional[str] = Field(None, description="Opcional - Cupón")
-    subscription_id: Optional[int] = Field(None, description="Opcional - Subscripción")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "address_id": 1,
-                "coupon_code": None,
-                "subscription_id": None
+                "coupon_code": None
             }
         }
 
@@ -64,15 +62,13 @@ class PayPalCaptureRequest(BaseModel):
     paypal_order_id: str = Field(..., description="ID orden paypal")
     address_id: int = Field(..., description="ID de dirección")
     coupon_code: Optional[str] = Field(None, description="Opcional - Cupón")
-    subscription_id: Optional[int] = Field(None, description="Opcional - Subscripción")
     
     class Config:
         json_schema_extra = {
             "example": {
                 "paypal_order_id": "5O190127TN364715T",
                 "address_id": 1,
-                "coupon_code": None,
-                "subscription_id": None
+                "coupon_code": None
             }
         }
 

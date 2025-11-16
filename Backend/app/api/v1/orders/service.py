@@ -14,8 +14,9 @@ from app.models.address import Address
 from app.models.product import Product
 from app.models.shopping_cart import ShoppingCart
 from app.models.cart_item import CartItem
-from app.models.coupon import Coupon
+from app.models.user_coupon import UserCoupon
 from app.models.enum import OrderStatus
+from app.api.v1.shipping.service import shipping_service
 
 class OrderService:
     
@@ -65,7 +66,7 @@ class OrderService:
             if not cart_items:
                 return {"success": False, "error": "El carrito está vacío"}
             
-            # Valida productos
+            # Valida productos y stock
             for cart_item in cart_items:
                 product = db.query(Product).filter(
                     Product.product_id == cart_item.product_id
@@ -82,6 +83,9 @@ class OrderService:
             # Calcula puntos
             points_earned = int(total_amount / 5)
             
+            # Genera tracking number
+            tracking_number = shipping_service.generate_tracking_number()
+            
             # Crea orden
             order = Order(
                 user_id=user_id,
@@ -92,6 +96,7 @@ class OrderService:
                 is_subscription=is_subscription,
                 order_date=datetime.now(UTC),
                 order_status=order_status,
+                tracking_number=tracking_number,
                 subtotal=subtotal,
                 discount_amount=discount_amount,
                 shipping_cost=shipping_cost,
@@ -118,15 +123,22 @@ class OrderService:
                 )
                 db.add(order_item)
 
+                # Actualiza stock
                 product.stock -= cart_item.quantity
             
             # Limpia carrito
             db.query(CartItem).filter(CartItem.cart_id == cart.cart_id).delete()
             
-            # Marca cupones como usados
             if coupon_id:
-                # Me falta el modulo de cupones :p TODO
-                pass
+                user_coupon = db.query(UserCoupon).filter(
+                    UserCoupon.user_id == user_id,
+                    UserCoupon.coupon_id == coupon_id,
+                    UserCoupon.used_date.is_(None)  # Solo cupones no usados
+                ).first()
+                
+                if user_coupon:
+                    user_coupon.used_date = datetime.now(UTC).date()
+                    user_coupon.order_id = order.order_id
             
             db.flush()
             
@@ -181,26 +193,26 @@ class OrderService:
     
     def get_order_by_id(self, db: Session, cognito_sub: str, order_id: int) -> Dict:
         """
-            Autor: Lizbeth Barajas
+        Autor: Lizbeth Barajas
 
-            Descripción:
-                Obtiene los detalles completos de un pedido, incluyendo sus productos,
-                precios, subtotales y dirección de envío asociada. Solo permite consultar
-                órdenes pertenecientes al usuario autenticado.
+        Descripción:
+            Obtiene los detalles completos de un pedido, incluyendo sus productos,
+            precios, subtotales y dirección de envío asociada. Solo permite consultar
+            órdenes pertenecientes al usuario autenticado.
 
-            Parámetros:
-                db (Session): Sesión activa de la base de datos.
-                cognito_sub (str): Identificador único del usuario en Cognito.
-                order_id (int): ID del pedido a consultar.
+        Parámetros:
+            db (Session): Sesión activa de la base de datos.
+            cognito_sub (str): Identificador único del usuario en Cognito.
+            order_id (int): ID del pedido a consultar.
 
-            Retorna:
-                Dict: Información detallada del pedido e items, o mensaje de error.
+        Retorna:
+            Dict: Información detallada del pedido e items, o mensaje de error.
         """
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
             if not user or not user.account_status:
                 return {"success": False, "error": "Usuario no encontrado o inactivo"}
-
+            
             order = db.query(Order).filter(
                 Order.order_id == order_id,
                 Order.user_id == user.user_id
@@ -234,18 +246,16 @@ class OrderService:
                 Address.address_id == order.address_id
             ).first()
             
-            shipping_address = {}
-            if address:
-                shipping_address = {
-                    "recipient_name": address.recipient_name,
-                    "address_line1": address.address_line1,
-                    "address_line2": address.address_line2,
-                    "city": address.city,
-                    "state": address.state,
-                    "zip_code": address.zip_code,
-                    "country": address.country,
-                    "phone_number": address.phone_number
-                }
+            shipping_address = {
+                "recipient_name": address.recipient_name,
+                "address_line1": address.address_line1,
+                "address_line2": address.address_line2,
+                "city": address.city,
+                "state": address.state,
+                "zip_code": address.zip_code,
+                "country": address.country,
+                "phone_number": address.phone_number
+            }
             
             return {
                 "success": True,
@@ -345,7 +355,7 @@ class OrderService:
                     "error": f"No se puede cancelar un pedido con estado {order.order_status.value}"
                 }
             
-            # Restore
+            # Restaura inventario
             order_items = db.query(OrderItem).filter(
                 OrderItem.order_id == order_id
             ).all()

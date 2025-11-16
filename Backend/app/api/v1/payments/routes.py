@@ -205,7 +205,6 @@ async def initialize_paypal_checkout(
         cognito_sub=current_user.cognito_sub,
         address_id=paypal_data.address_id,
         coupon_code=paypal_data.coupon_code,
-        subscription_id=paypal_data.subscription_id
     )
     
     if not result.get("success"):
@@ -249,7 +248,6 @@ async def capture_paypal_payment(
         paypal_order_id=capture_data.paypal_order_id,
         address_id=capture_data.address_id,
         coupon_code=capture_data.coupon_code,
-        subscription_id=capture_data.subscription_id
     )
     
     if not result.get("success"):

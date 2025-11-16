@@ -17,6 +17,7 @@ from app.models.loyalty_tier import LoyaltyTier
 from app.models.shopping_cart import ShoppingCart
 from app.models.cart_item import CartItem
 from app.models.coupon import Coupon
+from app.models.user_coupon import UserCoupon
 from app.models.enum import OrderStatus, PaymentType
 import stripe
 from app.services.stripe_service import stripe_service
@@ -88,52 +89,62 @@ class PaymentProcessService:
                 UserLoyalty.user_id == user_id
             ).first()
             
-            shipping_cost = Decimal('0.00')
+            shipping_cost = Decimal('150.00')  # Default shipping
+            
             if user_loyalty:
                 tier = db.query(LoyaltyTier).filter(
                     LoyaltyTier.tier_id == user_loyalty.tier_id
                 ).first()
                 
                 if tier:
-                    # Check if free shipping applies
+                    # Nivel 3: Envío gratis siempre (free_shipping_threshold = 0)
                     if tier.free_shipping_threshold == 0:
-                        # Nivel 3 gratis
                         shipping_cost = Decimal('0.00')
-                    elif subtotal >= tier.free_shipping_threshold:
-                        # Nivel 2 depende de threshold
+                    # Nivel 2: Envío gratis si supera el threshold
+                    elif tier.free_shipping_threshold > 0 and subtotal >= tier.free_shipping_threshold:
                         shipping_cost = Decimal('0.00')
+                    # Nivel 1: Envío de $150 siempre
                     else:
-                        # 150 fijo el resto
                         shipping_cost = Decimal('150.00')
-                else:
-                    shipping_cost = Decimal('150.00')
-            else:
-                shipping_cost = Decimal('150.00')
             
             # Calcula desceunto si hay cupon
             discount_amount = Decimal('0.00')
             coupon_id = None
             
             if coupon_code:
+                # Verifica que el cupón exista y esté activo
                 coupon = db.query(Coupon).filter(
                     Coupon.coupon_code == coupon_code,
                     Coupon.is_active == True
                 ).first()
                 
-                if coupon:
-                    # valida start date y expiracion
-                    today = date.today()
-                    if coupon.expiration_date and coupon.expiration_date < today:
-                        return {"success": False, "error": "El cupón ha expirado"}
-                  
-                    if coupon.start_date and coupon.start_date > today:
-                        return {"success": False, "error": "El cupón aún no es válido"}
-                    
-                    # calcula descuento
-                    discount_amount = subtotal * (coupon.discount_value / Decimal('100.00'))
-                    coupon_id = coupon.coupon_id
-                else:
+                if not coupon:
                     return {"success": False, "error": "Cupón no válido"}
+                
+                # Verifica que el cupón esté asignado al usuario
+                user_coupon = db.query(UserCoupon).filter(
+                    UserCoupon.user_id == user_id,
+                    UserCoupon.coupon_id == coupon.coupon_id
+                ).first()
+                
+                if not user_coupon:
+                    return {"success": False, "error": "Este cupón no está asignado a tu cuenta"}
+                
+                # Verifica que el cupón no haya sido usado
+                if user_coupon.used_date is not None:
+                    return {"success": False, "error": "Este cupón ya ha sido utilizado"}
+                
+                # Valida fechas del cupón
+                today = date.today()
+                if coupon.expiration_date and coupon.expiration_date < today:
+                    return {"success": False, "error": "El cupón ha expirado"}
+              
+                if coupon.start_date and coupon.start_date > today:
+                    return {"success": False, "error": "El cupón aún no es válido"}
+                
+                # Calcula descuento (discount_value es porcentaje)
+                discount_amount = subtotal * (coupon.discount_value / Decimal('100.00'))
+                coupon_id = coupon.coupon_id
             
             # Total
             total_amount = subtotal + shipping_cost - discount_amount
@@ -215,6 +226,7 @@ class PaymentProcessService:
             else:
                 metadata = {
                     "user_id": str(user.user_id),
+                    "cognito_sub": cognito_sub,
                     "address_id": str(address_id),
                 }
                 
@@ -304,6 +316,7 @@ class PaymentProcessService:
                 }
             )
             
+            # Maneja casos donde se requiere autenticación adicional (3D Secure)
             if not payment_result.get('success'):
                 if payment_result.get('requires_action'):
                     return {
@@ -318,8 +331,7 @@ class PaymentProcessService:
                         "error": payment_result.get('error', 'Error al procesar pago')
                     }
             
-            # Crea orden si el pago fue procesado
-            order_result = order_service.create_order_from_cart( # TODO Falta crear en modulo de orden
+            order_result = order_service.create_order_from_cart(
                 db=db,
                 user_id=user.user_id,
                 address_id=address_id,
@@ -461,7 +473,6 @@ class PaymentProcessService:
                 db.add(payment_method_record)
                 db.flush()
             
-            # Crea orden (TODO order service)
             order_result = order_service.create_order_from_cart(
                 db=db,
                 user_id=user_id,
@@ -501,6 +512,7 @@ class PaymentProcessService:
                         print(f"Error al agregar puntos: {loyalty_result.get('error')}")
             
             db.commit()
+            db.refresh(order)
             
             return {
                 "success": True,
@@ -593,7 +605,6 @@ class PaymentProcessService:
         paypal_order_id: str,
         address_id: int,
         coupon_code: Optional[str] = None,
-        subscription_id: Optional[int] = None
     ) -> Dict:
         """
         Autor: Lizbeth Barajas
@@ -608,7 +619,6 @@ class PaymentProcessService:
             paypal_order_id (str): ID de la orden de PayPal aprobada.
             address_id (int): Dirección utilizada para envío.
             coupon_code (str, opcional): Cupón aplicado.
-            subscription_id (int, opcional): ID de suscripción asociada.
 
         Retorna:
             dict: Resultado del proceso, incluyendo ID de orden y puntos generados.
@@ -645,7 +655,6 @@ class PaymentProcessService:
             db.add(paypal_payment)
             db.flush()
             
-            # Crea orden TODO
             order_result = order_service.create_order_from_cart(
                 db=db,
                 user_id=user.user_id,
@@ -657,7 +666,7 @@ class PaymentProcessService:
                 total_amount=Decimal(str(summary["total_amount"])),
                 order_status=OrderStatus.PAID,
                 coupon_id=coupon_id,
-                subscription_id=subscription_id
+                subscription_id=None
             )
             
             if not order_result.get("success"):
