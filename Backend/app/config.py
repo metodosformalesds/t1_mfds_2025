@@ -46,8 +46,14 @@ class Settings(BaseSettings):
     PAYPAL_API_BASE_URL: str 
     
     # CORS
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
-    
+    #BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
+    BACKEND_CORS_ORIGINS: list = [str]
+
+     # En lugar de se el local host, debe de ser la url del frontend para que funcione las redirecciones
+    # de success y cancel
+    #APP_URL: str = "http://localhost:8000"
+    #APP_URL: str = "https://frontend.d34s9corpodswj.amplifyapp.com/"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
