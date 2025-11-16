@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { getUserProfile, deleteUserAccount, logout, getLoyaltyStatus } from "../utils/api";
-// import { getSubscriptionOrders } from "../utils/api";
+// import { getUserProfile, getSubscriptionOrders, deleteUserAccount, logout, getLoyaltyStatus } from "../utils/api";
 
 // --- Datos Mock para Desarrollo ---
 const MOCK_USER_DATA = {
@@ -113,13 +112,18 @@ export default function PerfilUsuario() {
         navigate("/addresses");
     };
 
-    const handleNavigateToLLoyalties = () => {
+    const handleNavigateToLoyalties = () => {
         // TODO: Navegar a la gestión de soporte
         navigate("/loyalty-program");
     };
 
     const handleManageSubscription = () => {
         setShowSubscriptionModal(true);
+    };
+
+    const handleNavigateToSubscription = () => {
+        // TODO: Navegar a la gestión de suscripción
+        navigate("/subscription");
     };
 
     const handleSubscriptionAction = (action) => {
@@ -372,7 +376,7 @@ export default function PerfilUsuario() {
                             <p className="text-sm text-right mt-2 text-gray-600">
                                 {loyaltyData.total_points}/{loyaltyData.next_tier_points} pts
                             </p>
-                            <button onClick={handleNavigateToLLoyalties} className="text-sm text-blue-800 underline mt-3 hover:text-blue-700">
+                            <button onClick={handleNavigateToLoyalties} className="text-sm text-blue-800 underline mt-3 hover:text-blue-700">
                                 Ver beneficios
                             </button>
                         </div>
@@ -390,7 +394,7 @@ export default function PerfilUsuario() {
                                         <h4 className="text-xl font-semibold font-popins tracking-wide">Membresía Activa</h4>
                                         <div className="mt-3 flex flex-col text-sm gap-2">
                                             <button 
-                                                onClick={handleNavigateToOrders}
+                                                onClick={handleNavigateToSubscription}
                                                 className="underline text-white hover:text-gray-100 text-left"
                                             >
                                                 Ver membresía

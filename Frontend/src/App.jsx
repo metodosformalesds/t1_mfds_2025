@@ -27,6 +27,7 @@ import PaymentMethods from "./Payments/PaymentMethods";
 import FitnessProfile from "./Profile/FitnessProfile";
 import Addresses from "./Profile/Addresses";
 import LoyaltyProgram from "./Profile/LoyaltyProgram.jsx";
+import SubscriptionPage from "./Profile/Subscription.jsx";
 
 // Inicializar Stripe con tu clave pública
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
@@ -128,6 +129,9 @@ export default function App() {
           <Route path="/CartPage" element={<CartPage />} />
           <Route path="/CheckoutPage" element={<CheckoutPage />} />
           <Route path="/profile" element={<FitnessProfile />}/>
+
+          {/* Ruta de Subscripción */}
+          <Route path="/subscription" element={<SubscriptionPage />} />
 
           {/* Información Personal */}
           <Route path="/personal-info" element={<PersonalInfo />}/>
