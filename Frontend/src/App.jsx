@@ -17,6 +17,7 @@ import RCode from "./Login/RecoveryCode";
 import RPassword from "./Login/RecoveryPassword";
 import SetupP from "./Login/SetupProfile";
 import ProfileUser from "./Profile/UserProfile";
+import PersonalInfo from "./Profile/PersonalInformation";
 // Componentes de Productos
 import Tienda from "./Componentes/Tienda";
 import ProductDetail from "./Products/ProductDetails";
@@ -24,6 +25,8 @@ import CartPage from "./Products/CartPage";
 import CheckoutPage from "./Products/CheckoutPage";
 import PaymentMethods from "./Payments/PaymentMethods";
 import FitnessProfile from "./Profile/FitnessProfile";
+import Addresses from "./Profile/Addresses";
+import LoyaltyProgram from "./Profile/LoyaltyProgram.jsx";
 
 // Inicializar Stripe con tu clave pública
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
@@ -125,10 +128,17 @@ export default function App() {
           <Route path="/CartPage" element={<CartPage />} />
           <Route path="/CheckoutPage" element={<CheckoutPage />} />
           <Route path="/profile" element={<FitnessProfile />}/>
+
+          {/* Información Personal */}
+          <Route path="/personal-info" element={<PersonalInfo />}/>
+          {/* Direcciones de Envío */}
+          <Route path="/addresses" element={<Addresses />} />
           {/* Perfil Fitness */}
           <Route path="/fitness-profile" element={<FitnessProfile />}/>
           {/* Métodos de pago */}
           <Route path="/payment-methods" element={<Elements stripe={stripePromise}><PaymentMethods /></Elements>}/>
+          {/* Programa de Lealtad */}
+          <Route path="/loyalty-program" element={<LoyaltyProgram />} />
         </Route>    
       </Routes>
     </Router>
