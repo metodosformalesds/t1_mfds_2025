@@ -98,32 +98,32 @@ export default function PerfilUsuario() {
     };
 
     const handleNavigateToPayments = () => {
-        // TODO: Navegar a la gestión de métodos de pago
+        // Navegar a la gestión de métodos de pago
         navigate("/payment-methods");
     };
 
     const handleNavigateToOrderHistory = () => {
-        // TODO: Navegar a la gestión de ordenes
+        // Navegar a la gestión de ordenes
         navigate("/order-history");
     };
 
     const handleNavigateToAddresses = () => {
-        // TODO: Navegar a la gestión de direcciones
+        // Navegar a la gestión de direcciones
         navigate("/addresses");
     };
 
     const handleNavigateToLoyalties = () => {
-        // TODO: Navegar a la gestión de soporte
+        // Navegar a la vista de lealtad
         navigate("/loyalty-program");
     };
 
+    const handleNavigateToSubscription = () => {
+            // Navegar a la gestión de suscripción
+            navigate("/subscription");
+        };
+
     const handleManageSubscription = () => {
         setShowSubscriptionModal(true);
-    };
-
-    const handleNavigateToSubscription = () => {
-        // TODO: Navegar a la gestión de suscripción
-        navigate("/subscription");
     };
 
     const handleSubscriptionAction = (action) => {

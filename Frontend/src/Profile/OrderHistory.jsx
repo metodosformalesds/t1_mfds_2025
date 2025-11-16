@@ -438,7 +438,10 @@ export default function OrderHistoryPage() {
                                                         </div>
 
                                                         {/* Botón Escribir Opinión */}
-                                                        <button className="bg-[#A8C69F] hover:bg-[#94b38b] text-white text-xs font-bold py-2 px-4 rounded-md transition shadow-sm mt-2 sm:mt-0">
+                                                        <button  
+                                                            onClick={() => navigate(`/reviews/${order.order_id}`)}
+                                                            className="bg-[#A8C69F] hover:bg-[#94b38b] text-white text-xs font-bold py-2 px-4 rounded-md transition shadow-sm mt-2 sm:mt-0"
+                                                        >
                                                             ESCRIBIR OPINIÓN
                                                         </button>
                                                     </div>
