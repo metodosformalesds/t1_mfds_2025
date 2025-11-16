@@ -2,6 +2,8 @@ import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 
 // Componentes Globales
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import Header from "./Componentes/Header";
 import Footer from "./Componentes/Footer";
 import CartSidebar from "./Componentes/CartSidebar";
@@ -18,7 +20,11 @@ import ProfileUser from "./Profile/UserProfile";
 // Componentes de Productos
 import Tienda from "./Componentes/Tienda";
 import ProductDetail from "./Products/ProductDetails";
+import PaymentMethods from "./Payments/PaymentMethods";
+import FitnessProfile from "./Profile/FitnessProfile";
 
+// Inicializar Stripe con tu clave pública
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
 
 // Estilos Globales
 import './index.css';
@@ -114,7 +120,12 @@ export default function App() {
           {/* Rutas de la Tienda */}
           <Route path="/Productos" element={<Tienda />} />
           <Route path="/:productName/:id" element={<ProductDetail />}/>
-        </Route>
+          <Route path="/profile" element={<FitnessProfile />}/>
+          {/* Perfil Fitness */}
+          <Route path="/fitness-profile" element={<FitnessProfile />}/>
+          {/* Métodos de pago */}
+          <Route path="/payment-methods" element={<Elements stripe={stripePromise}><PaymentMethods /></Elements>}/>
+        </Route>    
       </Routes>
     </Router>
   );

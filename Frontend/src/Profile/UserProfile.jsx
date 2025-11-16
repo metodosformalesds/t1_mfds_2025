@@ -11,8 +11,14 @@ export default function PerfilUsuario() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Reemplazar con endpoint real ->>>
-                // const res = await fetch("/api/user/profile");
+                // Endpoint real (descomentar cuando el backend esté listo)
+                // const token = localStorage.getItem("token");
+                // const res = await fetch("http://localhost:8000/api/v1/user-profile/me", {
+                //     headers: {
+                //         "Content-Type": "application/json",
+                //         "Authorization": token ? `Bearer ${token}` : ""
+                //     }
+                // });
                 // const data = await res.json();
                 
                 // Datos de ejemplo mientras se conecta el backend
@@ -52,6 +58,17 @@ export default function PerfilUsuario() {
 
         fetchData();
     }, []);
+
+    const handlePersonalInfo = () => {
+        // TODO: Navegar a edición de información personal
+        alert("Función de edición de información personal - Pendiente de implementar");
+        // navigate("/personal-info"); // Descomentar cuando se cree el componente
+    };
+
+    const handleFitnessProfile = () => {
+        // Navegar al perfil fitness del usuario
+        navigate("/fitness-profile");
+    };
 
     const handleLogout = () => {
         // TODO: Implementar lógica de cierre de sesión
@@ -167,6 +184,7 @@ export default function PerfilUsuario() {
                         <LargeCard 
                             title="Información Personal" 
                             icon={<UserIcon />} 
+                            onClick={handlePersonalInfo}
                             desc="Ve y edita tu información relacionada a tu cuenta"
                             className="col-span-2"
                             bgColor="bg-[#70AA77]"
@@ -185,6 +203,7 @@ export default function PerfilUsuario() {
                         <LargeCard 
                             title="Perfil Fitness" 
                             icon={<DumbbellIcon />} 
+                            onClick={handleFitnessProfile}
                             desc="Ajusta tus objetivos y vuelve a tomar el test"
                             className="col-span-2"
                             bgColor="bg-[#69AEA2]"
