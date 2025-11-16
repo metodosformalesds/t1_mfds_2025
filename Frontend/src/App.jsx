@@ -31,6 +31,8 @@ import SubscriptionPage from "./Profile/Subscription.jsx";
 import OrderHistory from "./Profile/OrderHistory";
 import DoReviews from "./Products/Reviews";
 import PlacementTest from "./PositioningTest/Test";
+import PlacementTestQuestions from "./PositioningTest/PlacementTestQuestions";
+import TestResults from "./PositioningTest/TestResults";
 
 // Inicializar Stripe con tu clave pública
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
@@ -120,6 +122,9 @@ export default function App() {
         <Route path="/RecoveryCode" element={<RCode />} />
         <Route path="/RecoveryPassword" element={<RPassword />} />
         <Route path="/SetupProfile" element={<SetupP />} />
+        <Route path="/placement-test/questions" element={<PlacementTestQuestions />} />
+        {/* Resultados del Test de Posicionamiento */}
+        <Route path="/placement-test/results" element={<TestResults />} />
 
         {/* Rutas Principales (Dentro del MainLayout) */}
         <Route element={<MainLayout />}>
@@ -142,9 +147,10 @@ export default function App() {
           <Route path="/reviews/:orderId" element={<DoReviews />} />
           {/* Test de Posicionamiento Fitness */}
           <Route path="/placement-test" element={<PlacementTest />} />
-
+          
           {/* Información Personal */}
           <Route path="/personal-info" element={<PersonalInfo />}/>
+
           {/* Direcciones de Envío */}
           <Route path="/addresses" element={<Addresses />} />
           {/* Perfil Fitness */}

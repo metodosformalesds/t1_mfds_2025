@@ -143,7 +143,7 @@ const FitnessProfile = () => {
             hydration: "1.5 lts al dia",
             diet_restrictions: "N/A",
             fitness_goal: "BeStrong",
-            goal_description: "Esta es una descripción del perfil de 'ganar masa muscular' la cual debe de contener una pequeña descripción de lo que significa este tipo de perfil, tips, recomendaciones y otras cosas relacionadas al objetivo principal del usuario."
+            goal_description: "Plan enfocado en el aumento de masa muscular y fuerza. Este perfil está diseñado para maximizar tu desarrollo muscular mediante una combinación de entrenamiento de fuerza progresivo y nutrición adecuada. Productos recomendados: Proteína aislada, Creatina, Pre-entreno."
         }
     };
 
@@ -190,20 +190,24 @@ const FitnessProfile = () => {
                 // Esto personaliza las recomendaciones según el perfil del usuario
                 const goalMapping = {
                     'BeStrong': {
-                        category: 'Proteínas y Suplementos',
-                        description: 'Productos para ganancia muscular y fuerza'
+                        category: 'Ganancia Muscular',
+                        description: 'Productos para aumento de masa muscular y fuerza'
                     },
-                    'BeHealthy': {
-                        category: 'Nutrición Saludable',
-                        description: 'Productos para una vida saludable y equilibrada'
+                    'BeLean': {
+                        category: 'Pérdida de Grasa',
+                        description: 'Productos para pérdida de grasa y tonificación'
                     },
-                    'BeFit': {
-                        category: 'Rendimiento Deportivo',
-                        description: 'Productos para mejorar tu rendimiento físico'
+                    'BeBalance': {
+                        category: 'Estado Físico Estable',
+                        description: 'Productos para mantener balance y equilibrio'
                     },
-                    'BeActive': {
-                        category: 'Energía y Vitalidad',
-                        description: 'Productos para mantener tu energía diaria'
+                    'BeDefine': {
+                        category: 'Definición Muscular',
+                        description: 'Productos para definición y tono muscular'
+                    },
+                    'BeNutri': {
+                        category: 'Nutrición Integral',
+                        description: 'Productos para balance alimenticio y nutrición'
                     }
                 };
                 

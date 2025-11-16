@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { gsap } from "gsap";
 
 // --- Iconos SVG ---
 const StethoscopeIcon = () => (
@@ -43,11 +45,41 @@ const CheckIcon = () => (
 
 // --- Componente Principal ---
 const TestIntro = () => {
+    const navigate = useNavigate();
     const [hasAgreed, setHasAgreed] = useState(false);
+    const containerRef = useRef(null);
+    const cardRef = useRef(null);
+
+    const handleStartTest = () => {
+        if (hasAgreed && containerRef.current && cardRef.current) {
+            // Crear timeline de GSAP para la transición
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    navigate("/placement-test/questions");
+                }
+            });
+
+            // Animación de salida con efecto de distorsión
+            tl.to(cardRef.current, {
+                scale: 0.95,
+                opacity: 0,
+                y: -30,
+                duration: 0.4,
+                ease: "power2.in"
+            })
+            .to(containerRef.current, {
+                scale: 1.1,
+                opacity: 0,
+                filter: "blur(20px)",
+                duration: 0.5,
+                ease: "power2.inOut"
+            }, "-=0.2");
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-amber-50 p-4 md:p-8 flex items-center justify-center">
-            <div className="max-w-5xl w-full bg-white rounded-xl shadow-md border border-gray-200 p-8 md:p-12">
+        <div ref={containerRef} className="min-h-screen bg-amber-50 p-4 md:p-8 flex items-center justify-center">
+            <div ref={cardRef} className="max-w-5xl w-full bg-white rounded-xl shadow-md border border-gray-200 p-8 md:p-12">
                 <main className="text-center max-w-4xl mx-auto">
                     {/* Encabezado */}
                     <h1 className="text-3xl md:text-4xl font-bold text-green-900 mb-6">
@@ -106,6 +138,7 @@ const TestIntro = () => {
 
                     {/* Botón de Comenzar */}
                     <button
+                        onClick={handleStartTest}
                         className="bg-[#70AA77] text-white text-lg font-semibold py-3 px-10 rounded-lg transition-opacity shadow-sm
                         disabled:opacity-50 disabled:cursor-not-allowed
                         hover:enabled:bg-opacity-90"
