@@ -433,7 +433,7 @@ const FitnessProfile = () => {
                         <div className="my-4 pt-3 pb-6">
                             <span className="text-sm font-medium">BMI</span>
                             {/* Barra segmentada */}
-                            <div className="w-full flex rounded-full h-3.5 my-2 overflow-hidden">
+                            <div className="w-full flex rounded-full h-6 my-2 overflow-hidden border border-black/40">
                                 <div className="w-1/4 h-full bg-[#71D77C]"></div>
                                 <div className="w-1/4 h-full bg-[#8CDE94]"></div>
                                 <div className="w-1/4 h-full bg-[#ACE4B2]"></div>

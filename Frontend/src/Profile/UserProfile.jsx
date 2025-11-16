@@ -1,68 +1,80 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+// import { getUserProfile, deleteUserAccount, logout, getLoyaltyStatus } from "../utils/api";
+
+// --- Datos Mock para Desarrollo ---
+const MOCK_USER_DATA = {
+    user_id: 1,
+    first_name: "Nombre",
+    last_name: "Apellido",
+    email: "nombre.apellido@ejemplo.com",
+    gender: "M",
+    date_of_birth: "1999-12-25",
+    profile_image_url: null,
+    cognito_user_sub: "mock-cognito-sub"
+};
+
+const MOCK_LOYALTY_DATA = {
+    user_loyalty_id: 1,
+    user_id: 1,
+    tier_id: 1,
+    tier_name: "Nivel 1",
+    total_points: 450,
+    points_earned_this_period: 450,
+    period_start_date: "2025-05-16T00:00:00",
+    period_end_date: "2025-11-16T23:59:59",
+    next_tier_points: 1000,
+    current_benefits: {
+        points_multiplier: 1.0,
+        discount_percentage: 0,
+        free_shipping_threshold: 1500,
+        monthly_coupons: 1,
+        available_coupons: 1,
+        early_access: false
+    }
+};
 
 export default function PerfilUsuario() {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const [userData, setUserData] = useState(null);
+    const [loyaltyData, setLoyaltyData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    // Simulación de fetch al backend 
+    // Cargar datos del usuario y lealtad al montar el componente
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Endpoint real (descomentar cuando el backend esté listo)
-                // const token = localStorage.getItem("token");
-                // const res = await fetch("http://localhost:8000/api/v1/user-profile/me", {
-                //     headers: {
-                //         "Content-Type": "application/json",
-                //         "Authorization": token ? `Bearer ${token}` : ""
-                //     }
-                // });
-                // const data = await res.json();
-                
-                // Datos de ejemplo mientras se conecta el backend
-                const mockData = {
-                    success: true,
-                    user: {
-                        user_id: "123e4567-e89b-12d3-a456-426614174000",
-                        email: "nombre.apellido@ejemplo.com",
-                        first_name: "Nombre",
-                        last_name: "Apellido",
-                        profile_picture: null,
-                    },
-                    // Datos del endpoint de loyalty
-                    loyalty: {
-                        loyalty_id: "loyalty-123",
-                        user_id: "123e4567-e89b-12d3-a456-426614174000",
-                        total_points: 450,
-                        tier_level: 1,
-                        points_to_next_tier: 550,
-                        next_tier_level: 2,
-                    },
-                };
-                
-                setTimeout(() => {
-                    setUser(mockData);
-                    setLoading(false);
-                }, 500);
-            } catch (error) {
-                // TODO: Manejo de errores (Temporal para debug) 
-                console.error(
-                    `Error fetching user data: ${error && error.message ? error.message : error}`,
-                    error && error.stack ? `\nStack trace: ${error.stack}` : ""
-                );
-                setLoading(false);
-            }
-        };
-
-        fetchData();
+        loadUserData();
     }, []);
+
+    const loadUserData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // TODO: Descomentar cuando el backend esté listo
+            // const [userProfile, loyaltyStatus] = await Promise.all([
+            //     getUserProfile(),
+            //     getLoyaltyStatus()
+            // ]);
+            
+            // Mock data para desarrollo
+            const userProfile = MOCK_USER_DATA;
+            const loyaltyStatus = MOCK_LOYALTY_DATA;
+            
+            setUserData(userProfile);
+            setLoyaltyData(loyaltyStatus);
+        } catch (err) {
+            console.error("Error loading user data:", err);
+            setError("Error al cargar la información del usuario.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handlePersonalInfo = () => {
         // TODO: Navegar a edición de información personal
-        alert("Función de edición de información personal - Pendiente de implementar");
-        // navigate("/personal-info"); // Descomentar cuando se cree el componente
+        navigate("/personal-info");
     };
 
     const handleFitnessProfile = () => {
@@ -70,41 +82,66 @@ export default function PerfilUsuario() {
         navigate("/fitness-profile");
     };
 
-    const handleLogout = () => {
-        // TODO: Implementar lógica de cierre de sesión
-        navigate("/");
+    const handleNavigateToPayments = () => {
+        // TODO: Navegar a la gestión de métodos de pago
+        navigate("/payment-methods");
+    };
+
+    const handleNavigateToOrders = () => {
+        // TODO: Navegar a la gestión de ordenes
+        navigate("/orders");
+    };
+
+    const handleNavigateToAddresses = () => {
+        // TODO: Navegar a la gestión de direcciones
+        navigate("/addresses");
+    };
+
+    const handleNavigateToLLoyalties = () => {
+        // TODO: Navegar a la gestión de soporte
+        navigate("/loyalty-program");
+    };
+
+    const handleLogout = async () => {
+        try {
+            // TODO: Descomentar cuando el backend esté listo
+            // await logout();
+            
+            // Mock para desarrollo
+            console.log("Cerrando sesión...");
+            localStorage.removeItem("token");
+            navigate("/");
+        } catch (err) {
+            console.error("Error logging out:", err);
+            setError("Error al cerrar sesión.");
+        }
     };
 
     const handleDeleteAccount = () => {
         setShowDeleteModal(true);
     };
 
-    const confirmDeleteAccount = () => {
-        // TODO: Implementar lógica de eliminación en el backend
-        console.log("Eliminando cuenta...");
-        setShowDeleteModal(false);
-        navigate("/");
-    };
-
-    const handleNavigateToPayments = () => {
-        // TODO: Navegar a la gestión de métodos de pago
-        navigate("/payment-methods");
-    };
-
-    // Función para obtener el nombre del nivel según su categoría.
-    const getTierName = (tierLevel) => {
-        const tierMap = {
-            1: "Bronce",
-            2: "Plata",
-            3: "Oro"
-        };
-        return tierMap[tierLevel] || "Desconocido";
+    const confirmDeleteAccount = async () => {
+        try {
+            // TODO: Descomentar cuando el backend esté listo
+            // await deleteUserAccount();
+            
+            // Mock para desarrollo
+            console.log("Eliminando cuenta...");
+            localStorage.removeItem("token");
+            setShowDeleteModal(false);
+            navigate("/");
+        } catch (err) {
+            console.error("Error deleting account:", err);
+            setError("Error al eliminar la cuenta.");
+            setShowDeleteModal(false);
+        }
     };
 
     // Función para calcular el porcentaje de progreso en lealtad
-    const calculateLoyaltyProgress = (totalPoints, pointsToNextTier) => {
-        if (!pointsToNextTier) return 100;
-        return (totalPoints / (totalPoints + pointsToNextTier)) * 100;
+    const calculateLoyaltyProgress = (totalPoints, nextTierPoints) => {
+        if (!nextTierPoints || nextTierPoints === 0) return 100;
+        return Math.min((totalPoints / nextTierPoints) * 100, 100);
     };
 
     // Renderizado condicional mientras se cargan los datos
@@ -119,19 +156,32 @@ export default function PerfilUsuario() {
         );
     }
 
-    // Renderizado condicional si no se encuentra el usuario 
-    // (2da capa de seguridad, debe de haber validación en back para esto independientemente de esta validación)
-    if (!user) {
+    // Renderizado condicional si hay error o no se encuentra el usuario
+    if (!userData || !loyaltyData) {
         return (
-            <div className="min-h-screen bg-[#F7F3E7] flex items-center justify-center">
+            <div className="min-h-screen bg-[#F7F3E7] flex items-center justify-center p-4">
                 <div className="text-center">
-                    <p className="text-lg font-oswald text-gray-700">No se encontró información del usuario</p>
-                    <button 
-                        onClick={() => navigate("/")}
-                        className="mt-4 bg-blue-800 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-poppins tracking-wide"
-                    >
-                        Volver al inicio
-                    </button>
+                    {error ? (
+                        <>
+                            <p className="text-lg font-oswald text-gray-700 mb-4">{error}</p>
+                            <button 
+                                onClick={loadUserData}
+                                className="bg-blue-800 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-poppins tracking-wide"
+                            >
+                                Reintentar
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-lg font-oswald text-gray-700">No se encontró información del usuario</p>
+                            <button 
+                                onClick={() => navigate("/")}
+                                className="mt-4 bg-blue-800 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-poppins tracking-wide"
+                            >
+                                Volver al inicio
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
         );
@@ -144,24 +194,32 @@ export default function PerfilUsuario() {
                 <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-4">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-800 to-green-400 flex items-center justify-center text-white text-3xl font-popins">
-                                {user.user.first_name.charAt(0)}
-                            </div>
+                            {userData.profile_image_url ? (
+                                <img 
+                                    src={userData.profile_image_url} 
+                                    alt="Profile" 
+                                    className="w-20 h-20 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-800 to-green-400 flex items-center justify-center text-white text-3xl font-popins">
+                                    {userData.first_name.charAt(0)}{userData.last_name.charAt(0)}
+                                </div>
+                            )}
                             <div>
                                 <h2 className="text-2xl md:text-3xl font-semibold font-popins tracking-wide">
-                                    {user.user.first_name} {user.user.last_name}
+                                    {userData.first_name} {userData.last_name}
                                 </h2>
                                 <p className="invisible sm:visible flex text-sm md:text-base items-center gap-2 text-gray-600 bg-gray-200 px-3 py-1 rounded-full mt-1">
                                     <span><svg className="size-3 md:size-4" viewBox="0 0 23 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M1 3.28571C1 2.67951 1.24583 2.09812 1.68342 1.66947C2.121 1.24082 2.71449 1 3.33333 1H19.6667C20.2855 1 20.879 1.24082 21.3166 1.66947C21.7542 2.09812 22 2.67951 22 3.28571M1 3.28571V14.7143C1 15.3205 1.24583 15.9019 1.68342 16.3305C2.121 16.7592 2.71449 17 3.33333 17H19.6667C20.2855 17 20.879 16.7592 21.3166 16.3305C21.7542 15.9019 22 15.3205 22 14.7143V3.28571M1 3.28571L11.5 10.1429L22 3.28571" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg></span> {user.user.email}
+                                    </svg></span> {userData.email}
                                 </p>
                             </div>
                         </div>
                         <p className="visible sm:invisible sm:absolute flex text-sm md:text-base items-center gap-2 text-gray-600 bg-gray-200 px-3 py-1 rounded-full mt-1">
                                     <span><svg className="size-3 md:size-4" viewBox="0 0 23 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M1 3.28571C1 2.67951 1.24583 2.09812 1.68342 1.66947C2.121 1.24082 2.71449 1 3.33333 1H19.6667C20.2855 1 20.879 1.24082 21.3166 1.66947C21.7542 2.09812 22 2.67951 22 3.28571M1 3.28571V14.7143C1 15.3205 1.24583 15.9019 1.68342 16.3305C2.121 16.7592 2.71449 17 3.33333 17H19.6667C20.2855 17 20.879 16.7592 21.3166 16.3305C21.7542 15.9019 22 15.3205 22 14.7143V3.28571M1 3.28571L11.5 10.1429L22 3.28571" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg></span> {user.user.email}
+                                    </svg></span> {userData.email}
                                 </p>
                         <button 
                             onClick={handleLogout}
@@ -198,6 +256,7 @@ export default function PerfilUsuario() {
                         <SmallCard 
                             title="Direcciones de entrega" 
                             icon={<TruckIcon />}
+                            onClick={handleNavigateToAddresses}
                             bgColor="bg-[#70AA77]"
                         />
                         <LargeCard 
@@ -228,21 +287,20 @@ export default function PerfilUsuario() {
                         <div>
                             <h3 className="text-2xl font-semibold font-popins tracking-wide mb-4">Programa de puntos</h3>
                             <p className="font-medium text-lg mb-2">
-                                Nivel {getTierName(user.loyalty.tier_level)}
+                                {loyaltyData.tier_name}
                             </p>
                             <div className="w-full h-6 rounded-full bg-gray-200 mt-2">
                                 <div
                                     className="h-6 bg-[#70AA77] rounded-full transition-all duration-500"
                                     style={{ 
-                                        width: `${calculateLoyaltyProgress(user.loyalty.total_points, user.loyalty.points_to_next_tier)}%` 
+                                        width: `${calculateLoyaltyProgress(loyaltyData.total_points, loyaltyData.next_tier_points)}%` 
                                     }}
                                 />
                             </div>
                             <p className="text-sm text-right mt-2 text-gray-600">
-                                {user.loyalty.total_points}/{user.loyalty.points_to_next_tier ? 
-                                    user.loyalty.total_points + user.loyalty.points_to_next_tier : user.loyalty.total_points} pts
+                                {loyaltyData.total_points}/{loyaltyData.next_tier_points} pts
                             </p>
-                            <button className="text-sm text-blue-800 underline mt-3 hover:text-blue-700">
+                            <button onClick={handleNavigateToLLoyalties} className="text-sm text-blue-800 underline mt-3 hover:text-blue-700">
                                 Ver beneficios
                             </button>
                         </div>
