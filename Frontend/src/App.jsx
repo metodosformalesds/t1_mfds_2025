@@ -17,7 +17,7 @@ import AboutUs from "./Home/AboutUsPage";
 import Login from "./Login/LoginPage";
 import Register from "./Login/RegisterPage";
 import RSelect from "./Login/RecoverySelect";
-import RCode from "./Login/RecoveryCode";
+import RCode from "./Login/RecoveryCode"; 
 import RPassword from "./Login/RecoveryPassword";
 import SetupP from "./Login/SetupProfile";
 
@@ -32,7 +32,7 @@ import OrderHistory from "./Profile/OrderHistory";
 import PaymentMethods from "./Payments/PaymentMethods";
 
 // Productos
-import Tienda from "./Componentes/Tienda";
+import Tienda from "./Componentes/Shop.jsx";
 import ProductDetail from "./Products/ProductDetails";
 import CartPage from "./Products/CartPage";
 import CheckoutPage from "./Products/CheckoutPage";

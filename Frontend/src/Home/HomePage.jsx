@@ -252,6 +252,7 @@ const Hero = () => (
           className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center md:justify-start"
           variants={containerVariants}
         >
+        <Link to="/Subscription">
           <motion.button 
             className="font-bebas tracking-[1px] rounded-lg bg-blue-800 px-8 py-3 text-xl font-regular text-white shadow-lg transition hover:bg-blue-700 sm:px-12 sm:py-4 sm:text-2xl"
             variants={itemVariants}
@@ -263,6 +264,7 @@ const Hero = () => (
           >
             Explora la suscripción
           </motion.button>
+        </Link>
         <Link to="/Productos">
           <motion.button 
             className="font-bebas tracking-[1px] rounded-lg border-2 border-green-400 px-6 py-3 text-xl font-regular text-white shadow-lg transition hover:bg-green-400 hover:text-black sm:px-10 sm:py-4 sm:text-2xl"
@@ -393,6 +395,7 @@ const ProductCard = ({ product }) => (
           </motion.p>
           <span className="text-sm text-gray-500 sm:text-md">MXN</span>
         </div>
+      <Link to={`/Productos/${product.id}`}>
         <motion.button 
           className="rounded-2xl bg-blue-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 sm:px-6 sm:py-3 sm:text-base"
           whileHover={{ 
@@ -403,6 +406,7 @@ const ProductCard = ({ product }) => (
         >
           Ver
         </motion.button>
+      </Link>
       </motion.div>
     </div>
   </motion.div>
@@ -412,9 +416,9 @@ const ProductCard = ({ product }) => (
 const FeaturedProducts = () => {
   const products = [
     { id: 1, title: "Proteina Whey Gold Standard", description: "2.27kg Chocolate Flavor", price: 899, rating: 5, reviewCount: 322, tag: "Recomendado para ti", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Proteina" },
-    { id: 2, title: "Creatina Monohidratada", description: "500g Sin Sabor", price: 499, rating: 4, reviewCount: 210, tag: "Popular", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Creatina" },
+    { id: 4, title: "Creatina Monohidratada", description: "500g Sin Sabor", price: 499, rating: 4, reviewCount: 210, tag: "Popular", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Creatina" },
     { id: 3, title: "Multivitamínico Opti-Men", description: "90 Tabletas", price: 350, rating: 5, reviewCount: 180, tag: "Esencial", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Vitaminas" },
-    { id: 4, title: "Pre-Entrenamiento C4", description: "30 Servicios Fruit Punch", price: 599, rating: 4, reviewCount: 250, tag: "", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Pre-Workout" },
+    { id: 2, title: "Gatorade", description: "Hidratación intensa", price: 200, rating: 4, reviewCount: 500, tag: "team_sports", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Gatorade" },
   ];
 
   return (
