@@ -12,7 +12,8 @@ from fastapi import (
     UploadFile, 
     status, 
     Form,
-    Security
+    Security, 
+    BackgroundTasks
 )
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict
@@ -45,9 +46,10 @@ async def register_user(
     last_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
+    background_tasks: BackgroundTasks = Depends(),
     gender: Optional[str] = Form(None),
     birth_date: Optional[str] = Form(None), 
-    profile_image: Optional[UploadFile] = None
+    profile_image: Optional[UploadFile] = None,
 ):
     """
     Autor: Gabriel Vilchis
@@ -82,10 +84,19 @@ async def register_user(
 
     image_bytes = await profile_image.read() if profile_image else None
 
-    result = cognito_service.sign_up(db=db, user_data=user_data, profile_image=image_bytes)
+    result = await cognito_service.sign_up(db=db, user_data=user_data, profile_image=image_bytes)
     
     if not result.get("success"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error"))
+    
+    if image_bytes:
+        background_tasks.add_task(
+            cognito_service.process_s3_and_cognito_updates_sync,
+            profile_image=image_bytes,
+            cognito_sub=result["user_sub"],
+            temp_s3_id=result["temp_s3_id"],
+            profile_image_url=result["profile_image_url"]
+        )
     
     return result
 

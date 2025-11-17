@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from PIL import Image
 from app.config import settings
 from typing import Dict
+from starlette.concurrency import run_in_threadpool
 
 class S3Service:
     def __init__(self):
@@ -19,7 +20,7 @@ class S3Service:
         )
         self.bucket_name = settings.S3_BUCKET_NAME
 
-    def upload_profile_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
+    async def upload_profile_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
         """
         Autor: Gabriel Vilchis
         Sube una imagen de perfil al bucket de S3 con validación de tamaño, formato,
@@ -77,13 +78,21 @@ class S3Service:
             content_type = content_types.get(file_ext, 'image/jpeg') 
 
             # Subir el archivo
-            self.s3_client.put_object(
+            await run_in_threadpool(
+                self.s3_client.put_object,
                 Bucket=self.bucket_name,
                 Key=file_name,
                 Body=file_content, 
                 ContentType=content_type,
                 Metadata={'user_id': user_id}
             )
+            #self.s3_client.put_object(
+             #   Bucket=self.bucket_name,
+              #  Key=file_name,
+               # Body=file_content, 
+                #ContentType=content_type,
+                #Metadata={'user_id': user_id}
+            #)
 
             img_url = f"https://{self.bucket_name}.s3.{settings.AWS_REGION}.amazonaws.com/{file_name}"
 
@@ -95,7 +104,7 @@ class S3Service:
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
          
-    def upload_product_img(self, file_content: bytes, product_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
+    async def upload_product_img(self, file_content: bytes, product_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
         """
         Autor: Gabriel Vilchis
         Sube una imagen de producto a S3 siguiendo el mismo proceso de validación
@@ -151,14 +160,22 @@ class S3Service:
             }
             content_type = content_types.get(file_ext, 'image/jpeg') 
 
-            # Subir el archivo
-            self.s3_client.put_object(
+            await run_in_threadpool(
+                self.s3_client.put_object,
                 Bucket=self.bucket_name,
                 Key=file_name,
                 Body=file_content, 
                 ContentType=content_type,
                 Metadata={'product_id': product_id}
             )
+            # Subir el archivo
+            #self.s3_client.put_object(
+             #   Bucket=self.bucket_name,
+              #  Key=file_name,
+               # Body=file_content, 
+                #ContentType=content_type,
+                #Metadata={'product_id': product_id}
+            #)
 
             img_url = f"https://{self.bucket_name}.s3.{settings.AWS_REGION}.amazonaws.com/{file_name}"
 

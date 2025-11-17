@@ -17,6 +17,7 @@ from app.models.user import User
 from app.models.enum import AuthType, UserRole, Gender
 from app.core.security import hash_password
 from app.api.v1.auth.schemas import SignUpRequest
+from starlette.concurrency import run_in_threadpool
 
 
 class CognitoService:
@@ -66,7 +67,7 @@ class CognitoService:
         
         return CognitoService._jwks_cache
     
-    def sign_up(
+    async def sign_up(
         self, 
         db: Session, 
         user_data: SignUpRequest, 
@@ -139,12 +140,13 @@ class CognitoService:
                 user_attributes.append({"Name": "picture", "Value": profile_image_url})
 
             # Registrar en Cognito
-            response = self.client.sign_up(
+            response = await run_in_threadpool(
+                self.client.sign_up,
                 ClientId=self.client_id,
                 Username=email,
                 Password=user_data.password,
                 UserAttributes=user_attributes
-            )
+            )   
 
             cognito_sub = response["UserSub"]
             
@@ -175,16 +177,54 @@ class CognitoService:
                 "success": True,
                 "user_sub": cognito_sub,
                 "user_id": str(new_db_user.user_id),
+                "temp_s3_id": temp_s3_id,
+                "profile_image": profile_image,
                 "profile_image_url": profile_image_url,
                 "message": "Usuario registrado correctamente. Verifica tu correo.",
             }
 
         except self.client.exceptions.UsernameExistsException:
+            if profile_image_url and temp_s3_id:
+                # Esto es una limpieza de emergencia. No debería ser asíncrono.
+                s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
             return {"success": False, "error": "El usuario ya existe"}
         except self.client.exceptions.InvalidPasswordException:
             return {"success": False, "error": "La contraseña no cumple con los requisitos"}
         except Exception as e:
+            if profile_image_url and temp_s3_id:
+                # Esto es una limpieza de emergencia. No debería ser asíncrono.
+                s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
             return {"success": False, "error": str(e)}
+        
+    def process_s3_and_cognito_updates_sync(self, profile_image: bytes, cognito_sub: str, temp_s3_id: str, profile_image_url: str):
+        """Tarea síncrona de limpieza y actualización que se ejecuta en segundo plano."""
+        s3_service_instance = S3Service()
+        
+        if not profile_image:
+            return
+            
+        try:
+            transfer_upload_result = s3_service_instance.upload_profile_img(
+                file_content=profile_image,
+                user_id=cognito_sub
+            )
+            
+            if transfer_upload_result["success"]:
+                final_profile_image_url = transfer_upload_result["file_url"]
+                
+                s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
+
+                self.client.admin_update_user_attributes(
+                    UserPoolId=self.user_pool_id,
+                    Username=self.client.admin_get_user(UserPoolId=self.user_pool_id, Username=cognito_sub)['Username'], 
+                    UserAttributes=[
+                        {'Name': 'picture', 'Value': final_profile_image_url}
+                    ]
+                )
+                
+        except Exception as e:
+            print(f"ERROR TAREA DE FONDO: Falló la re-subida o limpieza en S3: {e}")
+
     
     def confirm_sign_up(self, email: str, code: str) -> Dict:
         """
