@@ -23,9 +23,22 @@ from app.core.database import get_db
 from app.api.deps import get_token_from_header
 
 
+
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 security = HTTPBearer()
+
+"""Extrae el token del header Authorization"""
+def get_token_from_header(
+    credentials: HTTPAuthorizationCredentials = Security(security)
+) -> str:
+    if not credentials or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No se proporcionaron credenciales de autenticación",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return credentials.credentials
 
 @router.post("/signup", response_model=schemas.SignUpResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
@@ -242,5 +255,35 @@ async def confirm_forgot_password(data: schemas.ConfirmForgotPasswordRequest):
     
     if not result.get("success"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result["error"])
+    
+    return result
+
+@router.post("/change-password", response_model=schemas.MessageResponse)
+async def change_password(
+    data: schemas.ChangePasswordRequest,
+    token: str = Depends(get_token_from_header)
+):
+    """
+    Autor: Luis Flores
+    Cambia la contraseña del usuario autenticado.
+    
+    Requiere autenticación y la contraseña actual.
+    
+    Args:
+        data (schemas.ChangePasswordRequest): Contraseña actual y nueva.
+        token (str): Token de autenticación del usuario.
+    
+    Returns:
+        schemas.MessageResponse: Mensaje de éxito o error.
+    """
+    result = cognito_service.change_password(
+        token, data.old_password, data.new_password
+    )
+    
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result["error"]
+        )
     
     return result

@@ -34,11 +34,10 @@ def get_db():
     try:
         yield db
     finally:
-        db.close()  
-# version con rds
-#DATABASE_URL_RDS = os.getenv("DATABASE_RDS")
+        db.close()
 
-#engine_rds = create_engine(DATABASE_URL_RDS)
 
-#SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) 
-#Base = declarative_base()
+# Log de inicialización
+if settings.DEBUG:
+    logger.info(f"Base de datos configurada correctamente")
+    logger.info(f"Tipo: {'SQLite' if 'sqlite' in DATABASE_URL else 'Remota'}")

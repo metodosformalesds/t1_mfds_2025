@@ -1,5 +1,3 @@
-#from . import routes, schemas, service
-from .routes import router
+from app.api.v1.auth.routes import router
 
-
-#__all__ = ["routes", "service", "schemas", "utils"]
+__all__ = ["router"]
