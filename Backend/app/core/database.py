@@ -35,9 +35,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-# Log de inicialización
-if settings.DEBUG:
-    logger.info(f"Base de datos configurada correctamente")
-    logger.info(f"Tipo: {'SQLite' if 'sqlite' in DATABASE_URL else 'Remota'}")
