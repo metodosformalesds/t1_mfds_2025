@@ -2,6 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useNavigate } from "react-router-dom";
+import { 
+    getPaymentMethods, 
+    createSetupIntent, 
+    savePaymentMethod, 
+    deletePaymentMethod,
+    setDefaultPaymentMethod
+} from "../utils/api";
 
 export default function PaymentMethods() {
     const stripe = useStripe();
@@ -27,41 +34,13 @@ export default function PaymentMethods() {
         }
     ]);
 
-    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
-
     // ====================
-    // Helper genérico API
+    // Fetch Payment Methods
     // ====================
-    
-    
-    async function apiFetch(path, options = {}) {
-        const token = localStorage.getItem("token"); // <--- Para producción
-
-        const res = await fetch(`${API_BASE}${path}`, {
-            /*
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": token ? `Bearer ${token}` : ""
-            },
-            */
-            headers: { "Content-Type": "application/json" }, // MOCK
-            ...options,
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) throw new Error(data.detail || "Error en la solicitud");
-        return data;
-    }
-        
-    // TODO: FETCH real (COMENTADO)
-
     async function fetchPaymentMethods() {
         /*
         try {
-            const data = await apiFetch("/api/v1/payment_method", { 
-            method: "GET" 
-            });
+            const data = await getPaymentMethods();
             setPaymentMethods(data.payment_methods || []);
         } catch (err) {
             console.error(err);
@@ -69,6 +48,10 @@ export default function PaymentMethods() {
         }
         */
     }
+
+    useEffect(() => {
+        fetchPaymentMethods();
+    }, []);
 
     // Abrir modales
 
@@ -83,24 +66,36 @@ export default function PaymentMethods() {
         setShowEditModal(true);
     }
 
-    // Actualizar tarjeta
-
-    async function handleUpdateCard() {
+    // Establecer tarjeta como predeterminada
+    async function handleSetDefault(pmId) {
         setLoading(true);
         setError(null);
 
         /*
         try {
-            await apiFetch("/api/v1/payment_method/update", {
-                method: "POST",
-                body: JSON.stringify({
-                    payment_method_id: editingCard.id,
-                    billing_details: {
-                        name: editingCardName,
-                    },
-                }),
-            });
+            await setDefaultPaymentMethod(pmId);
+            await fetchPaymentMethods();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+        */
 
+        alert(`Tarjeta ${pmId} establecida como predeterminada (simulación)`);
+        setLoading(false);
+    }
+
+    // Actualizar tarjeta (Nota: Stripe no permite editar tarjetas, solo el nombre del titular)
+    async function handleUpdateCard() {
+        setLoading(true);
+        setError(null);
+
+        /*
+        // Nota: La API de Stripe generalmente no permite actualizar tarjetas directamente.
+        // Se debe eliminar y agregar una nueva. O solo actualizar billing_details.
+        try {
+            await setDefaultPaymentMethod(editingCard.id);
             await fetchPaymentMethods();
             setShowEditModal(false);
         } catch (err) {
@@ -123,10 +118,7 @@ export default function PaymentMethods() {
         /*
         try {
             // 1. Crear SetupIntent
-            const intent = await apiFetch("/api/v1/payment_method/create-setup-intent", {
-                method: "POST",
-                body: JSON.stringify({})
-            });
+            const intent = await createSetupIntent();
 
             const cardElement = elements.getElement(CardElement);
 
@@ -144,10 +136,7 @@ export default function PaymentMethods() {
             }
 
             // 2. Guardar en backend
-            await apiFetch("/api/v1/payment_method/save", {
-                method: "POST",
-                body: JSON.stringify({ payment_method_id: result.setupIntent.payment_method })
-            });
+            await savePaymentMethod(result.setupIntent.payment_method, false);
 
             await fetchPaymentMethods();
             setShowAddModal(false);
@@ -174,29 +163,7 @@ export default function PaymentMethods() {
         setLoading(false);
     }
 
-    // ====================
-    // Crear suscripción
-    // ====================
-    async function handleCreateSubscription(pmId) {
-        setLoading(true);
-        setError(null);
 
-        /*
-        try {
-            await apiFetch("/api/v1/subscription/create", {
-                method: "POST",
-                body: JSON.stringify({ payment_method_id: pmId })
-            });
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-        */
-
-        alert(`Suscripción creada con la tarjeta ${pmId} (simulación)`);
-        setLoading(false);
-    }
 
     // Eliminar tarjeta
     async function handleDetachPaymentMethod(pmId) {
@@ -205,10 +172,7 @@ export default function PaymentMethods() {
 
         /*
         try {
-            await apiFetch("/api/v1/payment_method/delete", {
-                method: "POST",
-                body: JSON.stringify({ payment_method_id: pmId })
-            });
+            await deletePaymentMethod(pmId);
 
             await fetchPaymentMethods();
             setShowConfirm({ visible: false, pmId: null });
@@ -282,16 +246,24 @@ export default function PaymentMethods() {
                                 </p>
                             </div>
 
-                            <div className="flex gap-2 mt-3 md:mt-0">
+                            <div className="flex gap-2 mt-3 md:mt-0 flex-wrap">
                                 <button
-                                    className="bg-[#70AA77] hover:bg-[#5f8a5f] text-white px-6 py-2 rounded-3xl"
+                                    className="bg-[#31478F] hover:bg-[#2a3f7f] text-white px-4 py-2 rounded-3xl text-sm"
+                                    onClick={() => handleSetDefault(pm.id)}
+                                    disabled={loading}
+                                >
+                                    Predeterminada
+                                </button>
+
+                                <button
+                                    className="bg-[#70AA77] hover:bg-[#5f8a5f] text-white px-4 py-2 rounded-3xl text-sm"
                                     onClick={() => handleOpenEdit(pm)}
                                 >
                                     Editar
                                 </button>
 
                                 <button
-                                    className="bg-[#C05F5F] hover:bg-[#9b4b4b] text-white px-6 py-2 rounded-3xl"
+                                    className="bg-[#C05F5F] hover:bg-[#9b4b4b] text-white px-4 py-2 rounded-3xl text-sm"
                                     onClick={() => setShowConfirm({ visible: true, pmId: pm.id })}
                                 >
                                     Eliminar

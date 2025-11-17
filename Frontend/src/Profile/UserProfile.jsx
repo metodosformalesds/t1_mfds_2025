@@ -1,68 +1,101 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+// import { getUserProfile, getSubscriptionOrders, deleteUserAccount, logout, getLoyaltyStatus } from "../utils/api";
+
+// --- Datos Mock para Desarrollo ---
+const MOCK_USER_DATA = {
+    user_id: 1,
+    first_name: "Nombre",
+    last_name: "Apellido",
+    email: "nombre.apellido@ejemplo.com",
+    gender: "M",
+    date_of_birth: "1999-12-25",
+    profile_image_url: null,
+    cognito_user_sub: "mock-cognito-sub"
+};
+
+const MOCK_LOYALTY_DATA = {
+    user_loyalty_id: 1,
+    user_id: 1,
+    tier_id: 1,
+    tier_name: "Nivel 1",
+    total_points: 450,
+    points_earned_this_period: 450,
+    period_start_date: "2025-05-16T00:00:00",
+    period_end_date: "2025-11-16T23:59:59",
+    next_tier_points: 1000,
+    current_benefits: {
+        points_multiplier: 1.0,
+        discount_percentage: 0,
+        free_shipping_threshold: 1500,
+        monthly_coupons: 1,
+        available_coupons: 1,
+        early_access: false
+    }
+};
+
+const MOCK_SUBSCRIPTION_DATA = {
+    subscription_id: 1,
+    status: "active", // puede ser: "active", "paused", "cancelled"
+    next_billing_date: "2025-12-16",
+    plan_name: "Premium Monthly"
+};
 
 export default function PerfilUsuario() {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const [userData, setUserData] = useState(null);
+    const [loyaltyData, setLoyaltyData] = useState(null);
+    const [subscriptionData, setSubscriptionData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [confirmAction, setConfirmAction] = useState(null);
+    const [processingSubscription, setProcessingSubscription] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
-    // Simulación de fetch al backend 
+    // Cargar datos del usuario y lealtad al montar el componente
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Endpoint real (descomentar cuando el backend esté listo)
-                // const token = localStorage.getItem("token");
-                // const res = await fetch("http://localhost:8000/api/v1/user-profile/me", {
-                //     headers: {
-                //         "Content-Type": "application/json",
-                //         "Authorization": token ? `Bearer ${token}` : ""
-                //     }
-                // });
-                // const data = await res.json();
-                
-                // Datos de ejemplo mientras se conecta el backend
-                const mockData = {
-                    success: true,
-                    user: {
-                        user_id: "123e4567-e89b-12d3-a456-426614174000",
-                        email: "nombre.apellido@ejemplo.com",
-                        first_name: "Nombre",
-                        last_name: "Apellido",
-                        profile_picture: null,
-                    },
-                    // Datos del endpoint de loyalty
-                    loyalty: {
-                        loyalty_id: "loyalty-123",
-                        user_id: "123e4567-e89b-12d3-a456-426614174000",
-                        total_points: 450,
-                        tier_level: 1,
-                        points_to_next_tier: 550,
-                        next_tier_level: 2,
-                    },
-                };
-                
-                setTimeout(() => {
-                    setUser(mockData);
-                    setLoading(false);
-                }, 500);
-            } catch (error) {
-                // TODO: Manejo de errores (Temporal para debug) 
-                console.error(
-                    `Error fetching user data: ${error && error.message ? error.message : error}`,
-                    error && error.stack ? `\nStack trace: ${error.stack}` : ""
-                );
-                setLoading(false);
-            }
-        };
-
-        fetchData();
+        loadUserData();
     }, []);
+
+    const loadUserData = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // TODO: Descomentar cuando el backend esté listo
+            // const [userProfile, loyaltyStatus, subscriptionStatus] = await Promise.all([
+            //     getUserProfile(),
+            //     getLoyaltyStatus(),
+            //     getSubscriptionOrders()
+            // ]);
+            
+            // Mock data para desarrollo
+            const userProfile = MOCK_USER_DATA;
+            const loyaltyStatus = MOCK_LOYALTY_DATA;
+            const subscriptionStatus = MOCK_SUBSCRIPTION_DATA;
+            
+            setUserData(userProfile);
+            setLoyaltyData(loyaltyStatus);
+            setSubscriptionData(subscriptionStatus);
+            
+            // TODO: Verificar permisos reales desde el backend
+            // const isAdminUser = userProfile.role === 'admin' || userProfile.is_admin;
+            // Mock: establecer como admin para desarrollo
+            setIsAdmin(true);
+        } catch (err) {
+            console.error("Error loading user data:", err);
+            setError("Error al cargar la información del usuario.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handlePersonalInfo = () => {
         // TODO: Navegar a edición de información personal
-        alert("Función de edición de información personal - Pendiente de implementar");
-        // navigate("/personal-info"); // Descomentar cuando se cree el componente
+        navigate("/personal-info");
     };
 
     const handleFitnessProfile = () => {
@@ -70,41 +103,127 @@ export default function PerfilUsuario() {
         navigate("/fitness-profile");
     };
 
-    const handleLogout = () => {
-        // TODO: Implementar lógica de cierre de sesión
-        navigate("/");
+    const handleNavigateToPayments = () => {
+        // Navegar a la gestión de métodos de pago
+        navigate("/payment-methods");
+    };
+
+    const handleNavigateToOrderHistory = () => {
+        // Navegar a la gestión de ordenes
+        navigate("/order-history");
+    };
+
+    const handleNavigateToAddresses = () => {
+        // Navegar a la gestión de direcciones
+        navigate("/addresses");
+    };
+
+    const handleNavigateToLoyalties = () => {
+        // Navegar a la vista de lealtad
+        navigate("/loyalty-program");
+    };
+
+    const handleNavigateToSubscription = () => {
+            // Navegar a la gestión de suscripción
+            navigate("/subscription");
+        };
+
+    const handleManageSubscription = () => {
+        setShowSubscriptionModal(true);
+    };
+
+    const handleSubscriptionAction = (action) => {
+        setConfirmAction(action);
+        setShowSubscriptionModal(false);
+        setShowConfirmModal(true);
+    };
+
+    const confirmSubscriptionAction = async () => {
+        try {
+            setProcessingSubscription(true);
+            setError(null);
+
+            // TODO: Descomentar cuando el backend esté listo
+            // Dependiendo de la acción, llamar al endpoint correspondiente
+            // switch(confirmAction) {
+            //     case 'pause':
+            //         await pauseSubscription(subscriptionId);
+            //         break;
+            //     case 'resume':
+            //         await resumeSubscription(subscriptionId);
+            //         break;
+            //     case 'cancel':
+            //         await cancelSubscription(subscriptionId);
+            //         break;
+            // }
+
+            // Mock para desarrollo
+            console.log(`Ejecutando acción de suscripción: ${confirmAction}`);
+            
+            // Simular delay de API
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Actualizar el estado de la suscripción localmente
+            setSubscriptionData(prev => ({
+                ...prev,
+                status: confirmAction === 'pause' ? 'paused' : 
+                        confirmAction === 'resume' ? 'active' : 
+                        'cancelled'
+            }));
+
+            setShowConfirmModal(false);
+            setConfirmAction(null);
+            
+            // Mostrar mensaje de éxito (puedes agregar un estado para esto)
+            alert(`Suscripción ${confirmAction === 'pause' ? 'pausada' : confirmAction === 'resume' ? 'reanudada' : 'cancelada'} exitosamente`);
+        } catch (err) {
+            console.error(`Error ${confirmAction}ing subscription:`, err);
+            setError(`Error al ${confirmAction === 'pause' ? 'pausar' : confirmAction === 'resume' ? 'reanudar' : 'cancelar'} la suscripción.`);
+        } finally {
+            setProcessingSubscription(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            // TODO: Descomentar cuando el backend esté listo
+            // await logout();
+            
+            // Mock para desarrollo
+            console.log("Cerrando sesión...");
+            localStorage.removeItem("token");
+            navigate("/");
+        } catch (err) {
+            console.error("Error logging out:", err);
+            setError("Error al cerrar sesión.");
+        }
     };
 
     const handleDeleteAccount = () => {
         setShowDeleteModal(true);
     };
 
-    const confirmDeleteAccount = () => {
-        // TODO: Implementar lógica de eliminación en el backend
-        console.log("Eliminando cuenta...");
-        setShowDeleteModal(false);
-        navigate("/");
-    };
-
-    const handleNavigateToPayments = () => {
-        // TODO: Navegar a la gestión de métodos de pago
-        navigate("/payment-methods");
-    };
-
-    // Función para obtener el nombre del nivel según su categoría.
-    const getTierName = (tierLevel) => {
-        const tierMap = {
-            1: "Bronce",
-            2: "Plata",
-            3: "Oro"
-        };
-        return tierMap[tierLevel] || "Desconocido";
+    const confirmDeleteAccount = async () => {
+        try {
+            // TODO: Descomentar cuando el backend esté listo
+            // await deleteUserAccount();
+            
+            // Mock para desarrollo
+            console.log("Eliminando cuenta...");
+            localStorage.removeItem("token");
+            setShowDeleteModal(false);
+            navigate("/");
+        } catch (err) {
+            console.error("Error deleting account:", err);
+            setError("Error al eliminar la cuenta.");
+            setShowDeleteModal(false);
+        }
     };
 
     // Función para calcular el porcentaje de progreso en lealtad
-    const calculateLoyaltyProgress = (totalPoints, pointsToNextTier) => {
-        if (!pointsToNextTier) return 100;
-        return (totalPoints / (totalPoints + pointsToNextTier)) * 100;
+    const calculateLoyaltyProgress = (totalPoints, nextTierPoints) => {
+        if (!nextTierPoints || nextTierPoints === 0) return 100;
+        return Math.min((totalPoints / nextTierPoints) * 100, 100);
     };
 
     // Renderizado condicional mientras se cargan los datos
@@ -119,19 +238,32 @@ export default function PerfilUsuario() {
         );
     }
 
-    // Renderizado condicional si no se encuentra el usuario 
-    // (2da capa de seguridad, debe de haber validación en back para esto independientemente de esta validación)
-    if (!user) {
+    // Renderizado condicional si hay error o no se encuentra el usuario
+    if (!userData || !loyaltyData || !subscriptionData) {
         return (
-            <div className="min-h-screen bg-[#F7F3E7] flex items-center justify-center">
+            <div className="min-h-screen bg-[#F7F3E7] flex items-center justify-center p-4">
                 <div className="text-center">
-                    <p className="text-lg font-oswald text-gray-700">No se encontró información del usuario</p>
-                    <button 
-                        onClick={() => navigate("/")}
-                        className="mt-4 bg-blue-800 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-poppins tracking-wide"
-                    >
-                        Volver al inicio
-                    </button>
+                    {error ? (
+                        <>
+                            <p className="text-lg font-oswald text-gray-700 mb-4">{error}</p>
+                            <button 
+                                onClick={loadUserData}
+                                className="bg-blue-800 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-poppins tracking-wide"
+                            >
+                                Reintentar
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-lg font-oswald text-gray-700">No se encontró información del usuario</p>
+                            <button 
+                                onClick={() => navigate("/")}
+                                className="mt-4 bg-blue-800 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-poppins tracking-wide"
+                            >
+                                Volver al inicio
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
         );
@@ -144,24 +276,32 @@ export default function PerfilUsuario() {
                 <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-4">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-800 to-green-400 flex items-center justify-center text-white text-3xl font-popins">
-                                {user.user.first_name.charAt(0)}
-                            </div>
+                            {userData.profile_image_url ? (
+                                <img 
+                                    src={userData.profile_image_url} 
+                                    alt="Profile" 
+                                    className="w-20 h-20 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-800 to-green-400 flex items-center justify-center text-white text-3xl font-popins">
+                                    {userData.first_name.charAt(0)}{userData.last_name.charAt(0)}
+                                </div>
+                            )}
                             <div>
                                 <h2 className="text-2xl md:text-3xl font-semibold font-popins tracking-wide">
-                                    {user.user.first_name} {user.user.last_name}
+                                    {userData.first_name} {userData.last_name}
                                 </h2>
                                 <p className="invisible sm:visible flex text-sm md:text-base items-center gap-2 text-gray-600 bg-gray-200 px-3 py-1 rounded-full mt-1">
                                     <span><svg className="size-3 md:size-4" viewBox="0 0 23 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M1 3.28571C1 2.67951 1.24583 2.09812 1.68342 1.66947C2.121 1.24082 2.71449 1 3.33333 1H19.6667C20.2855 1 20.879 1.24082 21.3166 1.66947C21.7542 2.09812 22 2.67951 22 3.28571M1 3.28571V14.7143C1 15.3205 1.24583 15.9019 1.68342 16.3305C2.121 16.7592 2.71449 17 3.33333 17H19.6667C20.2855 17 20.879 16.7592 21.3166 16.3305C21.7542 15.9019 22 15.3205 22 14.7143V3.28571M1 3.28571L11.5 10.1429L22 3.28571" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg></span> {user.user.email}
+                                    </svg></span> {userData.email}
                                 </p>
                             </div>
                         </div>
                         <p className="visible sm:invisible sm:absolute flex text-sm md:text-base items-center gap-2 text-gray-600 bg-gray-200 px-3 py-1 rounded-full mt-1">
                                     <span><svg className="size-3 md:size-4" viewBox="0 0 23 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M1 3.28571C1 2.67951 1.24583 2.09812 1.68342 1.66947C2.121 1.24082 2.71449 1 3.33333 1H19.6667C20.2855 1 20.879 1.24082 21.3166 1.66947C21.7542 2.09812 22 2.67951 22 3.28571M1 3.28571V14.7143C1 15.3205 1.24583 15.9019 1.68342 16.3305C2.121 16.7592 2.71449 17 3.33333 17H19.6667C20.2855 17 20.879 16.7592 21.3166 16.3305C21.7542 15.9019 22 15.3205 22 14.7143V3.28571M1 3.28571L11.5 10.1429L22 3.28571" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg></span> {user.user.email}
+                                    </svg></span> {userData.email}
                                 </p>
                         <button 
                             onClick={handleLogout}
@@ -176,6 +316,33 @@ export default function PerfilUsuario() {
                         </button>
                     </div>
                 </div>
+
+                {/* Admin Panel Button - Solo visible para administradores */}
+                {isAdmin && (
+                    <div className="bg-gradient-to-r from-[#31478F] to-[#4A5FA0] rounded-2xl shadow-lg p-6 md:p-8 mb-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <svg className="size-10 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                <div>
+                                    <h3 className="text-xl md:text-2xl font-semibold text-white font-popins">Panel de Administración</h3>
+                                    <p className="text-white/80 text-sm">Accede a las herramientas de administrador</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => navigate('/admin/dashboard')}
+                                className="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-lg transition-colors backdrop-blur-sm flex items-center gap-2"
+                            >
+                                <span>Ir al panel</span>
+                                <svg className="size-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* General section */}
                 <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-4">
@@ -198,6 +365,7 @@ export default function PerfilUsuario() {
                         <SmallCard 
                             title="Direcciones de entrega" 
                             icon={<TruckIcon />}
+                            onClick={handleNavigateToAddresses}
                             bgColor="bg-[#70AA77]"
                         />
                         <LargeCard 
@@ -211,6 +379,7 @@ export default function PerfilUsuario() {
                         <SmallCard 
                             title="Historial" 
                             icon={<ClockIcon />}
+                            onClick={handleNavigateToOrderHistory}
                             bgColor="bg-[#69AEA2]"
                         />
                         <SmallCard 
@@ -228,21 +397,20 @@ export default function PerfilUsuario() {
                         <div>
                             <h3 className="text-2xl font-semibold font-popins tracking-wide mb-4">Programa de puntos</h3>
                             <p className="font-medium text-lg mb-2">
-                                Nivel {getTierName(user.loyalty.tier_level)}
+                                {loyaltyData.tier_name}
                             </p>
                             <div className="w-full h-6 rounded-full bg-gray-200 mt-2">
                                 <div
                                     className="h-6 bg-[#70AA77] rounded-full transition-all duration-500"
                                     style={{ 
-                                        width: `${calculateLoyaltyProgress(user.loyalty.total_points, user.loyalty.points_to_next_tier)}%` 
+                                        width: `${calculateLoyaltyProgress(loyaltyData.total_points, loyaltyData.next_tier_points)}%` 
                                     }}
                                 />
                             </div>
                             <p className="text-sm text-right mt-2 text-gray-600">
-                                {user.loyalty.total_points}/{user.loyalty.points_to_next_tier ? 
-                                    user.loyalty.total_points + user.loyalty.points_to_next_tier : user.loyalty.total_points} pts
+                                {loyaltyData.total_points}/{loyaltyData.next_tier_points} pts
                             </p>
-                            <button className="text-sm text-blue-800 underline mt-3 hover:text-blue-700">
+                            <button onClick={handleNavigateToLoyalties} className="text-sm text-blue-800 underline mt-3 hover:text-blue-700">
                                 Ver beneficios
                             </button>
                         </div>
@@ -259,10 +427,16 @@ export default function PerfilUsuario() {
                                     <div className="flex-1">
                                         <h4 className="text-xl font-semibold font-popins tracking-wide">Membresía Activa</h4>
                                         <div className="mt-3 flex flex-col text-sm gap-2">
-                                            <button className="underline text-white hover:text-gray-100 text-left">
+                                            <button 
+                                                onClick={handleNavigateToSubscription}
+                                                className="underline text-white hover:text-gray-100 text-left"
+                                            >
                                                 Ver membresía
                                             </button>
-                                            <button className="underline text-white hover:text-gray-100 text-left">
+                                            <button 
+                                                onClick={handleManageSubscription}
+                                                className="underline text-white hover:text-gray-100 text-left"
+                                            >
                                                 Gestionar membresía
                                             </button>
                                         </div>
@@ -295,6 +469,28 @@ export default function PerfilUsuario() {
                 <DeleteAccountModal 
                     onClose={() => setShowDeleteModal(false)}
                     onConfirm={confirmDeleteAccount}
+                />
+            )}
+
+            {/* Modal de gestión de suscripción */}
+            {showSubscriptionModal && (
+                <SubscriptionManagementModal
+                    onClose={() => setShowSubscriptionModal(false)}
+                    onAction={handleSubscriptionAction}
+                    subscriptionStatus={subscriptionData.status}
+                />
+            )}
+
+            {/* Modal de confirmación de acción de suscripción */}
+            {showConfirmModal && confirmAction && (
+                <ConfirmSubscriptionActionModal
+                    action={confirmAction}
+                    onClose={() => {
+                        setShowConfirmModal(false);
+                        setConfirmAction(null);
+                    }}
+                    onConfirm={confirmSubscriptionAction}
+                    isProcessing={processingSubscription}
                 />
             )}
         </div>
@@ -380,6 +576,154 @@ function ChatIcon() {
         <svg className="size-10 md:size-12" viewBox="0 0 58 52" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M2.5 49.5L6.3248 38.0588C3.01913 33.1839 1.82328 27.4109 2.95962 21.8132C4.09595 16.2155 7.48714 11.174 12.5026 7.62609C17.5181 4.07815 23.8167 2.26523 30.2271 2.52439C36.6376 2.78356 42.7237 5.09718 47.354 9.03507C51.9842 12.973 54.8435 18.2672 55.4001 23.9333C55.9568 29.5995 54.1729 35.252 50.3803 39.8399C46.5876 44.4278 41.0442 47.6389 34.7807 48.8762C28.5173 50.1134 21.96 49.2926 16.3281 46.5664L2.5 49.5Z" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
+    );
+}
+
+// Modal de gestión de suscripción
+function SubscriptionManagementModal({ onClose, onAction, subscriptionStatus }) {
+    const isPaused = subscriptionStatus === 'paused';
+    const isActive = subscriptionStatus === 'active';
+    const isCancelled = subscriptionStatus === 'cancelled';
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-r from-[#E0C77B] to-[#B99C42] rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-semibold text-white font-popins">
+                        Gestionar Membresía
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="text-white hover:text-gray-200 transition-colors"
+                    >
+                        <svg className="size-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+
+                {isCancelled ? (
+                    <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4">
+                        <p className="text-white text-center">
+                            Tu suscripción ha sido cancelada. No hay acciones disponibles.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-3">
+                        {isActive && (
+                            <button
+                                onClick={() => onAction('pause')}
+                                className="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-xl transition-colors backdrop-blur-sm"
+                            >
+                                Pausar Suscripción
+                            </button>
+                        )}
+                        {isPaused && (
+                            <button
+                                onClick={() => onAction('resume')}
+                                className="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-xl transition-colors backdrop-blur-sm"
+                            >
+                                Reanudar Suscripción
+                            </button>
+                        )}
+                        {!isCancelled && (
+                            <button
+                                onClick={() => onAction('cancel')}
+                                className="bg-red-500/80 hover:bg-red-600/80 text-white font-semibold py-3 px-6 rounded-xl transition-colors backdrop-blur-sm"
+                            >
+                                Cancelar Suscripción
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                <button
+                    onClick={onClose}
+                    className="w-full mt-4 bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-4 rounded-xl transition-colors"
+                >
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// Modal de confirmación de acción de suscripción
+function ConfirmSubscriptionActionModal({ action, onClose, onConfirm, isProcessing }) {
+    const getActionText = () => {
+        switch(action) {
+            case 'pause':
+                return {
+                    title: '¿Pausar suscripción?',
+                    description: 'Tu suscripción será pausada y no se realizarán cobros hasta que la reactives.',
+                    confirmButton: 'Pausar',
+                    color: 'bg-yellow-500'
+                };
+            case 'resume':
+                return {
+                    title: '¿Reanudar suscripción?',
+                    description: 'Tu suscripción será reactivada y se reanudarán los cobros según tu plan.',
+                    confirmButton: 'Reanudar',
+                    color: 'bg-green-500'
+                };
+            case 'cancel':
+                return {
+                    title: '¿Cancelar suscripción?',
+                    description: 'Tu suscripción será cancelada. Perderás acceso a los beneficios exclusivos de tu membresía.',
+                    confirmButton: 'Cancelar suscripción',
+                    color: 'bg-red-500'
+                };
+            default:
+                return {};
+        }
+    };
+
+    const actionText = getActionText();
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-r from-[#E0C77B] to-[#B99C42] rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+                <div className="flex items-start gap-4 mb-4">
+                    <div className="flex-shrink-0">
+                        <svg className="size-10 text-white" viewBox="0 0 33 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16.5005 11.0012V17.003M16.5005 21.5043H16.5155M14.0447 2.88524L1.88478 23.1922C1.6341 23.6264 1.50145 24.1187 1.50001 24.6201C1.49858 25.1215 1.62841 25.6145 1.87659 26.0502C2.12478 26.4858 2.48267 26.8489 2.91467 27.1032C3.34666 27.3576 3.83771 27.4944 4.33897 27.5H28.6619C29.1629 27.4942 29.6537 27.3574 30.0855 27.1031C30.5173 26.8488 30.875 26.486 31.1232 26.0506C31.3713 25.6152 31.5012 25.1224 31.5 24.6212C31.4987 24.12 31.3664 23.6279 31.1161 23.1937L18.9561 2.88374C18.7003 2.46137 18.3399 2.11213 17.9097 1.86974C17.4796 1.62734 16.9942 1.5 16.5004 1.5C16.0067 1.5 15.5213 1.62734 15.0911 1.86974C14.661 2.11213 14.3006 2.46137 14.0447 2.88374V2.88524Z" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 className="text-xl md:text-2xl font-semibold text-white font-popins leading-tight mb-2">
+                            {actionText.title}
+                        </h3>
+                        <p className="text-white/90 text-sm md:text-base">
+                            {actionText.description}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                    <button
+                        onClick={onClose}
+                        disabled={isProcessing}
+                        className="flex-1 px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-xl transition-colors font-popins disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={isProcessing}
+                        className={`flex-1 px-6 py-3 ${actionText.color} hover:opacity-90 text-white rounded-xl transition-colors font-popins disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                    >
+                        {isProcessing ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Procesando...
+                            </>
+                        ) : (
+                            actionText.confirmButton
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }
 

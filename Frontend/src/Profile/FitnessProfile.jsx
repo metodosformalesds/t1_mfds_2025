@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getBasicUserProfile, getFitnessProfile, getRelatedProducts } from "../utils/api";
+import { getUserProfile, getRelatedProducts } from "../utils/api";
 
 // ============================================================================
 // COMPONENTES DE ICONOS
@@ -113,9 +113,8 @@ const FitnessProfile = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     
-    // Datos del usuario y perfil fitness
+    // Datos completos del usuario (incluye fitness_profile si existe)
     const [userData, setUserData] = useState(null);
-    const [fitnessData, setFitnessData] = useState(null);
     
     // Productos recomendados según perfil fitness
     const [recommendations, setRecommendations] = useState(null);
@@ -124,26 +123,41 @@ const FitnessProfile = () => {
     // Datos de prueba mientras se integra la API real del backend
     // TODO: Eliminar cuando los endpoints estén listos en producción
     
-    const mockUser = {
+    const mockUserProfile = {
+        user_id: 1,
+        email: "usuario@example.com",
+        first_name: "Juan",
+        last_name: "Pérez",
         gender: "M", // M, F, prefer_not_say
         date_of_birth: "1998-05-15",
         profile_picture: null,
-        account_status: true
-    };
-
-    const mockFitnessProfile = {
-        test_date: "2025-01-10",
-        attributes: {
-            height_cm: 168,
-            weight_kg: 65,
-            bmi: 23.0,
-            sleep_hours: "6-8 hrs diarias",
-            activity_level: "Moderado",
-            activity_details: "1 hr diaria - 3 días a la semana",
-            hydration: "1.5 lts al dia",
-            diet_restrictions: "N/A",
-            fitness_goal: "BeStrong",
-            goal_description: "Esta es una descripción del perfil de 'ganar masa muscular' la cual debe de contener una pequeña descripción de lo que significa este tipo de perfil, tips, recomendaciones y otras cosas relacionadas al objetivo principal del usuario."
+        role: "customer",
+        account_status: true,
+        // fitness_profile incluido en el perfil del usuario
+        fitness_profile: {
+            profile_id: 1,
+            test_date: "2025-01-10",
+            attributes: {
+                age: 27,
+                gender: "M",
+                height_cm: 168,
+                weight_kg: 65,
+                bmi: 23.0,
+                exercise_freq: 3,
+                activity_type: "Gym",
+                activity_intensity: "Moderado",
+                activity_details: "1 hr diaria - 3 días a la semana",
+                diet_type: "Balanceada",
+                diet_special: "N/A",
+                diet_restrictions: "N/A",
+                supplements: "Proteína",
+                goal_declared: "BeStrong",
+                sleep_hours: "6-8 hrs diarias",
+                hydration: "1.5 lts al dia",
+                recommended_plan: "BeStrong",
+                description: "Plan enfocado en el aumento de masa muscular y fuerza. Este perfil está diseñado para maximizar tu desarrollo muscular mediante una combinación de entrenamiento de fuerza progresivo y nutrición adecuada. Productos recomendados: Proteína aislada, Creatina, Pre-entreno.",
+                recommended_products: ["Proteína aislada", "Creatina", "Pre-entreno"]
+            }
         }
     };
 
@@ -151,13 +165,11 @@ const FitnessProfile = () => {
     // EFECTO: CARGA INICIAL DE DATOS
     /**
      * Descripción: Hook que se ejecuta al montar el componente para cargar:
-     *              1. Información básica del usuario (nombre, email, etc.)
-     *              2. Perfil fitness completo (resultados del test)
-     *              3. Productos recomendados según objetivo fitness
+     *              1. Perfil completo del usuario (incluye fitness_profile si existe)
+     *              2. Productos recomendados según objetivo fitness
      * 
      * Endpoints utilizados:
-     *   - GET /api/v1/user-profile/me/basic
-     *   - GET /api/v1/placement-test/fitness-profile
+     *   - GET /api/v1/profile/me (retorna todo incluyendo fitness_profile)
      *   - GET /api/v1/products/{id}/related?limit=3
      */
     useEffect(() => {
@@ -169,18 +181,21 @@ const FitnessProfile = () => {
             // TODO: CÓDIGO PARA PRODUCCIÓN (descomentar cuando backend esté listo) ============
             /*
             try {
-                // 1. Obtener información básica del usuario autenticado
-                const userResponse = await getBasicUserProfile();
+                // 1. Obtener perfil completo del usuario (incluye fitness_profile)
+                const userResponse = await getUserProfile();
                 setUserData(userResponse);
 
-                // 2. Obtener perfil fitness del usuario
-                const fitnessResponse = await getFitnessProfile();
-                setFitnessData(fitnessResponse);
+                // 2. Verificar si el usuario tiene fitness_profile
+                if (!userResponse.fitness_profile) {
+                    // Si no tiene perfil fitness, redirigir al test
+                    navigate("/placement-test");
+                    return;
+                }
 
                 // 3. Obtener productos recomendados usando endpoint de productos relacionados
                 // NOTA: Se usa un producto base como referencia para obtener productos similares.
                 //       En producción, este ID debería determinarse dinámicamente según:
-                //       - El objetivo fitness del usuario (BeStrong, BeHealthy, etc.)
+                //       - El objetivo fitness del usuario (BeStrong, BeLean, etc.)
                 //       - La categoría de productos preferida
                 //       - Un producto semilla configurado en el sistema
                 const baseProductId = 1; // TODO: Hacer dinámico según fitness_goal
@@ -190,24 +205,28 @@ const FitnessProfile = () => {
                 // Esto personaliza las recomendaciones según el perfil del usuario
                 const goalMapping = {
                     'BeStrong': {
-                        category: 'Proteínas y Suplementos',
-                        description: 'Productos para ganancia muscular y fuerza'
+                        category: 'Ganancia Muscular',
+                        description: 'Productos para aumento de masa muscular y fuerza'
                     },
-                    'BeHealthy': {
-                        category: 'Nutrición Saludable',
-                        description: 'Productos para una vida saludable y equilibrada'
+                    'BeLean': {
+                        category: 'Pérdida de Grasa',
+                        description: 'Productos para pérdida de grasa y tonificación'
                     },
-                    'BeFit': {
-                        category: 'Rendimiento Deportivo',
-                        description: 'Productos para mejorar tu rendimiento físico'
+                    'BeBalance': {
+                        category: 'Estado Físico Estable',
+                        description: 'Productos para mantener balance y equilibrio'
                     },
-                    'BeActive': {
-                        category: 'Energía y Vitalidad',
-                        description: 'Productos para mantener tu energía diaria'
+                    'BeDefine': {
+                        category: 'Definición Muscular',
+                        description: 'Productos para definición y tono muscular'
+                    },
+                    'BeNutri': {
+                        category: 'Nutrición Integral',
+                        description: 'Productos para balance alimenticio y nutrición'
                     }
                 };
                 
-                const fitnessGoal = fitnessResponse?.attributes?.fitness_goal || 'BeStrong';
+                const fitnessGoal = userResponse.fitness_profile?.attributes?.recommended_plan || 'BeStrong';
                 const categoryInfo = goalMapping[fitnessGoal] || goalMapping['BeStrong'];
                 
                 setRecommendations({
@@ -227,8 +246,7 @@ const FitnessProfile = () => {
             // Simula llamadas al backend con datos estáticos
             // TODO: Eliminar este setTimeout y descomentar el código anterior cuando backend esté listo
             setTimeout(async () => {
-                setUserData(mockUser);
-                setFitnessData(mockFitnessProfile);
+                setUserData(mockUserProfile);
                 
                 // Mock de productos recomendados siguiendo estructura ProductListResponse
                 const mockRecommendations = {
@@ -274,7 +292,7 @@ const FitnessProfile = () => {
         }
 
         fetchFitnessData();
-    }, []);
+    }, [navigate]);
 
     // ============================================================================
     // FUNCIÓN: ACTUALIZAR PERFIL FITNESS
@@ -292,17 +310,12 @@ const FitnessProfile = () => {
         setError(null);
 
         /*
+        // Nota: Para actualizar el fitness profile, se debe retomar el test completo.
+        // No hay endpoint de actualización parcial, solo el test crea/actualiza el perfil.
         try {
-            await apiFetch("/api/v1/fitness-profile/me", {
-                method: "PUT",
-                body: JSON.stringify(updatedData)
-            });
-
-            // Recargar datos
-            const fitnessResponse = await apiFetch("/api/v1/fitness-profile/me", { 
-                method: "GET" 
-            });
-            setFitnessData(fitnessResponse);
+            // Recargar datos del usuario completo
+            const userResponse = await getUserProfile();
+            setUserData(userResponse);
 
             alert("Información actualizada correctamente");
         } catch (err) {
@@ -314,7 +327,13 @@ const FitnessProfile = () => {
         */
 
         // MOCK
-        setFitnessData({ ...fitnessData, ...updatedData });
+        setUserData({ 
+            ...userData, 
+            fitness_profile: { 
+                ...userData.fitness_profile, 
+                ...updatedData 
+            } 
+        });
         alert("Información actualizada correctamente (simulación)");
         setLoading(false);
     }
@@ -338,8 +357,8 @@ const FitnessProfile = () => {
         }
         */
 
-        alert("Redirigiendo al test fitness (simulación)");
-        // navigate("/placement-test"); // Descomentar cuando exista la ruta
+        // Redirigir al test fitness
+        navigate("/placement-test");
     }
 
     // ============================================================================
@@ -421,11 +440,11 @@ const FitnessProfile = () => {
 
                         <InfoRow 
                             label="Altura" 
-                            value={`${fitnessData?.attributes?.height_cm || 0} cm`} 
+                            value={`${userData?.fitness_profile?.attributes?.height_cm || 0} cm`} 
                         />
                         <InfoRow 
                             label="Peso" 
-                            value={`${fitnessData?.attributes?.weight_kg || 0} kg`} 
+                            value={`${userData?.fitness_profile?.attributes?.weight_kg || 0} kg`} 
                         />
 
                         {/* ========== VISUALIZACIÓN DE BMI ========== */}
@@ -433,7 +452,7 @@ const FitnessProfile = () => {
                         <div className="my-4 pt-3 pb-6">
                             <span className="text-sm font-medium">BMI</span>
                             {/* Barra segmentada */}
-                            <div className="w-full flex rounded-full h-3.5 my-2 overflow-hidden">
+                            <div className="w-full flex rounded-full h-6 my-2 overflow-hidden border border-black/40">
                                 <div className="w-1/4 h-full bg-[#71D77C]"></div>
                                 <div className="w-1/4 h-full bg-[#8CDE94]"></div>
                                 <div className="w-1/4 h-full bg-[#ACE4B2]"></div>
@@ -441,7 +460,7 @@ const FitnessProfile = () => {
                             </div>
                             {/* Marcador */}
                             <div className="relative w-full h-6">
-                                <div className="absolute" style={{ left: `${Math.min(Math.max((fitnessData?.attributes?.bmi || 23) * 3.5, 5), 95)}%` }}>
+                                <div className="absolute" style={{ left: `${Math.min(Math.max((userData?.fitness_profile?.attributes?.bmi || 23) * 3.5, 5), 95)}%` }}>
                                     <div
                                         className="relative w-0 h-0
                     border-l-[6px] border-l-transparent
@@ -449,7 +468,7 @@ const FitnessProfile = () => {
                     border-t-[8px] border-t-white opacity-80 top-1 left-1/2 -translate-x-1/2"
                                     ></div>
                                     <span className="absolute top-3 left-1/2 -translate-x-1/2 text-xs font-bold">
-                                        {fitnessData?.attributes?.bmi || 23.0}
+                                        {userData?.fitness_profile?.attributes?.bmi || 23.0}
                                     </span>
                                 </div>
                             </div>
@@ -457,20 +476,20 @@ const FitnessProfile = () => {
 
                         <InfoRow 
                             label="Horas de sueño" 
-                            value={fitnessData?.attributes?.sleep_hours || "N/A"} 
+                            value={userData?.fitness_profile?.attributes?.sleep_hours || "N/A"} 
                         />
                         <InfoRow
                             label="Nivel de actividad"
-                            value={fitnessData?.attributes?.activity_level || "N/A"}
-                            detail={fitnessData?.attributes?.activity_details || ""}
+                            value={userData?.fitness_profile?.attributes?.activity_intensity || "N/A"}
+                            detail={userData?.fitness_profile?.attributes?.activity_details || ""}
                         />
                         <InfoRow 
                             label="Hidratación" 
-                            value={fitnessData?.attributes?.hydration || "N/A"} 
+                            value={userData?.fitness_profile?.attributes?.hydration || "N/A"} 
                         />
                         <InfoRow 
                             label="Restricciones de dieta" 
-                            value={fitnessData?.attributes?.diet_restrictions || "N/A"} 
+                            value={userData?.fitness_profile?.attributes?.diet_restrictions || "N/A"} 
                             noBorder 
                         />
 
@@ -504,7 +523,7 @@ const FitnessProfile = () => {
                             <div>
                                 <h2 className="text-sm md:text-xl font-semibold opacity-90">Perfil</h2>
                                 <h3 className="text-xl md:text-4xl font-bold underline">
-                                    {fitnessData?.attributes?.fitness_goal || "Objetivo fitness"}
+                                    {userData?.fitness_profile?.attributes?.recommended_plan || "Objetivo fitness"}
                                 </h3>
                             </div>
                             <div className="bg-white rounded-full p-3">
@@ -517,7 +536,7 @@ const FitnessProfile = () => {
                         <div className="mb-6">
                             <h4 className="text-2xl font-bold mb-2">Descripción</h4>
                             <p className="text-xs font-light leading-relaxed opacity-90">
-                                {fitnessData?.attributes?.goal_description || 
+                                {userData?.fitness_profile?.attributes?.description || 
                                 "Descripción del objetivo fitness y recomendaciones personalizadas."}
                             </p>
                         </div>

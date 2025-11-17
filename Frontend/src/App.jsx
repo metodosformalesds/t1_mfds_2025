@@ -7,6 +7,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import Header from "./Componentes/Header";
 import Footer from "./Componentes/Footer";
 import CartSidebar from "./Componentes/CartSidebar";
+import AdminSidebar from "./Componentes/AdminSidebar";
 
 // Componentes de Páginas
 import Home from "./Home/HomePage";
@@ -17,6 +18,7 @@ import RCode from "./Login/RecoveryCode";
 import RPassword from "./Login/RecoveryPassword";
 import SetupP from "./Login/SetupProfile";
 import ProfileUser from "./Profile/UserProfile";
+import PersonalInfo from "./Profile/PersonalInformation";
 // Componentes de Productos
 import Tienda from "./Componentes/Tienda";
 import ProductDetail from "./Products/ProductDetails";
@@ -24,6 +26,17 @@ import CartPage from "./Products/CartPage";
 import CheckoutPage from "./Products/CheckoutPage";
 import PaymentMethods from "./Payments/PaymentMethods";
 import FitnessProfile from "./Profile/FitnessProfile";
+import Addresses from "./Profile/Addresses";
+import LoyaltyProgram from "./Profile/LoyaltyProgram.jsx";
+import SubscriptionPage from "./Profile/Subscription.jsx";
+import OrderHistory from "./Profile/OrderHistory";
+import DoReviews from "./Products/Reviews";
+import PlacementTest from "./PositioningTest/Test";
+import PlacementTestQuestions from "./PositioningTest/PlacementTestQuestions";
+import TestResults from "./PositioningTest/TestResults";
+import ManageProducts from "./Admin/ManageProducts";
+import Dashboard from "./Admin/Dashboard";
+//import CRUDView from "./Admin/CRUDView";
 
 // Inicializar Stripe con tu clave pública
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
@@ -102,6 +115,18 @@ const MainLayout = () => {
   );
 };
 
+// Layout de Administración con AdminSidebar
+const AdminLayout = () => {
+  return (
+    <div className="flex min-h-screen">
+      <AdminSidebar />
+      <main className="flex-1 ml-20">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <Router>
@@ -113,6 +138,9 @@ export default function App() {
         <Route path="/RecoveryCode" element={<RCode />} />
         <Route path="/RecoveryPassword" element={<RPassword />} />
         <Route path="/SetupProfile" element={<SetupP />} />
+        <Route path="/placement-test/questions" element={<PlacementTestQuestions />} />
+        {/* Resultados del Test de Posicionamiento */}
+        <Route path="/placement-test/results" element={<TestResults />} />
 
         {/* Rutas Principales (Dentro del MainLayout) */}
         <Route element={<MainLayout />}>
@@ -125,11 +153,41 @@ export default function App() {
           <Route path="/CartPage" element={<CartPage />} />
           <Route path="/CheckoutPage" element={<CheckoutPage />} />
           <Route path="/profile" element={<FitnessProfile />}/>
+
+          {/* Ruta de Subscripción */}
+          <Route path="/subscription" element={<SubscriptionPage />} />
+
+          {/* Ruta de Historial de Ordenes */}
+          <Route path="/order-history" element={<OrderHistory />} />
+          {/* Hacer Reseñas de productos*/}
+          <Route path="/reviews/:orderId" element={<DoReviews />} />
+          {/* Test de Posicionamiento Fitness */}
+          <Route path="/placement-test" element={<PlacementTest />} />
+          
+          {/* Información Personal */}
+          <Route path="/personal-info" element={<PersonalInfo />}/>
+
+          {/* Direcciones de Envío */}
+          <Route path="/addresses" element={<Addresses />} />
           {/* Perfil Fitness */}
           <Route path="/fitness-profile" element={<FitnessProfile />}/>
           {/* Métodos de pago */}
           <Route path="/payment-methods" element={<Elements stripe={stripePromise}><PaymentMethods /></Elements>}/>
-        </Route>    
+          {/* Programa de Lealtad */}
+          <Route path="/loyalty-program" element={<LoyaltyProgram />} />
+        </Route>
+
+        {/* Rutas de Administración (Con AdminSidebar, sin Header/Footer) */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="products" element={<ManageProducts />} />
+          {/* Aquí puedes agregar más rutas de admin como:
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="orders" element={<ManageOrders />} />
+          <Route path="users" element={<ManageUsers />} />
+          */}
+        </Route>
       </Routes>
     </Router>
   );
