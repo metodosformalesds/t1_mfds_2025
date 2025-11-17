@@ -154,25 +154,32 @@ class CognitoService:
             hashed_password = hash_password(user_data.password)
 
             # Crear usuario en base de datos local
-            new_db_user = User(
-                cognito_sub=cognito_sub,
-                email=email,
-                auth_type=AuthType.EMAIL,
-                password_hash=hashed_password,
-                first_name=user_data.first_name,
-                last_name=user_data.last_name,
-                gender=Gender(user_data.gender) if user_data.gender else None,
-                date_of_birth=user_data.birth_date,
-                profile_picture=profile_image_url,
-                role=UserRole.USER,
-                account_status=True,
-                created_at=current_time
-            )
+            def create_db_user():
+                new_db_user = User(
+                    cognito_sub=cognito_sub,
+                    email=email,
+                    auth_type=AuthType.EMAIL,
+                    password_hash=hashed_password,
+                    first_name=user_data.first_name,
+                    last_name=user_data.last_name,
+                    gender=Gender(user_data.gender) if user_data.gender else None,
+                    date_of_birth=user_data.birth_date,
+                    profile_picture=profile_image_url,
+                    role=UserRole.USER,
+                    account_status=True,
+                    created_at=current_time
+                )
+                db.add(new_db_user)
+                db.commit()
+                db.refresh(new_db_user)
 
-            db.add(new_db_user)
-            db.commit()
-            db.refresh(new_db_user)
+                return new_db_user
 
+            #db.add(new_db_user)
+            #db.commit()
+            # db.refresh(new_db_user)
+            new_db_user = await run_in_threadpool(create_db_user)
+            
             return {
                 "success": True,
                 "user_sub": cognito_sub,
