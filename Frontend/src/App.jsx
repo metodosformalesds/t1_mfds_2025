@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Outlet, useLocation } from "react-router-dom";
 
 // Componentes Globales
 import { Elements } from "@stripe/react-stripe-js";
@@ -7,29 +7,51 @@ import { loadStripe } from "@stripe/stripe-js";
 import Header from "./Componentes/Header";
 import Footer from "./Componentes/Footer";
 import CartSidebar from "./Componentes/CartSidebar";
+import AdminSidebar from "./Componentes/AdminSidebar";
 
-// Componentes de Páginas
+// Páginas principales
 import Home from "./Home/HomePage";
+import AboutUs from "./Home/AboutUsPage";
+
+// Login y Registro
 import Login from "./Login/LoginPage";
 import Register from "./Login/RegisterPage";
 import RSelect from "./Login/RecoverySelect";
-import RCode from "./Login/RecoveryCode";
+import RCode from "./Login/RecoveryCode"; 
 import RPassword from "./Login/RecoveryPassword";
 import SetupP from "./Login/SetupProfile";
+
+// Perfil de usuario
 import ProfileUser from "./Profile/UserProfile";
-// Componentes de Productos
-import Tienda from "./Componentes/Tienda";
+import PersonalInfo from "./Profile/PersonalInformation";
+import FitnessProfile from "./Profile/FitnessProfile";
+import Addresses from "./Profile/Addresses";
+import LoyaltyProgram from "./Profile/LoyaltyProgram.jsx";
+import SubscriptionPage from "./Profile/Subscription.jsx";
+import OrderHistory from "./Profile/OrderHistory";
+import PaymentMethods from "./Payments/PaymentMethods";
+
+// Productos
+import Tienda from "./Componentes/Shop.jsx";
 import ProductDetail from "./Products/ProductDetails";
 import CartPage from "./Products/CartPage";
 import CheckoutPage from "./Products/CheckoutPage";
-import PaymentMethods from "./Payments/PaymentMethods";
-import FitnessProfile from "./Profile/FitnessProfile";
+import DoReviews from "./Products/Reviews";
 
-// Inicializar Stripe con tu clave pública
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
+// Test de posicionamiento
+import PlacementTest from "./PositioningTest/Test";
+import PlacementTestQuestions from "./PositioningTest/PlacementTestQuestions";
+import TestResults from "./PositioningTest/TestResults";
 
-// Estilos Globales
-import './index.css';
+// Admin
+import ManageProducts from "./Admin/ManageProducts";
+import Dashboard from "./Admin/Dashboard";
+
+// Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "pk_test_tu_clave_publica");
+
+// Estilos globales
+import "./index.css";
 
 // --- BASE DE DATOS CENTRALIZADA ---
 const ALL_PRODUCTS = [
@@ -43,93 +65,149 @@ const ALL_PRODUCTS = [
   { id: 8, title: "BCAAs Recovery", category: "aminoacidos", goal: "recovery", activity: "gym", description: "Recuperación muscular", price: 500, rating: 4, reviewCount: 150, hasBg: false },
 ];
 
-// Layout Principal con Lógica del Carrito
+// --- MAIN LAYOUT ---
 const MainLayout = () => {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const location = useLocation();
 
-  // --- AGREGAR AL CARRITO ---
+  const isCartOrCheckoutPage =
+    location.pathname === "/CartPage" || location.pathname === "/CheckoutPage";
+
+  const handleCartClick = () => {
+    if (!isCartOrCheckoutPage) setIsCartOpen(true);
+  };
+
   const addToCart = (product) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id);
-      if (existingItem) {
-        return prevItems.map(item =>
+    setCartItems((prev) => {
+      const exists = prev.find((item) => item.id === product.id);
+      if (exists) {
+        return prev.map((item) =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevItems, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity: 1 }];
     });
   };
 
-  // --- REMOVER DEL CARRITO ---
-  const removeFromCart = (productId) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+  const removeFromCart = (id) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // --- ACTUALIZAR CANTIDAD ---
-  const updateQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-    } else {
-      setCartItems(prevItems =>
-        prevItems.map(item =>
-          item.id === productId ? { ...item, quantity } : item
-        )
-      );
-    }
+  const updateQuantity = (id, qty) => {
+    if (qty <= 0) return removeFromCart(id);
+    setCartItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: qty } : item))
+    );
   };
+
+  const clearCart = () => setCartItems([]);
 
   return (
     <>
-      <Header 
-        cartItems={cartItems} 
-        onCartClick={() => setIsCartOpen(true)} 
+      <Header
+        cartItems={cartItems}
+        onCartClick={handleCartClick}
+        isCartDisabled={isCartOrCheckoutPage}
       />
 
       <CartSidebar
-        isOpen={isCartOpen}
+        isOpen={isCartOpen && !isCartOrCheckoutPage}
         onClose={() => setIsCartOpen(false)}
         cartItems={cartItems}
         onRemove={removeFromCart}
         onUpdateQuantity={updateQuantity}
       />
 
-      {/* Outlet provee el contexto del carrito a Home, Tienda, Perfil, etc. */}
-      <Outlet context={{ cartItems, addToCart, removeFromCart, updateQuantity, setIsCartOpen, allProducts: ALL_PRODUCTS }} />
+      <Outlet
+        context={{
+          cartItems,
+          addToCart,
+          removeFromCart,
+          updateQuantity,
+          setIsCartOpen,
+          allProducts: ALL_PRODUCTS,
+          clearCart,
+        }}
+      />
 
       <Footer />
     </>
   );
 };
 
+// --- ADMIN LAYOUT ---
+const AdminLayout = () => (
+  <div className="flex min-h-screen">
+    <AdminSidebar />
+    <main className="flex-1 ml-20">
+      <Outlet />
+    </main>
+  </div>
+);
+
+// --- RUTAS PRINCIPALES ---
 export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Rutas de Autenticación (Sin Header/Footer/Carrito) */}
+        {/* Auth */}
         <Route path="/" element={<Login />} />
         <Route path="/RegisterPage" element={<Register />} />
         <Route path="/RecoverySelect" element={<RSelect />} />
         <Route path="/RecoveryCode" element={<RCode />} />
         <Route path="/RecoveryPassword" element={<RPassword />} />
         <Route path="/SetupProfile" element={<SetupP />} />
+        <Route path="/placement-test/questions" element={<PlacementTestQuestions />} />
+        <Route path="/placement-test/results" element={<TestResults />} />
 
-        {/* Rutas Principales (Dentro del MainLayout) */}
+        {/* Layout principal */}
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/profile" element={<ProfileUser />} />
-          
-          {/* Rutas de la Tienda */}
+          <Route path="/aboutUsPage" element={<AboutUs />} />
+
+          {/* Tienda */}
           <Route path="/Productos" element={<Tienda />} />
-          <Route path="/:productName/:id" element={<ProductDetail />}/>
+          <Route path="/:productName/:id" element={<ProductDetail />} />
           <Route path="/CartPage" element={<CartPage />} />
           <Route path="/CheckoutPage" element={<CheckoutPage />} />
-          <Route path="/profile" element={<FitnessProfile />}/>
-          {/* Perfil Fitness */}
-          <Route path="/fitness-profile" element={<FitnessProfile />}/>
-          {/* Métodos de pago */}
-          <Route path="/payment-methods" element={<Elements stripe={stripePromise}><PaymentMethods /></Elements>}/>
-        </Route>    
+
+          {/* Subscripción */}
+          <Route path="/subscription" element={<SubscriptionPage />} />
+
+          {/* Órdenes */}
+          <Route path="/order-history" element={<OrderHistory />} />
+          <Route path="/reviews/:orderId" element={<DoReviews />} />
+
+          {/* Test */}
+          <Route path="/placement-test" element={<PlacementTest />} />
+
+          {/* Perfil */}
+          <Route path="/personal-info" element={<PersonalInfo />} />
+          <Route path="/addresses" element={<Addresses />} />
+          <Route path="/fitness-profile" element={<FitnessProfile />} />
+
+          {/* Pagos */}
+          <Route
+            path="/payment-methods"
+            element={
+              <Elements stripe={stripePromise}>
+                <PaymentMethods />
+              </Elements>
+            }
+          />
+
+          {/* Lealtad */}
+          <Route path="/loyalty-program" element={<LoyaltyProgram />} />
+        </Route>
+
+        {/* Admin */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="products" element={<ManageProducts />} />
+        </Route>
       </Routes>
     </Router>
   );

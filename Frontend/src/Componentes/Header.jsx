@@ -1,10 +1,43 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import logo from "../assets/Befitwhite.png";
 import drop_down from "../assets/arrow_drop_down.png";
-import usuario from "../assets/profile.svg";
+import usuarioUrl from "../assets/profile.svg?url";
 
-// 1. Recibimos cartItems y onCartClick
+const MotionLink = motion(Link);
+
+const desktopDropdownVariants = {
+  hidden: { opacity: 0, y: -20, transition: { duration: 0.2, ease: "easeOut" } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeIn" } }
+};
+
+const mobileMenuVariants = {
+  hidden: { opacity: 0, y: -50, transition: { duration: 0.3, ease: "easeOut", when: "afterChildren" } },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { 
+      duration: 0.3, 
+      ease: "easeIn", 
+      staggerChildren: 0.05,
+      delayChildren: 0.1
+    } 
+  }
+};
+
+const mobileItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { opacity: 1, x: 0 }
+};
+
+const cartCounterVariants = {
+  hidden: { scale: 0, opacity: 0 },
+  visible: { scale: 1, opacity: 1, transition: { type: "spring", stiffness: 500, damping: 20 } },
+  exit: { scale: 0, opacity: 0, transition: { duration: 0.2 } }
+};
+
+
 function Header({ cartItems = [], onCartClick }) {
   const navigate = useNavigate();
   const [isDropdownOpen, setDropdownOpen] = useState(false);
@@ -12,7 +45,6 @@ function Header({ cartItems = [], onCartClick }) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  // 2. Cálculo del total de items
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   useEffect(() => {
@@ -35,7 +67,6 @@ function Header({ cartItems = [], onCartClick }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
   
-  // 3. Links de categorías actualizados
   const categories = [
     { name: "Proteínas", link: "/Productos?category=proteinas" },
     { name: "Vitaminas", link: "/Productos?category=vitaminas" },
@@ -49,219 +80,298 @@ function Header({ cartItems = [], onCartClick }) {
 
   return (
     <>
-      <header 
-        className={`bg-[#70AA77] w-full h-20 font-montserrat fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
-          isVisible ? 'translate-y-0' : '-translate-y-full'
-        }`}
+      <motion.header 
+        className={`bg-[#70AA77] w-full h-20 font-montserrat fixed top-0 left-0 right-0 z-50`}
+        animate={{ y: isVisible ? 0 : "-100%" }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
         <div className="max-w-7xl mx-auto h-full px-4 md:px-6 flex items-center justify-between">
           
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <motion.div 
+            className="flex-shrink-0"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <img 
               src={logo} 
               alt="Logo Befit" 
               className="w-16 md:w-32 h-auto object-contain cursor-pointer"
               onClick={() => navigate("/home")}
             />
-          </div>
+          </motion.div>
 
-          {/* Botón Productos - Desktop */}
+          {/* Boton Productos - Desktop */}
           <div className="hidden lg:flex items-center gap-2 ml-8">
-            <button
+            <motion.button
               type="button"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               onClick={() => setDropdownOpen(!isDropdownOpen)}
+              whileTap={{ scale: 0.95 }}
             >
               <span className="font-semibold text-white text-base">
                 Productos
               </span>
-              <img
-                className={`w-6 h-6 transition-transform duration-300 ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
+              <motion.img
+                className={`w-6 h-6`}
                 alt="dropdown arrow"
                 src={drop_down}
+                animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
               />
-            </button>
+            </motion.button>
           </div>
 
-          {/* Barra de búsqueda - Desktop */}
+          {/* Barra de busqueda - Desktop */}
           <div className="hidden md:flex flex-1 max-w-2xl mx-4 lg:mx-8">
             <div className="w-full h-12 bg-white rounded-full border border-gray-300 flex items-center px-6 shadow-sm">
-              <input
+              <motion.input
                 id="search-input"
                 type="search"
                 placeholder="Buscar..."
                 className="w-full font-light text-gray-700 text-base bg-transparent outline-none placeholder:text-gray-400"
+                whileFocus={{ 
+                  borderColor: "#70AA77", 
+                  boxShadow: "0 0 0 2px rgba(112, 170, 119, 0.3)" 
+                }}
               />
             </div>
           </div>
 
           
-          {/* Navegación derecha - Desktop */}
+          {/* Navegacion derecha - Desktop */}
           <nav
             className="hidden md:flex items-center gap-4 lg:gap-6"
             aria-label="User navigation"
           >
-            {/* Botón perfil */}
-            <button 
+            <motion.button 
               type="button" 
               aria-label="User profile"
               onClick={handleProfileClick}
               className="hover:opacity-80 transition-opacity"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              <img className="w-8 h-8" alt="Profile" src={usuario} />
-            </button>
+              <img className="w-8 h-8" alt="Profile" src={usuarioUrl} />
+            </motion.button>
 
-            {/* Botón Orders */}
-            <button type="button" aria-label="Orders" className="hover:opacity-80 transition-opacity">
-              <svg
-                width="35"
-                height="35"
-                viewBox="0 0 43 38"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                {/* SVG Path original mantenido */}
+            <motion.button 
+              type="button" 
+              aria-label="Orders" 
+              className="hover:opacity-80 transition-opacity"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <svg width="35" height="35" viewBox="0 0 43 38" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.32 18.7969C22.32 17.8028 21.5141 16.9969 20.52 16.9969C19.526 16.9969 18.72 17.8028 18.72 18.7969H22.32ZM20.52 35.4001H18.72C18.72 35.9977 19.0167 36.5564 19.5118 36.8912C20.0069 37.226 20.636 37.2932 21.1906 37.0705L20.52 35.4001ZM34.3056 29.8657L34.9762 31.5361C35.6585 31.2623 36.1056 30.6008 36.1056 29.8657H34.3056ZM36.1056 18.3601C36.1056 17.366 35.2997 16.5601 34.3056 16.5601C33.3116 16.5601 32.5056 17.366 32.5056 18.3601H36.1056ZM21.613 17.3667C20.8232 16.7631 19.6935 16.9141 19.0899 17.7039C18.4863 18.4938 18.6372 19.6235 19.4271 20.2271L21.613 17.3667ZM25.4352 22.5529L24.3423 23.9831C24.8775 24.392 25.596 24.4681 26.2049 24.1801L25.4352 22.5529ZM35.0681 19.9873C35.9667 19.562 36.3507 18.489 35.9256 17.5904C35.5004 16.6919 34.4273 16.3079 33.5288 16.7329L35.0681 19.9873ZM19.8495 17.1265C18.9269 17.4968 18.4793 18.5449 18.8496 19.4675C19.22 20.39 20.268 20.8376 21.1906 20.4673L19.8495 17.1265ZM34.9762 14.9329C35.8988 14.5626 36.3464 13.5144 35.976 12.5919C35.6057 11.6694 34.5576 11.2217 33.6351 11.5921L34.9762 14.9329ZM33.6353 14.9329C34.5579 15.3032 35.606 14.8554 35.976 13.9328C36.3464 13.0103 35.8985 11.9622 34.976 11.592L33.6353 14.9329ZM21.1904 6.05998C20.2678 5.68976 19.2197 6.13755 18.8496 7.06013C18.4793 7.98274 18.9272 9.0308 19.8497 9.40102L21.1904 6.05998ZM35.1876 11.6958C34.3212 11.2087 33.2237 11.5163 32.7365 12.3828C32.2493 13.2494 32.557 14.3468 33.4236 14.834L35.1876 11.6958ZM39.228 16.0321L39.9968 17.6598C40.6056 17.3723 41.0031 16.7689 41.0268 16.0959C41.0508 15.423 40.6971 14.793 40.11 14.463L39.228 16.0321ZM33.5288 16.7329C32.63 17.1575 32.2462 18.2298 32.6708 19.1288C33.0953 20.0276 34.1691 20.4119 35.0681 19.9873L33.5288 16.7329ZM32.9638 12.0547C32.2968 12.7917 32.3535 13.9299 33.0905 14.5971C33.8276 15.2641 34.9659 15.2075 35.6331 14.4704L32.9638 12.0547ZM40.2 6.7417L41.5347 7.94955C41.9422 7.49912 42.0953 6.87341 41.9412 6.28572C41.7874 5.69801 41.3475 5.22759 40.7712 5.03477L40.2 6.7417ZM25.4352 1.8001L26.0064 0.0931723C25.3023 -0.142556 24.5254 0.0785318 24.0507 0.649804L25.4352 1.8001ZM19.1235 6.5802C18.4882 7.34484 18.5931 8.47971 19.3577 9.11499C20.1224 9.75029 21.2573 9.64544 21.8926 8.8808L19.1235 6.5802ZM6.05206 11.592C5.12948 11.9622 4.68169 13.0103 5.05191 13.9328C5.42214 14.8554 6.47019 15.3032 7.3928 14.9329L6.05206 11.592ZM21.1784 9.40102C22.1009 9.0308 22.5488 7.98274 22.1784 7.06013C21.8084 6.13755 20.7603 5.68976 19.8377 6.05998L21.1784 9.40102ZM7.6045 14.8316C8.47107 14.3444 8.77866 13.247 8.29151 12.3804C7.80433 11.5139 6.70693 11.2063 5.84036 11.6934L7.6045 14.8316ZM1.80003 16.0297L0.917961 14.4606C0.331281 14.7903 -0.0224076 15.4201 0.00113636 16.0926C0.0246804 16.7653 0.421497 17.3687 1.02982 17.6567L1.80003 16.0297ZM5.95223 19.9871C6.85071 20.4123 7.92394 20.0288 8.34932 19.1303C8.7747 18.2317 8.39115 17.1587 7.49264 16.7331L5.95223 19.9871ZM7.39304 11.5921C6.4705 11.2217 5.42238 11.6694 5.05201 12.5919C4.68164 13.5144 5.12929 14.5626 6.05183 14.9329L7.39304 11.5921ZM19.8375 20.4673C20.76 20.8376 21.8081 20.39 22.1784 19.4675C22.5488 18.5449 22.1012 17.4968 21.1786 17.1265L19.8375 20.4673ZM5.37771 14.4591C6.03853 15.2017 7.1763 15.2679 7.91898 14.6072C8.66166 13.9465 8.72799 12.8086 8.06715 12.066L5.37771 14.4591ZM1.80003 7.7305L1.08872 6.07702C0.557456 6.30555 0.168368 6.77542 0.0428964 7.33997C-0.0825756 7.90452 0.0708563 8.495 0.455312 8.92704L1.80003 7.7305ZM15.5856 1.8001L16.9707 0.650476C16.4609 0.0362915 15.6075 -0.168812 14.8743 0.14662L15.5856 1.8001ZM19.123 8.88012C19.7578 9.64508 20.8928 9.75046 21.6576 9.11554C22.4225 8.48062 22.5281 7.3458 21.8931 6.58088L19.123 8.88012ZM22.308 18.7993C22.308 17.8052 21.5021 16.9993 20.508 16.9993C19.514 16.9993 18.708 17.8052 18.708 18.7993H22.308ZM20.508 35.4001L19.8375 37.0705C20.3921 37.2932 21.0212 37.226 21.5163 36.8912C22.0114 36.5564 22.308 35.9977 22.308 35.4001H20.508ZM6.72243 29.8657H4.92243C4.92243 30.6008 5.36955 31.2623 6.05183 31.5361L6.72243 29.8657ZM8.52243 18.3601C8.52243 17.366 7.71654 16.5601 6.72243 16.5601C5.72833 16.5601 4.92243 17.366 4.92243 18.3601H8.52243ZM21.6 20.2278C22.3904 19.6249 22.542 18.4952 21.9389 17.7049C21.336 16.9146 20.2064 16.7629 19.416 17.366L21.6 20.2278ZM15.5856 22.5529L14.8159 24.1801C15.4244 24.4679 16.1424 24.3923 16.6776 23.9838L15.5856 22.5529ZM7.49264 16.7331C6.59401 16.3081 5.52042 16.6919 5.09531 17.5904C4.67019 18.489 5.05359 19.5618 5.95223 19.9871L7.49264 16.7331ZM18.72 18.7969V35.4001H22.32V18.7969H18.72ZM21.1906 37.0705L34.9762 31.5361L33.6351 28.1953L19.8495 33.7297L21.1906 37.0705ZM36.1056 29.8657V18.3601H32.5056V29.8657H36.1056ZM19.4271 20.2271L24.3423 23.9831L26.5282 21.1227L21.613 17.3667L19.4271 20.2271ZM26.2049 24.1801L35.0681 19.9873L33.5288 16.7329L24.6656 20.9257L26.2049 24.1801ZM21.1906 20.4673L34.9762 14.9329L33.6351 11.5921L19.8495 17.1265L21.1906 20.4673ZM34.976 11.592L21.1904 6.05998L19.8497 9.40102L33.6353 14.9329L34.976 11.592ZM33.4236 14.834L38.346 17.6012L40.11 14.463L35.1876 11.6958L33.4236 14.834ZM38.4593 14.4044L33.5288 16.7329L35.0681 19.9873L39.9968 17.6598L38.4593 14.4044ZM35.6331 14.4704L41.5347 7.94955L38.8654 5.53385L32.9638 12.0547L35.6331 14.4704ZM40.7712 5.03477L26.0064 0.0931723L24.864 3.50703L39.6288 8.44863L40.7712 5.03477ZM24.0507 0.649804L19.1235 6.5802L21.8926 8.8808L26.8198 2.9504L24.0507 0.649804ZM7.3928 14.9329L21.1784 9.40102L19.8377 6.05998L6.05206 11.592L7.3928 14.9329ZM5.84036 11.6934L0.917961 14.4606L2.6821 17.5988L7.6045 14.8316L5.84036 11.6934ZM1.02982 17.6567L5.95223 19.9871L7.49264 16.7331L2.57024 14.4027L1.02982 17.6567ZM6.05183 14.9329L19.8375 20.4673L21.1786 17.1265L7.39304 11.5921L6.05183 14.9329ZM8.06715 12.066L3.14475 6.53396L0.455312 8.92704L5.37771 14.4591L8.06715 12.066ZM2.51134 9.38398L16.297 3.45358L14.8743 0.14662L1.08872 6.07702L2.51134 9.38398ZM14.2006 2.94972L19.123 8.88012L21.8931 6.58088L16.9707 0.650476L14.2006 2.94972ZM18.708 18.7993V35.4001H22.308V18.7993H18.708ZM21.1786 33.7297L7.39304 28.1953L6.05183 31.5361L19.8375 37.0705L21.1786 33.7297ZM8.52243 29.8657V18.3601H4.92243V29.8657H8.52243ZM19.416 17.366L14.4937 21.122L16.6776 23.9838L21.6 20.2278L19.416 17.366ZM16.3553 20.9257L7.49264 16.7331L5.95223 19.9871L14.8159 24.1801L16.3553 20.9257Z" fill="white"/>
               </svg>
-            </button>
+            </motion.button>
 
-            {/* Carrito Modificado con Funcionalidad y Estilos del código 1 */}
-            <button 
+            <motion.button 
               type="button" 
               aria-label="Shopping cart" 
               className="hover:opacity-80 transition-opacity relative"
               onClick={onCartClick}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              <svg
-                width="35"
-                height="28"
-                viewBox="0 0 60 40"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M49.298 40V35.1223H25.4607L23.0827 28.2107H51.5084L60 4.47189H54.9223L48.1755 23.333H21.4041L13.3765 0H11.4463H0V4.87771H9.99879L22.0832 40H49.298Z"
-                  fill="white"
-                />
+              <svg width="35" height="28" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M49.298 40V35.1223H25.4607L23.0827 28.2107H51.5084L60 4.47189H54.9223L48.1755 23.333H21.4041L13.3765 0H11.4463H0V4.87771H9.99879L22.0832 40H49.298Z" fill="white" />
               </svg>
               
-              {/* Orbe del Contador */}
-              <span className="absolute -top-3 -right-2 -translate-x-1/2 text-[#1877F2] text-xl font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                {totalItems}
-              </span>
-            </button>
+              <AnimatePresence>
+                {totalItems > 0 && (
+                  <motion.span 
+                    className="absolute -top-2 -right-3 bg-[#1877F2] text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"
+                    variants={cartCounterVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                  >
+                    {totalItems}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </nav>
 
-          {/* Botón menú móvil */}
-          <button
+          {/* Boton menu movil */}
+          <motion.button
             type="button"
             className="md:hidden flex items-center text-white"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
+            whileTap={{ scale: 0.9 }}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+            <motion.div
+              className="w-6 h-6"
+              key={isMobileMenuOpen ? "close" : "open"}
+              initial={{ rotate: -45, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </motion.div>
+          </motion.button>
         </div>
 
-        {/* Menú móvil */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-20 left-0 right-0 bg-[#70AA77] border-t border-white/20 shadow-lg z-40 max-h-[calc(100vh-5rem)] overflow-y-auto">
-            <div className="px-4 py-3 space-y-3">
-              {/* Barra de búsqueda móvil */}
-              <div className="w-full h-10 bg-white rounded-full flex items-center px-4">
-                <input
-                  type="search"
-                  placeholder="Buscar..."
-                  className="w-full font-light text-gray-700 text-sm bg-transparent outline-none placeholder:text-gray-400"
-                />
-              </div>
-
-              {/* Botón Productos móvil */}
-              <button
-                type="button"
-                className="w-full flex items-center justify-between py-2 text-white font-semibold"
-                onClick={() => setDropdownOpen(!isDropdownOpen)}
-              >
-                <span>Productos</span>
-                <img
-                  className={`w-5 h-5 transition-transform duration-300 ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                  alt="dropdown arrow"
-                  src={drop_down}
-                />
-              </button>
-
-              {/* Dropdown de categorías móvil */}
-              {isDropdownOpen && (
-                <div className="bg-[#B8D2B1] rounded-lg p-3 space-y-2">
-                  {categories.map((item) => (
-                    <a
-                      key={item.name}
-                      href={item.link}
-                      className="block py-2 px-3 font-semibold text-base text-green-800 hover:text-[#6d8c66] hover:bg-white/20 rounded transition-colors"
-                    >
-                      {item.name}
-                    </a>
-                  ))}
-                </div>
-              )}
-
-              {/* Navegación móvil */}
-              <div className="flex items-center justify-around py-3 border-t border-white/20">
-                <button 
-                  onClick={handleProfileClick}
-                  className="flex flex-col items-center gap-1 text-white"
-                  aria-label="User profile"
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div 
+              className="md:hidden absolute top-20 left-0 right-0 bg-[#70AA77] border-t border-white/20 shadow-lg z-40 max-h-[calc(100vh-5rem)] overflow-y-auto"
+              variants={mobileMenuVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+            >
+              <div className="px-4 py-3 space-y-3">
+                {/* Barra de búsqueda movil */}
+                <motion.div 
+                  className="w-full h-10 bg-white rounded-full flex items-center px-4"
+                  variants={mobileItemVariants}
                 >
-                  <img className="w-7 h-7" alt="Profile" src={usuario} />
-                  <span className="text-xs">Perfil</span>
-                </button>
-                
-                <button className="flex flex-col items-center gap-1 text-white" aria-label="Orders">
-                  <svg width="28" height="28" viewBox="0 0 43 38" fill="none">
-                    <path d="M22.32 18.7969C22.32 17.8028 21.5141 16.9969 20.52 16.9969C19.526 16.9969 18.72 17.8028 18.72 18.7969H22.32ZM20.52 35.4001H18.72C18.72 35.9977 19.0167 36.5564 19.5118 36.8912C20.0069 37.226 20.636 37.2932 21.1906 37.0705L20.52 35.4001ZM34.3056 29.8657L34.9762 31.5361C35.6585 31.2623 36.1056 30.6008 36.1056 29.8657H34.3056ZM36.1056 18.3601C36.1056 17.366 35.2997 16.5601 34.3056 16.5601C33.3116 16.5601 32.5056 17.366 32.5056 18.3601H36.1056ZM21.613 17.3667C20.8232 16.7631 19.6935 16.9141 19.0899 17.7039C18.4863 18.4938 18.6372 19.6235 19.4271 20.2271L21.613 17.3667ZM25.4352 22.5529L24.3423 23.9831C24.8775 24.392 25.596 24.4681 26.2049 24.1801L25.4352 22.5529ZM35.0681 19.9873C35.9667 19.562 36.3507 18.489 35.9256 17.5904C35.5004 16.6919 34.4273 16.3079 33.5288 16.7329L35.0681 19.9873ZM19.8495 17.1265C18.9269 17.4968 18.4793 18.5449 18.8496 19.4675C19.22 20.39 20.268 20.8376 21.1906 20.4673L19.8495 17.1265ZM34.9762 14.9329C35.8988 14.5626 36.3464 13.5144 35.976 12.5919C35.6057 11.6694 34.5576 11.2217 33.6351 11.5921L34.9762 14.9329ZM33.6353 14.9329C34.5579 15.3032 35.606 14.8554 35.976 13.9328C36.3464 13.0103 35.8985 11.9622 34.976 11.592L33.6353 14.9329ZM21.1904 6.05998C20.2678 5.68976 19.2197 6.13755 18.8496 7.06013C18.4793 7.98274 18.9272 9.0308 19.8497 9.40102L21.1904 6.05998ZM35.1876 11.6958C34.3212 11.2087 33.2237 11.5163 32.7365 12.3828C32.2493 13.2494 32.557 14.3468 33.4236 14.834L35.1876 11.6958ZM39.228 16.0321L39.9968 17.6598C40.6056 17.3723 41.0031 16.7689 41.0268 16.0959C41.0508 15.423 40.6971 14.793 40.11 14.463L39.228 16.0321ZM33.5288 16.7329C32.63 17.1575 32.2462 18.2298 32.6708 19.1288C33.0953 20.0276 34.1691 20.4119 35.0681 19.9873L33.5288 16.7329ZM32.9638 12.0547C32.2968 12.7917 32.3535 13.9299 33.0905 14.5971C33.8276 15.2641 34.9659 15.2075 35.6331 14.4704L32.9638 12.0547ZM40.2 6.7417L41.5347 7.94955C41.9422 7.49912 42.0953 6.87341 41.9412 6.28572C41.7874 5.69801 41.3475 5.22759 40.7712 5.03477L40.2 6.7417ZM25.4352 1.8001L26.0064 0.0931723C25.3023 -0.142556 24.5254 0.0785318 24.0507 0.649804L25.4352 1.8001ZM19.1235 6.5802C18.4882 7.34484 18.5931 8.47971 19.3577 9.11499C20.1224 9.75029 21.2573 9.64544 21.8926 8.8808L19.1235 6.5802ZM6.05206 11.592C5.12948 11.9622 4.68169 13.0103 5.05191 13.9328C5.42214 14.8554 6.47019 15.3032 7.3928 14.9329L6.05206 11.592ZM21.1784 9.40102C22.1009 9.0308 22.5488 7.98274 22.1784 7.06013C21.8084 6.13755 20.7603 5.68976 19.8377 6.05998L21.1784 9.40102ZM7.6045 14.8316C8.47107 14.3444 8.77866 13.247 8.29151 12.3804C7.80433 11.5139 6.70693 11.2063 5.84036 11.6934L7.6045 14.8316ZM1.80003 16.0297L0.917961 14.4606C0.331281 14.7903 -0.0224076 15.4201 0.00113636 16.0926C0.0246804 16.7653 0.421497 17.3687 1.02982 17.6567L1.80003 16.0297ZM5.95223 19.9871C6.85071 20.4123 7.92394 20.0288 8.34932 19.1303C8.7747 18.2317 8.39115 17.1587 7.49264 16.7331L5.95223 19.9871ZM7.39304 11.5921C6.4705 11.2217 5.42238 11.6694 5.05201 12.5919C4.68164 13.5144 5.12929 14.5626 6.05183 14.9329L7.39304 11.5921ZM19.8375 20.4673C20.76 20.8376 21.8081 20.39 22.1784 19.4675C22.5488 18.5449 22.1012 17.4968 21.1786 17.1265L19.8375 20.4673ZM5.37771 14.4591C6.03853 15.2017 7.1763 15.2679 7.91898 14.6072C8.66166 13.9465 8.72799 12.8086 8.06715 12.066L5.37771 14.4591ZM1.80003 7.7305L1.08872 6.07702C0.557456 6.30555 0.168368 6.77542 0.0428964 7.33997C-0.0825756 7.90452 0.0708563 8.495 0.455312 8.92704L1.80003 7.7305ZM15.5856 1.8001L16.9707 0.650476C16.4609 0.0362915 15.6075 -0.168812 14.8743 0.14662L15.5856 1.8001ZM19.123 8.88012C19.7578 9.64508 20.8928 9.75046 21.6576 9.11554C22.4225 8.48062 22.5281 7.3458 21.8931 6.58088L19.123 8.88012ZM22.308 18.7993C22.308 17.8052 21.5021 16.9993 20.508 16.9993C19.514 16.9993 18.708 17.8052 18.708 18.7993H22.308ZM20.508 35.4001L19.8375 37.0705C20.3921 37.2932 21.0212 37.226 21.5163 36.8912C22.0114 36.5564 22.308 35.9977 22.308 35.4001H20.508ZM6.72243 29.8657H4.92243C4.92243 30.6008 5.36955 31.2623 6.05183 31.5361L6.72243 29.8657ZM8.52243 18.3601C8.52243 17.366 7.71654 16.5601 6.72243 16.5601C5.72833 16.5601 4.92243 17.366 4.92243 18.3601H8.52243ZM21.6 20.2278C22.3904 19.6249 22.542 18.4952 21.9389 17.7049C21.336 16.9146 20.2064 16.7629 19.416 17.366L21.6 20.2278ZM15.5856 22.5529L14.8159 24.1801C15.4244 24.4679 16.1424 24.3923 16.6776 23.9838L15.5856 22.5529ZM7.49264 16.7331C6.59401 16.3081 5.52042 16.6919 5.09531 17.5904C4.67019 18.489 5.05359 19.5618 5.95223 19.9871L7.49264 16.7331ZM18.72 18.7969V35.4001H22.32V18.7969H18.72ZM21.1906 37.0705L34.9762 31.5361L33.6351 28.1953L19.8495 33.7297L21.1906 37.0705ZM36.1056 29.8657V18.3601H32.5056V29.8657H36.1056ZM19.4271 20.2271L24.3423 23.9831L26.5282 21.1227L21.613 17.3667L19.4271 20.2271ZM26.2049 24.1801L35.0681 19.9873L33.5288 16.7329L24.6656 20.9257L26.2049 24.1801ZM21.1906 20.4673L34.9762 14.9329L33.6351 11.5921L19.8495 17.1265L21.1906 20.4673ZM34.976 11.592L21.1904 6.05998L19.8497 9.40102L33.6353 14.9329L34.976 11.592ZM33.4236 14.834L38.346 17.6012L40.11 14.463L35.1876 11.6958L33.4236 14.834ZM38.4593 14.4044L33.5288 16.7329L35.0681 19.9873L39.9968 17.6598L38.4593 14.4044ZM35.6331 14.4704L41.5347 7.94955L38.8654 5.53385L32.9638 12.0547L35.6331 14.4704ZM40.7712 5.03477L26.0064 0.0931723L24.864 3.50703L39.6288 8.44863L40.7712 5.03477ZM24.0507 0.649804L19.1235 6.5802L21.8926 8.8808L26.8198 2.9504L24.0507 0.649804ZM7.3928 14.9329L21.1784 9.40102L19.8377 6.05998L6.05206 11.592L7.3928 14.9329ZM5.84036 11.6934L0.917961 14.4606L2.6821 17.5988L7.6045 14.8316L5.84036 11.6934ZM1.02982 17.6567L5.95223 19.9871L7.49264 16.7331L2.57024 14.4027L1.02982 17.6567ZM6.05183 14.9329L19.8375 20.4673L21.1786 17.1265L7.39304 11.5921L6.05183 14.9329ZM8.06715 12.066L3.14475 6.53396L0.455312 8.92704L5.37771 14.4591L8.06715 12.066ZM2.51134 9.38398L16.297 3.45358L14.8743 0.14662L1.08872 6.07702L2.51134 9.38398ZM14.2006 2.94972L19.123 8.88012L21.8931 6.58088L16.9707 0.650476L14.2006 2.94972ZM18.708 18.7993V35.4001H22.308V18.7993H18.708ZM21.1786 33.7297L7.39304 28.1953L6.05183 31.5361L19.8375 37.0705L21.1786 33.7297ZM8.52243 29.8657V18.3601H4.92243V29.8657H8.52243ZM19.416 17.366L14.4937 21.122L16.6776 23.9838L21.6 20.2278L19.416 17.366ZM16.3553 20.9257L7.49264 16.7331L5.95223 19.9871L14.8159 24.1801L16.3553 20.9257Z" fill="white"/>
-                  </svg>
+                  <input
+                    type="search"
+                    placeholder="Buscar..."
+                    className="w-full font-light text-gray-700 text-sm bg-transparent outline-none placeholder:text-gray-400"
+                  />
+                </motion.div>
+
+                {/* Boton Productos movil */}
+                <motion.button
+                  type="button"
+                  className="w-full flex items-center justify-between py-2 text-white font-semibold"
+                  onClick={() => setDropdownOpen(!isDropdownOpen)}
+                  variants={mobileItemVariants}
+                >
+                  <span>Productos</span>
+                  <motion.img
+                    className={`w-5 h-5`}
+                    alt="dropdown arrow"
+                    src={drop_down}
+                    animate={{ rotate: isDropdownOpen ? 180 : 0 }}
+                  />
+                </motion.button>
+
+                {/* Dropdown de categorias movil */}
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div 
+                      className="bg-[#B8D2B1] rounded-lg p-3 space-y-2 overflow-hidden" // Añadido overflow-hidden
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      {categories.map((item) => (
+                        <MotionLink
+                          key={item.name}
+                          to={item.link}
+                          className="block py-2 px-3 font-semibold text-base text-green-800 hover:text-[#6d8c66] hover:bg-white/20 rounded transition-colors"
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {item.name}
+                        </MotionLink>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Navegacion movil corregida */}
+                <motion.div 
+                  className="flex items-center justify-around py-3 border-t border-white/20 text-white"
+                  variants={mobileItemVariants}
+                >
                   
-                  {/* También actualicé el botón móvil para mantener la funcionalidad */}
-                  <span className="text-xs">Carrito</span>
-                </button>
+                  <motion.button 
+                    onClick={handleProfileClick}
+                    className="flex flex-col items-center gap-1 text-white"
+                    aria-label="User profile"
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <img className="w-7 h-7" alt="Profile" src={usuarioUrl} />
+                    <span className="text-xs">Perfil</span>
+                  </motion.button>
+                  
+                  <motion.button 
+                    className="flex flex-col items-center gap-1 text-white" 
+                    aria-label="Orders"
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 43 38" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.32 18.7969C22.32 17.8028 21.5141 16.9969 20.52 16.9969C19.526 16.9969 18.72 17.8028 18.72 18.7969H22.32ZM20.52 35.4001H18.72C18.72 35.9977 19.0167 36.5564 19.5118 36.8912C20.0069 37.226 20.636 37.2932 21.1906 37.0705L20.52 35.4001ZM34.3056 29.8657L34.9762 31.5361C35.6585 31.2623 36.1056 30.6008 36.1056 29.8657H34.3056ZM36.1056 18.3601C36.1056 17.366 35.2997 16.5601 34.3056 16.5601C33.3116 16.5601 32.5056 17.366 32.5056 18.3601H36.1056ZM21.613 17.3667C20.8232 16.7631 19.6935 16.9141 19.0899 17.7039C18.4863 18.4938 18.6372 19.6235 19.4271 20.2271L21.613 17.3667ZM25.4352 22.5529L24.3423 23.9831C24.8775 24.392 25.596 24.4681 26.2049 24.1801L25.4352 22.5529ZM35.0681 19.9873C35.9667 19.562 36.3507 18.489 35.9256 17.5904C35.5004 16.6919 34.4273 16.3079 33.5288 16.7329L35.0681 19.9873ZM19.8495 17.1265C18.9269 17.4968 18.4793 18.5449 18.8496 19.4675C19.22 20.39 20.268 20.8376 21.1906 20.4673L19.8495 17.1265ZM34.9762 14.9329C35.8988 14.5626 36.3464 13.5144 35.976 12.5919C35.6057 11.6694 34.5576 11.2217 33.6351 11.5921L34.9762 14.9329ZM33.6353 14.9329C34.5579 15.3032 35.606 14.8554 35.976 13.9328C36.3464 13.0103 35.8985 11.9622 34.976 11.592L33.6353 14.9329ZM21.1904 6.05998C20.2678 5.68976 19.2197 6.13755 18.8496 7.06013C18.4793 7.98274 18.9272 9.0308 19.8497 9.40102L21.1904 6.05998ZM35.1876 11.6958C34.3212 11.2087 33.2237 11.5163 32.7365 12.3828C32.2493 13.2494 32.557 14.3468 33.4236 14.834L35.1876 11.6958ZM39.228 16.0321L39.9968 17.6598C40.6056 17.3723 41.0031 16.7689 41.0268 16.0959C41.0508 15.423 40.6971 14.793 40.11 14.463L39.228 16.0321ZM33.5288 16.7329C32.63 17.1575 32.2462 18.2298 32.6708 19.1288C33.0953 20.0276 34.1691 20.4119 35.0681 19.9873L33.5288 16.7329ZM32.9638 12.0547C32.2968 12.7917 32.3535 13.9299 33.0905 14.5971C33.8276 15.2641 34.9659 15.2075 35.6331 14.4704L32.9638 12.0547ZM40.2 6.7417L41.5347 7.94955C41.9422 7.49912 42.0953 6.87341 41.9412 6.28572C41.7874 5.69801 41.3475 5.22759 40.7712 5.03477L40.2 6.7417ZM25.4352 1.8001L26.0064 0.0931723C25.3023 -0.142556 24.5254 0.0785318 24.0507 0.649804L25.4352 1.8001ZM19.1235 6.5802C18.4882 7.34484 18.5931 8.47971 19.3577 9.11499C20.1224 9.75029 21.2573 9.64544 21.8926 8.8808L19.1235 6.5802ZM6.05206 11.592C5.12948 11.9622 4.68169 13.0103 5.05191 13.9328C5.42214 14.8554 6.47019 15.3032 7.3928 14.9329L6.05206 11.592ZM21.1784 9.40102C22.1009 9.0308 22.5488 7.98274 22.1784 7.06013C21.8084 6.13755 20.7603 5.68976 19.8377 6.05998L21.1784 9.40102ZM7.6045 14.8316C8.47107 14.3444 8.77866 13.247 8.29151 12.3804C7.80433 11.5139 6.70693 11.2063 5.84036 11.6934L7.6045 14.8316ZM1.80003 16.0297L0.917961 14.4606C0.331281 14.7903 -0.0224076 15.4201 0.00113636 16.0926C0.0246804 16.7653 0.421497 17.3687 1.02982 17.6567L1.80003 16.0297ZM5.95223 19.9871C6.85071 20.4123 7.92394 20.0288 8.34932 19.1303C8.7747 18.2317 8.39115 17.1587 7.49264 16.7331L5.95223 19.9871ZM7.39304 11.5921C6.4705 11.2217 5.42238 11.6694 5.05201 12.5919C4.68164 13.5144 5.12929 14.5626 6.05183 14.9329L7.39304 11.5921ZM19.8375 20.4673C20.76 20.8376 21.8081 20.39 22.1784 19.4675C22.5488 18.5449 22.1012 17.4968 21.1786 17.1265L19.8375 20.4673ZM5.37771 14.4591C6.03853 15.2017 7.1763 15.2679 7.91898 14.6072C8.66166 13.9465 8.72799 12.8086 8.06715 12.066L5.37771 14.4591ZM1.80003 7.7305L1.08872 6.07702C0.557456 6.30555 0.168368 6.77542 0.0428964 7.33997C-0.0825756 7.90452 0.0708563 8.495 0.455312 8.92704L1.80003 7.7305ZM15.5856 1.8001L16.9707 0.650476C16.4609 0.0362915 15.6075 -0.168812 14.8743 0.14662L15.5856 1.8001ZM19.123 8.88012C19.7578 9.64508 20.8928 9.75046 21.6576 9.11554C22.4225 8.48062 22.5281 7.3458 21.8931 6.58088L19.123 8.88012ZM22.308 18.7993C22.308 17.8052 21.5021 16.9993 20.508 16.9993C19.514 16.9993 18.708 17.8052 18.708 18.7993H22.308ZM20.508 35.4001L19.8375 37.0705C20.3921 37.2932 21.0212 37.226 21.5163 36.8912C22.0114 36.5564 22.308 35.9977 22.308 35.4001H20.508ZM6.72243 29.8657H4.92243C4.92243 30.6008 5.36955 31.2623 6.05183 31.5361L6.72243 29.8657ZM8.52243 18.3601C8.52243 17.366 7.71654 16.5601 6.72243 16.5601C5.72833 16.5601 4.92243 17.366 4.92243 18.3601H8.52243ZM21.6 20.2278C22.3904 19.6249 22.542 18.4952 21.9389 17.7049C21.336 16.9146 20.2064 16.7629 19.416 17.366L21.6 20.2278ZM15.5856 22.5529L14.8159 24.1801C15.4244 24.4679 16.1424 24.3923 16.6776 23.9838L15.5856 22.5529ZM7.49264 16.7331C6.59401 16.3081 5.52042 16.6919 5.09531 17.5904C4.67019 18.489 5.05359 19.5618 5.95223 19.9871L7.49264 16.7331ZM18.72 18.7969V35.4001H22.32V18.7969H18.72ZM21.1906 37.0705L34.9762 31.5361L33.6351 28.1953L19.8495 33.7297L21.1906 37.0705ZM36.1056 29.8657V18.3601H32.5056V29.8657H36.1056ZM19.4271 20.2271L24.3423 23.9831L26.5282 21.1227L21.613 17.3667L19.4271 20.2271ZM26.2049 24.1801L35.0681 19.9873L33.5288 16.7329L24.6656 20.9257L26.2049 24.1801ZM21.1906 20.4673L34.9762 14.9329L33.6351 11.5921L19.8495 17.1265L21.1906 20.4673ZM34.976 11.592L21.1904 6.05998L19.8497 9.40102L33.6353 14.9329L34.976 11.592ZM33.4236 14.834L38.346 17.6012L40.11 14.463L35.1876 11.6958L33.4236 14.834ZM38.4593 14.4044L33.5288 16.7329L35.0681 19.9873L39.9968 17.6598L38.4593 14.4044ZM35.6331 14.4704L41.5347 7.94955L38.8654 5.53385L32.9638 12.0547L35.6331 14.4704ZM40.7712 5.03477L26.0064 0.0931723L24.864 3.50703L39.6288 8.44863L40.7712 5.03477ZM24.0507 0.649804L19.1235 6.5802L21.8926 8.8808L26.8198 2.9504L24.0507 0.649804ZM7.3928 14.9329L21.1784 9.40102L19.8377 6.05998L6.05206 11.592L7.3928 14.9329ZM5.84036 11.6934L0.917961 14.4606L2.6821 17.5988L7.6045 14.8316L5.84036 11.6934ZM1.02982 17.6567L5.95223 19.9871L7.49264 16.7331L2.57024 14.4027L1.02982 17.6567ZM6.05183 14.9329L19.8375 20.4673L21.1786 17.1265L7.39304 11.5921L6.05183 14.9329ZM8.06715 12.066L3.14475 6.53396L0.455312 8.92704L5.37771 14.4591L8.06715 12.066ZM2.51134 9.38398L16.297 3.45358L14.8743 0.14662L1.08872 6.07702L2.51134 9.38398ZM14.2006 2.94972L19.123 8.88012L21.8931 6.58088L16.9707 0.650476L14.2006 2.94972ZM18.708 18.7993V35.4001H22.308V18.7993H18.708ZM21.1786 33.7297L7.39304 28.1953L6.05183 31.5361L19.8375 37.0705L21.1786 33.7297ZM8.52243 29.8657V18.3601H4.92243V29.8657H8.52243ZM19.416 17.366L14.4937 21.122L16.6776 23.9838L21.6 20.2278L19.416 17.366ZM16.3553 20.9257L7.49264 16.7331L5.95223 19.9871L14.8159 24.1801L16.3553 20.9257Z" />
+                  </svg>
+                    <span className="text-xs">Órdenes</span>
+                  </motion.button>
+                  
+                  <motion.button
+                    onClick={onCartClick} 
+                    className="flex flex-col items-center gap-1 text-white relative" 
+                    aria-label="Shopping cart"
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 60 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                       <path
+                          d="M49.298 40V35.1223H25.4607L23.0827 28.2107H51.5084L60 4.47189H54.9223L48.1755 23.333H21.4041L13.3765 0H11.4463H0V4.87771H9.99879L22.0832 40H49.298Z"
+                       />
+                    </svg>
+                    <AnimatePresence>
+                      {totalItems > 0 && (
+                        <motion.span 
+                          className="absolute -top-1 -right-3 text-[#1877F2] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center bg-white"
+                          variants={cartCounterVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                        >
+                          {totalItems}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                    <span className="text-xs">Carrito</span>
+                  </motion.button>
+
+                </motion.div>
               </div>
-            </div>
-          </div>
-        )}
-      </header>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
 
       {/* Espaciador para compensar el header fixed */}
       <div className="h-20"></div>
 
-      {/* Dropdown animado fuera del header - Solo Desktop */}
-      <div
-        className={`hidden lg:block fixed top-20 left-0 right-0 z-40 transition-all duration-300 ease-in-out overflow-hidden bg-[#B8D2B1] shadow-inner ${
-          isDropdownOpen && isVisible ? "max-h-40" : "max-h-0"
-        }`}
-      >
-        <div className="flex justify-around items-center h-16">
-          {categories.map((item) => (
-            <a
-              key={item.name}
-              href={item.link}
-              className="font-semibold text-lg text-green-800 hover:text-[#6d8c66] transition-colors"
-            >
-              {item.name}
-            </a>
-          ))}
-        </div>
-      </div>
+      <AnimatePresence>
+        {isVisible && isDropdownOpen && (
+          <motion.div
+            className={`hidden lg:block fixed top-20 left-0 right-0 z-40 overflow-hidden bg-[#B8D2B1] shadow-inner`}
+            variants={desktopDropdownVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+          >
+            <div className="max-w-7xl mx-auto flex justify-around items-center h-16 px-6">
+              {categories.map((item) => (
+                <MotionLink
+                  key={item.name}
+                  to={item.link}
+                  className="font-semibold text-lg text-green-800 transition-colors"
+                  whileHover={{ color: "#2c5228" }} // Más oscuro
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {item.name}
+                </MotionLink>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

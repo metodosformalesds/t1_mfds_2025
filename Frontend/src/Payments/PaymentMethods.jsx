@@ -2,6 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useNavigate } from "react-router-dom";
+import { 
+    getPaymentMethods, 
+    createSetupIntent, 
+    savePaymentMethod, 
+    deletePaymentMethod,
+    setDefaultPaymentMethod
+} from "../utils/api";
 
 export default function PaymentMethods() {
     const stripe = useStripe();
@@ -15,60 +22,73 @@ export default function PaymentMethods() {
     const [showConfirm, setShowConfirm] = useState({ visible: false, pmId: null });
     const [error, setError] = useState(null);
 
-    // --- MOCK DATA (para visualización mientras se integra la API real) ---
-    const [paymentMethods, setPaymentMethods] = useState([
+    const [paymentMethods, setPaymentMethods] = useState([]);
+    const [defaultPaymentId, setDefaultPaymentId] = useState(null);
+
+    // --- MOCK DATA (estructura esperada del backend) ---
+    const mockPaymentMethods = [
         {
-            id: "pm_1",
-            card: { brand: "visa", last4: "4242", exp_month: 12, exp_year: 2025 }
+            payment_id: 1,
+            stripe_payment_method_id: "pm_1MockVisa4242",
+            card_brand: "visa",
+            card_last4: "4242",
+            card_exp_month: 12,
+            card_exp_year: 2025,
+            cardholder_name: "Juan Pérez",
+            is_default: true,
+            created_at: "2025-01-15T10:30:00"
         },
         {
-            id: "pm_2",
-            card: { brand: "mastercard", last4: "5555", exp_month: 6, exp_year: 2026 }
+            payment_id: 2,
+            stripe_payment_method_id: "pm_2MockMC5555",
+            card_brand: "mastercard",
+            card_last4: "5555",
+            card_exp_month: 6,
+            card_exp_year: 2026,
+            cardholder_name: "María García",
+            is_default: false,
+            created_at: "2025-02-01T14:20:00"
         }
-    ]);
-
-    const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+    ];
 
     // ====================
-    // Helper genérico API
+    // Fetch Payment Methods
     // ====================
-    
-    
-    async function apiFetch(path, options = {}) {
-        const token = localStorage.getItem("token"); // <--- Para producción
-
-        const res = await fetch(`${API_BASE}${path}`, {
-            /*
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": token ? `Bearer ${token}` : ""
-            },
-            */
-            headers: { "Content-Type": "application/json" }, // MOCK
-            ...options,
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) throw new Error(data.detail || "Error en la solicitud");
-        return data;
-    }
-        
-    // TODO: FETCH real (COMENTADO)
-
     async function fetchPaymentMethods() {
+        setLoading(true);
+        setError(null);
+
         /*
+        // CÓDIGO PARA PRODUCCIÓN
         try {
-            const data = await apiFetch("/api/v1/payment_method", { 
-            method: "GET" 
-            });
+            const data = await getPaymentMethods();
             setPaymentMethods(data.payment_methods || []);
+            const defaultMethod = data.payment_methods?.find(pm => pm.is_default);
+            if (defaultMethod) {
+                setDefaultPaymentId(defaultMethod.payment_id);
+            }
         } catch (err) {
             console.error(err);
             setError(err.message);
+        } finally {
+            setLoading(false);
         }
         */
+
+        // MOCK DATA
+        setTimeout(() => {
+            setPaymentMethods(mockPaymentMethods);
+            const defaultMethod = mockPaymentMethods.find(pm => pm.is_default);
+            if (defaultMethod) {
+                setDefaultPaymentId(defaultMethod.payment_id);
+            }
+            setLoading(false);
+        }, 500);
     }
+
+    useEffect(() => {
+        fetchPaymentMethods();
+    }, []);
 
     // Abrir modales
 
@@ -83,24 +103,45 @@ export default function PaymentMethods() {
         setShowEditModal(true);
     }
 
-    // Actualizar tarjeta
-
-    async function handleUpdateCard() {
+    // Establecer tarjeta como predeterminada
+    async function handleSetDefault(pmId) {
         setLoading(true);
         setError(null);
 
         /*
+        // CÓDIGO PARA PRODUCCIÓN
         try {
-            await apiFetch("/api/v1/payment_method/update", {
-                method: "POST",
-                body: JSON.stringify({
-                    payment_method_id: editingCard.id,
-                    billing_details: {
-                        name: editingCardName,
-                    },
-                }),
-            });
+            await setDefaultPaymentMethod(pmId);
+            await fetchPaymentMethods();
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+        */
 
+        // MOCK
+        setPaymentMethods(prev => prev.map(pm => ({
+            ...pm,
+            is_default: pm.payment_id === pmId
+        })));
+        setDefaultPaymentId(pmId);
+        setLoading(false);
+    }
+
+    // Actualizar nombre del titular (Stripe solo permite actualizar billing_details)
+    async function handleUpdateCard(e) {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        const newCardholderName = e.target.cardholder_name.value;
+
+        /*
+        // CÓDIGO PARA PRODUCCIÓN
+        // Nota: Stripe no permite editar los números de tarjeta, solo billing_details
+        try {
+            // Aquí irían las llamadas al backend para actualizar billing_details en Stripe
             await fetchPaymentMethods();
             setShowEditModal(false);
         } catch (err) {
@@ -110,30 +151,37 @@ export default function PaymentMethods() {
         }
         */
 
-        alert("Los datos del titular fueron actualizados (simulación).");
+        // MOCK
+        setPaymentMethods(prev => prev.map(pm =>
+            pm.payment_id === editingCard.payment_id
+                ? { ...pm, cardholder_name: newCardholderName }
+                : pm
+        ));
         setShowEditModal(false);
         setLoading(false);
     }
 
     // Agregar tarjeta
-    async function handleAddCard() {
+    async function handleAddCard(e) {
+        e.preventDefault();
         setLoading(true);
         setError(null);
 
         /*
+        // CÓDIGO PARA PRODUCCIÓN
         try {
             // 1. Crear SetupIntent
-            const intent = await apiFetch("/api/v1/payment_method/create-setup-intent", {
-                method: "POST",
-                body: JSON.stringify({})
-            });
+            const intent = await createSetupIntent();
 
             const cardElement = elements.getElement(CardElement);
 
+            // 2. Confirmar con Stripe
             const result = await stripe.confirmCardSetup(intent.client_secret, {
                 payment_method: {
                     card: cardElement,
-                    billing_details: { name: "Nombre del titular" }
+                    billing_details: { 
+                        name: e.target.cardholder_name.value 
+                    }
                 }
             });
 
@@ -143,11 +191,9 @@ export default function PaymentMethods() {
                 return;
             }
 
-            // 2. Guardar en backend
-            await apiFetch("/api/v1/payment_method/save", {
-                method: "POST",
-                body: JSON.stringify({ payment_method_id: result.setupIntent.payment_method })
-            });
+            // 3. Guardar en backend
+            const isFirstCard = paymentMethods.length === 0;
+            await savePaymentMethod(result.setupIntent.payment_method, isFirstCard);
 
             await fetchPaymentMethods();
             setShowAddModal(false);
@@ -159,44 +205,28 @@ export default function PaymentMethods() {
         */
 
         // MOCK: agregar tarjeta
+        const cardholderName = e.target.cardholder_name?.value || "Usuario";
         const newCard = {
-            id: `pm_${Date.now()}`,
-            card: {
-                brand: "visa",
-                last4: String(Math.floor(1000 + Math.random() * 9000)),
-                exp_month: 12,
-                exp_year: 2027
-            }
+            payment_id: Date.now(),
+            stripe_payment_method_id: `pm_mock_${Date.now()}`,
+            card_brand: "visa",
+            card_last4: String(Math.floor(1000 + Math.random() * 9000)),
+            card_exp_month: 12,
+            card_exp_year: 2027,
+            cardholder_name: cardholderName,
+            is_default: paymentMethods.length === 0,
+            created_at: new Date().toISOString()
         };
 
         setPaymentMethods([...paymentMethods, newCard]);
+        if (paymentMethods.length === 0) {
+            setDefaultPaymentId(newCard.payment_id);
+        }
         setShowAddModal(false);
         setLoading(false);
     }
 
-    // ====================
-    // Crear suscripción
-    // ====================
-    async function handleCreateSubscription(pmId) {
-        setLoading(true);
-        setError(null);
 
-        /*
-        try {
-            await apiFetch("/api/v1/subscription/create", {
-                method: "POST",
-                body: JSON.stringify({ payment_method_id: pmId })
-            });
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-        */
-
-        alert(`Suscripción creada con la tarjeta ${pmId} (simulación)`);
-        setLoading(false);
-    }
 
     // Eliminar tarjeta
     async function handleDetachPaymentMethod(pmId) {
@@ -204,12 +234,9 @@ export default function PaymentMethods() {
         setError(null);
 
         /*
+        // CÓDIGO PARA PRODUCCIÓN
         try {
-            await apiFetch("/api/v1/payment_method/delete", {
-                method: "POST",
-                body: JSON.stringify({ payment_method_id: pmId })
-            });
-
+            await deletePaymentMethod(pmId);
             await fetchPaymentMethods();
             setShowConfirm({ visible: false, pmId: null });
         } catch (err) {
@@ -220,7 +247,16 @@ export default function PaymentMethods() {
         */
 
         // MOCK
-        setPaymentMethods(paymentMethods.filter(pm => pm.id !== pmId));
+        const updatedMethods = paymentMethods.filter(pm => pm.payment_id !== pmId);
+        setPaymentMethods(updatedMethods);
+        
+        // Si eliminamos la tarjeta predeterminada y hay otras, establecer la primera como predeterminada
+        if (defaultPaymentId === pmId && updatedMethods.length > 0) {
+            const newDefault = updatedMethods[0];
+            newDefault.is_default = true;
+            setDefaultPaymentId(newDefault.payment_id);
+        }
+        
         setShowConfirm({ visible: false, pmId: null });
         setLoading(false);
     }
@@ -272,27 +308,49 @@ export default function PaymentMethods() {
                     )}
 
                     {paymentMethods.map(pm => (
-                        <div key={pm.id} className="bg-[#EBEFE6] rounded-lg p-4 flex flex-col md:flex-row justify-between">
-                            <div>
-                                <p className="font-medium">
-                                    {pm.card.brand.toUpperCase()} •••• {pm.card.last4}
-                                </p>
+                        <div key={pm.payment_id} className="bg-[#EBEFE6] rounded-lg p-4 flex flex-col md:flex-row justify-between items-start md:items-center">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                    <p className="font-medium">
+                                        {pm.card_brand.toUpperCase()} •••• {pm.card_last4}
+                                    </p>
+                                    {pm.is_default && (
+                                        <span className="bg-[#70AA77] text-white text-xs px-2 py-1 rounded-full">
+                                            Predeterminada
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-sm text-gray-600">
-                                    Expira: {pm.card.exp_month}/{pm.card.exp_year}
+                                    Expira: {String(pm.card_exp_month).padStart(2, '0')}/{pm.card_exp_year}
                                 </p>
+                                {pm.cardholder_name && (
+                                    <p className="text-sm text-gray-500">
+                                        {pm.cardholder_name}
+                                    </p>
+                                )}
                             </div>
 
-                            <div className="flex gap-2 mt-3 md:mt-0">
+                            <div className="flex gap-2 mt-3 md:mt-0 flex-wrap">
+                                {!pm.is_default && (
+                                    <button
+                                        className="bg-[#31478F] hover:bg-[#2a3f7f] text-white px-4 py-2 rounded-3xl text-sm disabled:opacity-50"
+                                        onClick={() => handleSetDefault(pm.payment_id)}
+                                        disabled={loading}
+                                    >
+                                        Hacer predeterminada
+                                    </button>
+                                )}
+
                                 <button
-                                    className="bg-[#70AA77] hover:bg-[#5f8a5f] text-white px-6 py-2 rounded-3xl"
+                                    className="bg-[#70AA77] hover:bg-[#5f8a5f] text-white px-4 py-2 rounded-3xl text-sm"
                                     onClick={() => handleOpenEdit(pm)}
                                 >
                                     Editar
                                 </button>
 
                                 <button
-                                    className="bg-[#C05F5F] hover:bg-[#9b4b4b] text-white px-6 py-2 rounded-3xl"
-                                    onClick={() => setShowConfirm({ visible: true, pmId: pm.id })}
+                                    className="bg-[#C05F5F] hover:bg-[#9b4b4b] text-white px-4 py-2 rounded-3xl text-sm"
+                                    onClick={() => setShowConfirm({ visible: true, pmId: pm.payment_id })}
                                 >
                                     Eliminar
                                 </button>
@@ -319,26 +377,44 @@ export default function PaymentMethods() {
                             <button onClick={() => setShowAddModal(false)} className="text-2xl">✕</button>
                         </div>
 
-                        <div className="space-y-3">
-                            <label className="block text-sm font-semibold">Tarjeta</label>
-                            <div className="p-3 border rounded">
-                                <CardElement options={{ hidePostalCode: true }} />
+                        <form onSubmit={handleAddCard} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold mb-1">Nombre del titular</label>
+                                <input
+                                    type="text"
+                                    name="cardholder_name"
+                                    placeholder="Como aparece en la tarjeta"
+                                    required
+                                    className="w-full p-3 border rounded-lg"
+                                />
                             </div>
-                            {error && <p className="text-sm text-red-600">{error}</p>}
-                        </div>
 
-                        <div className="flex gap-3 mt-6">
-                            <button
-                                onClick={handleAddCard}
-                                disabled={!stripe || loading}
-                                className="flex-1 bg-[#31478F] hover:bg-[#2a3f7f] text-white rounded-3xl py-2"
-                            >
-                                {loading ? "Guardando..." : "Guardar Tarjeta"}
-                            </button>
-                            <button onClick={() => setShowAddModal(false)} className="flex-1 bg-gray-300 hover:bg-gray-400 rounded-3xl py-2">
-                                Cancelar
-                            </button>
-                        </div>
+                            <div>
+                                <label className="block text-sm font-semibold mb-1">Tarjeta</label>
+                                <div className="p-3 border rounded-lg">
+                                    <CardElement options={{ hidePostalCode: true }} />
+                                </div>
+                            </div>
+
+                            {error && <p className="text-sm text-red-600">{error}</p>}
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    type="submit"
+                                    disabled={!stripe || loading}
+                                    className="flex-1 bg-[#31478F] hover:bg-[#2a3f7f] text-white rounded-3xl py-2 disabled:opacity-50"
+                                >
+                                    {loading ? "Guardando..." : "Guardar Tarjeta"}
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowAddModal(false)} 
+                                    className="flex-1 bg-gray-300 hover:bg-gray-400 rounded-3xl py-2"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
@@ -356,12 +432,12 @@ export default function PaymentMethods() {
                             Solo puedes editar el nombre del titular. Para cambiar la tarjeta añade una nueva.
                         </div>
 
-                        <div className="space-y-4">
+                        <form onSubmit={handleUpdateCard} className="space-y-4">
                             <div className="bg-gray-50 rounded-lg p-4">
                                 <p className="text-sm font-semibold text-gray-600 mb-2">Tarjeta actual:</p>
-                                <p className="font-medium">{editingCard.card.brand.toUpperCase()} •••• {editingCard.card.last4}</p>
+                                <p className="font-medium">{editingCard.card_brand.toUpperCase()} •••• {editingCard.card_last4}</p>
                                 <p className="text-sm text-gray-600">
-                                    Expira: {editingCard.card.exp_month}/{editingCard.card.exp_year}
+                                    Expira: {String(editingCard.card_exp_month).padStart(2, '0')}/{editingCard.card_exp_year}
                                 </p>
                             </div>
 
@@ -369,29 +445,33 @@ export default function PaymentMethods() {
                                 <label className="block text-sm font-semibold mb-1">Nombre del titular</label>
                                 <input
                                     type="text"
+                                    name="cardholder_name"
+                                    defaultValue={editingCard.cardholder_name || ""}
                                     placeholder="Nombre como aparece en la tarjeta"
+                                    required
                                     className="w-full p-3 border rounded-lg"
                                 />
                             </div>
 
                             {error && <p className="text-sm text-red-600">{error}</p>}
-                        </div>
 
-                        <div className="flex gap-3 mt-6">
-                            <button
-                                onClick={handleUpdateCard}
-                                disabled={loading}
-                                className="flex-1 bg-[#31478F] hover:bg-[#2a3f7f] text-white rounded-3xl py-2"
-                            >
-                                {loading ? "Actualizando..." : "Guardar Cambios"}
-                            </button>
-                            <button
-                                onClick={() => setShowEditModal(false)}
-                                className="flex-1 bg-gray-300 hover:bg-gray-400 rounded-3xl py-2"
-                            >
-                                Cancelar
-                            </button>
-                        </div>
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="flex-1 bg-[#31478F] hover:bg-[#2a3f7f] text-white rounded-3xl py-2 disabled:opacity-50"
+                                >
+                                    {loading ? "Actualizando..." : "Guardar Cambios"}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(false)}
+                                    className="flex-1 bg-gray-300 hover:bg-gray-400 rounded-3xl py-2"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
