@@ -1,16 +1,14 @@
-# Autor: Luis & Gabriel
-# Fecha: 16/11/2025
+# Autor: Gabriel Vilchis
+# Fecha: 09/11/2025
 # Descripción:
-# Configuración centralizada usando Pydantic Settings para variables de entorno.
-# Gestiona parámetros de AWS Cognito, S3, base de datos, Stripe, PayPal y CORS.
-
-import os
-from typing import Optional, List
-from dotenv import load_dotenv
+# Este archivo define la clase Settings utilizando Pydantic Settings para la carga
+# y gestión centralizada de variables de entorno provenientes del archivo .env.
+# Su propósito es centralizar parámetros sensibles y configuraciones relacionadas
+# con la base de datos, AWS, Cognito, S3, JWT, Stripe y PayPal.
+import json
+from typing import List
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
-
-# Cargar variables de entorno
-load_dotenv()
 
 class Settings(BaseSettings):
     """
@@ -23,52 +21,48 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # ============ BASE DE DATOS ============
-    DATABASE_URL: str  # Obligatorio
+    DATABASE_URL: str
     
     # ============ AWS ============
     AWS_REGION: str = "us-east-1"
-    AWS_ACCESS_KEY_ID: str  # Obligatorio
-    AWS_SECRET_ACCESS_KEY: str  # Obligatorio
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
     
     # ============ AWS COGNITO ============
-    COGNITO_REGION: str  # Obligatorio
-    COGNITO_USER_POOL_ID: str  # Obligatorio
-    COGNITO_CLIENT_ID: str  # Obligatorio
+    COGNITO_REGION: str
+    COGNITO_USER_POOL_ID: str
+    COGNITO_CLIENT_ID: str
     
     # ============ AWS S3 ============
-    S3_BUCKET_NAME: str  # Obligatorio
+    S3_BUCKET_NAME: str
     
     # ============ JWT ============
-    JWT_SECRET_KEY: str  # Obligatorio para compatibilidad
-    JWT_ALGORITHM: str = "RS256"  # RS256 para Cognito, HS256 para JWT manual
+    JWT_SECRET_KEY: str | None = None
+    JWT_ALGORITHM: str = "RS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # ============ STRIPE ============
-    STRIPE_API_KEY: str  # Obligatorio
-    STRIPE_SECRET_KEY: str  # Obligatorio
-    STRIPE_WEBHOOK_SECRET: str  # Obligatorio para validar webhooks
+    STRIPE_API_KEY: str
+    STRIPE_SECRET_KEY: str
+    STRIPE_WEBHOOK_SECRET: str
     
     # ============ PAYPAL ============
-    PAYPAL_CLIENT_ID: str  # Obligatorio
-    PAYPAL_CLIENT_SECRET: str  # Obligatorio
-    PAYPAL_API_BASE_URL: str  # Obligatorio
+    PAYPAL_CLIENT_ID: str
+    PAYPAL_CLIENT_SECRET: str
+    PAYPAL_API_BASE_URL: str
     
     # ============ CORS ============
-    # Lista directa de orígenes permitidos
-    # En .env puedes dejarla vacía: BACKEND_CORS_ORIGINS=[]
-    # O definir múltiples: BACKEND_CORS_ORIGINS=["http://localhost:3000", "http://localhost:8000"]
+     #BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
     BACKEND_CORS_ORIGINS: List[str] = []
-    
-    # ============ APPLICATION URL ============
-    # URL del frontend para redirecciones de success y cancel
-    # Producción: https://frontend.d34s9corpodswj.amplifyapp.com
-    # Desarrollo: http://localhost:3000
-    APP_URL: str = "http://localhost:3000"
+    APP_URL: str # "https://frontend.d34s9corpodswj.amplifyapp.com"
+     # En lugar de se el local host, debe de ser la url del frontend para que funcione las redirecciones
+    # de success y cancel
+    #APP_URL: str = "http://localhost:8000"
+    #APP_URL: str = "https://frontend.d34s9corpodswj.amplifyapp.com/"
     
     class Config:
         env_file = ".env"
         case_sensitive = True
-        extra = "ignore"  # Ignora variables extras en el .env
         
     def print_debug_info(self):
         """
