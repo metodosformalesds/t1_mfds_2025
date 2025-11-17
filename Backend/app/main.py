@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from app.services.scheduler import start_scheduler, stop_scheduler
+from app.config import settings
 from contextlib import asynccontextmanager
 import logging
+from fastapi.middleware.cors import CORSMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -38,9 +40,30 @@ async def lifespan(app: FastAPI):
         
     logger.info("Aplicación detenida")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    lifespan=lifespan
+)
+
+# Configurar CORS desde settings
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS if settings.BACKEND_CORS_ORIGINS else [
+        "http://localhost:3000",  # React
+        "http://localhost:8000",  # Backend API
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Esto es una prueba para probar el comando de uvicorn
 @app.get("/")
 def root():
-    return {"message": "Welcome to the T1-MFDS 2025 Backend!"}
+    return {
+        "message": "Welcome to the T1-MFDS 2025 Backend!",
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION
+    }

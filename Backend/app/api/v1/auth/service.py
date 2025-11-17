@@ -7,12 +7,15 @@ from app.services.s3_service import S3Service
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from app.models.user import User   
+from app.models.user import User
 from app.models.enum import AuthType, UserRole, Gender
 from app.core.security import hash_password
 from app.api.v1.auth.schemas import SignUpRequest
 
+
 class CognitoService:
+    """Servicio para gestión de autenticación con AWS Cognito"""
+    
     # Cache de JWKS a nivel de clase
     _jwks_cache = None
     _jwks_cache_time = None
@@ -27,7 +30,7 @@ class CognitoService:
         )
         self.user_pool_id = settings.COGNITO_USER_POOL_ID
         self.client_id = settings.COGNITO_CLIENT_ID
-        self.jwks = self._get_jwks()
+        self.jwks = None
     
     def _get_jwks(self):
         """Obtiene las claves públicas de Cognito con cache"""
@@ -37,16 +40,42 @@ class CognitoService:
             CognitoService._jwks_cache_time is None or 
             now - CognitoService._jwks_cache_time > CognitoService._jwks_cache_duration):
             
-            jwks_url = f"https://cognito-idp.{settings.COGNITO_REGION}.amazonaws.com/{self.user_pool_id}/.well-known/jwks.json"
+            # --- INICIO DE NUESTRO FIX PARA PRUEBAS ---
+            # Si estamos usando el .env de prueba (region='test'), 
+            # no intentes conectar a AWS. Devuelve un JWKS falso.
+            if settings.COGNITO_REGION == 'test':
+                CognitoService._jwks_cache = {'keys': []} # Un JWKS vacío pero válido
+                CognitoService._jwks_cache_time = now
+                return CognitoService._jwks_cache
+            # --- FIN DE NUESTRO FIX PARA PRUEBAS ---
+            
+            jwks_url = (
+                f"https://cognito-idp.{settings.COGNITO_REGION}.amazonaws.com/"
+                f"{self.user_pool_id}/.well-known/jwks.json"
+            )
             response = requests.get(jwks_url)
             CognitoService._jwks_cache = response.json()
             CognitoService._jwks_cache_time = now
         
         return CognitoService._jwks_cache
     
-    def sign_up(self, db: Session, user_data: SignUpRequest, profile_image: Optional[bytes] = None) -> Dict:
-        """Registra un nuevo usuario y sube su imagen de perfil si se proporciona."""
+    def sign_up(
+        self, 
+        db: Session, 
+        user_data: SignUpRequest, 
+        profile_image: Optional[bytes] = None
+    ) -> Dict:
+        """
+        Registra un nuevo usuario en Cognito y en la base de datos local.
         
+        Args:
+            db: Sesión de base de datos
+            user_data: Datos del usuario
+            profile_image: Imagen de perfil opcional (bytes)
+            
+        Returns:
+            Dict con success, user_sub, user_id, profile_image_url, message o error
+        """
         profile_image_url = None
         s3_service_instance = S3Service()
 
@@ -54,16 +83,22 @@ class CognitoService:
             email = user_data.email
             profile_image_url = None
             
-            # Generar id temporal ANTES de subir la imagen
+            # Generar ID temporal ANTES de subir la imagen
             temp_s3_id = str(uuid.uuid4())
 
             # Subir imagen si se proporciona
             if profile_image:
                 # Validar tamaño de imagen (máximo 5MB)
                 if len(profile_image) > 5 * 1024 * 1024:
-                    return {"success": False, "error": "La imagen es demasiado grande (máximo 5MB)"}
+                    return {
+                        "success": False, 
+                        "error": "La imagen es demasiado grande (máximo 5MB)"
+                    }
                 
-                upload_result = s3_service_instance.upload_profile_img(profile_image, user_id=temp_s3_id)
+                upload_result = s3_service_instance.upload_profile_img(
+                    profile_image, 
+                    user_id=temp_s3_id
+                )
 
                 if not upload_result["success"]:
                     return {"success": False, "error": upload_result["error"]}
@@ -75,11 +110,16 @@ class CognitoService:
                 {"Name": "email", "Value": email},
                 {"Name": "given_name", "Value": user_data.first_name},
                 {"Name": "family_name", "Value": user_data.last_name},
-                {"Name": "gender", "Value": user_data.gender},
-                {"Name": "birthdate", "Value": str(user_data.birth_date)},
-                {"Name": "picture", "Value": profile_image_url or ""},
-                {"Name": "custom:role", "Value": UserRole.USER.value}, # para identifcar el rol si es usuario o admin
+                {"Name": "custom:role", "Value": UserRole.USER.value},
             ]
+            
+            # Agregar atributos opcionales
+            if user_data.gender:
+                user_attributes.append({"Name": "gender", "Value": user_data.gender})
+            if user_data.birth_date:
+                user_attributes.append({"Name": "birthdate", "Value": str(user_data.birth_date)})
+            if profile_image_url:
+                user_attributes.append({"Name": "picture", "Value": profile_image_url})
 
             # Registrar en Cognito
             response = self.client.sign_up(
@@ -90,17 +130,19 @@ class CognitoService:
             )
 
             cognito_sub = response["UserSub"]
+            
             # Hashear la contraseña para almacenamiento local
-            hashed_password =hash_password(user_data.password)
+            hashed_password = hash_password(user_data.password)
 
+            # Crear usuario en base de datos local
             new_db_user = User(
                 cognito_sub=cognito_sub,
                 email=email,
                 auth_type=AuthType.EMAIL,
-                password_hash=hashed_password, 
+                password_hash=hashed_password,
                 first_name=user_data.first_name,
                 last_name=user_data.last_name,
-                gender=Gender(user_data.gender),
+                gender=Gender(user_data.gender) if user_data.gender else None,
                 date_of_birth=user_data.birth_date,
                 profile_picture=profile_image_url,
                 role=UserRole.USER,
@@ -113,7 +155,7 @@ class CognitoService:
 
             return {
                 "success": True,
-                "user_sub": response["UserSub"],
+                "user_sub": cognito_sub,
                 "user_id": str(new_db_user.user_id),
                 "profile_image_url": profile_image_url,
                 "message": "Usuario registrado correctamente. Verifica tu correo.",
@@ -125,9 +167,18 @@ class CognitoService:
             return {"success": False, "error": "La contraseña no cumple con los requisitos"}
         except Exception as e:
             return {"success": False, "error": str(e)}
-                
+    
     def confirm_sign_up(self, email: str, code: str) -> Dict:
-        """Confirma el registro con el código enviado al email"""
+        """
+        Confirma el registro con el código enviado al email.
+        
+        Args:
+            email: Email del usuario
+            code: Código de verificación
+            
+        Returns:
+            Dict con success y message o error
+        """
         try:
             self.client.confirm_sign_up(
                 ClientId=self.client_id,
@@ -144,7 +195,15 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def resend_confirmation_code(self, email: str) -> Dict:
-        """Reenvía el código de confirmación"""
+        """
+        Reenvía el código de confirmación.
+        
+        Args:
+            email: Email del usuario
+            
+        Returns:
+            Dict con success y message o error
+        """
         try:
             self.client.resend_confirmation_code(
                 ClientId=self.client_id,
@@ -155,7 +214,16 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def sign_in(self, email: str, password: str) -> Dict:
-        """Inicia sesión con email y contraseña"""
+        """
+        Inicia sesión con email y contraseña.
+        
+        Args:
+            email: Email del usuario
+            password: Contraseña
+            
+        Returns:
+            Dict con tokens o error
+        """
         try:
             response = self.client.initiate_auth(
                 ClientId=self.client_id,
@@ -176,12 +244,23 @@ class CognitoService:
         except self.client.exceptions.NotAuthorizedException:
             return {'success': False, 'error': 'Credenciales inválidas'}
         except self.client.exceptions.UserNotConfirmedException:
-            return {'success': False, 'error': 'Usuario no confirmado. Por favor verifica tu correo.'}
+            return {
+                'success': False, 
+                'error': 'Usuario no confirmado. Por favor verifica tu correo.'
+            }
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
     def sign_out(self, access_token: str) -> Dict:
-        """Cierra la sesión del usuario (invalida el token)"""
+        """
+        Cierra la sesión del usuario (invalida el token).
+        
+        Args:
+            access_token: Token de acceso del usuario
+            
+        Returns:
+            Dict con success y message o error
+        """
         try:
             self.client.global_sign_out(AccessToken=access_token)
             return {'success': True, 'message': 'Sesión cerrada correctamente'}
@@ -189,7 +268,15 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def refresh_token(self, refresh_token: str) -> Dict:
-        """Refresca el access token"""
+        """
+        Refresca el access token usando el refresh token.
+        
+        Args:
+            refresh_token: Refresh token del usuario
+            
+        Returns:
+            Dict con nuevos tokens o error
+        """
         try:
             response = self.client.initiate_auth(
                 ClientId=self.client_id,
@@ -209,7 +296,22 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def verify_token(self, token: str) -> Optional[Dict]:
-        """Verifica y decodifica un JWT token"""
+        """
+        Verifica y decodifica un JWT token.
+        ...
+        """
+        if self.jwks is None:            # <-- AÑADE ESTA LÍNEA
+            self.jwks = self._get_jwks() # <-- Y ESTA LÍNEA
+        """
+        Verifica y decodifica un JWT token.
+        
+        Args:
+            token: Token JWT a verificar
+            
+        Returns:
+            Payload del token o None si es inválido
+        """
+        
         try:
             # Decodificar el header para obtener el kid
             headers = jwt.get_unverified_header(token)
@@ -231,7 +333,10 @@ class CognitoService:
                 key,
                 algorithms=['RS256'],
                 audience=self.client_id,
-                issuer=f"https://cognito-idp.{settings.COGNITO_REGION}.amazonaws.com/{self.user_pool_id}",
+                issuer=(
+                    f"https://cognito-idp.{settings.COGNITO_REGION}.amazonaws.com/"
+                    f"{self.user_pool_id}"
+                ),
                 options={'verify_exp': True}
             )
             
@@ -242,7 +347,15 @@ class CognitoService:
             return None
     
     def get_user_info(self, access_token: str) -> Dict:
-        """Obtiene información del usuario usando el access token"""
+        """
+        Obtiene información del usuario usando el access token.
+        
+        Args:
+            access_token: Token de acceso
+            
+        Returns:
+            Dict con información del usuario o error
+        """
         try:
             response = self.client.get_user(AccessToken=access_token)
             
@@ -268,7 +381,15 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def forgot_password(self, email: str) -> Dict:
-        """Inicia el proceso de recuperación de contraseña"""
+        """
+        Inicia el proceso de recuperación de contraseña.
+        
+        Args:
+            email: Email del usuario
+            
+        Returns:
+            Dict con success y message o error
+        """
         try:
             self.client.forgot_password(
                 ClientId=self.client_id,
@@ -281,7 +402,17 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def confirm_forgot_password(self, email: str, code: str, new_password: str) -> Dict:
-        """Confirma el cambio de contraseña con el código recibido"""
+        """
+        Confirma el cambio de contraseña con el código recibido.
+        
+        Args:
+            email: Email del usuario
+            code: Código de verificación
+            new_password: Nueva contraseña
+            
+        Returns:
+            Dict con success y message o error
+        """
         try:
             self.client.confirm_forgot_password(
                 ClientId=self.client_id,
@@ -300,7 +431,17 @@ class CognitoService:
             return {'success': False, 'error': str(e)}
     
     def change_password(self, access_token: str, old_password: str, new_password: str) -> Dict:
-        """Cambia la contraseña del usuario autenticado"""
+        """
+        Cambia la contraseña del usuario autenticado.
+        
+        Args:
+            access_token: Token de acceso
+            old_password: Contraseña actual
+            new_password: Nueva contraseña
+            
+        Returns:
+            Dict con success y message o error
+        """
         try:
             self.client.change_password(
                 AccessToken=access_token,
@@ -314,69 +455,24 @@ class CognitoService:
             return {'success': False, 'error': 'La nueva contraseña no cumple con los requisitos'}
         except Exception as e:
             return {'success': False, 'error': str(e)}
+
+    def is_admin(self, id_token_payload: Dict) -> bool:
+        """
+        Verifica si el payload del token contiene el rol de administrador.
         
-    """
-    Esta funcion es para cuando el usuario inicia sesion con google o facebook
-    """   
-    def sync_federated_user(self, db: Session, id_token: str) -> dict:
-        try:
-            # verificar y decodificar el id de cognito
-            payload = self.verify_token(id_token)
-
-            if not payload:
-                return {'success': False, 'error': 'Token inválido o expirado. No se puede sincronizar.'}
+        Args:
+            id_token_payload: Payload decodificado del ID token
             
-            # extraer informacion del payload
-            cognito_sub = payload.get('sub')
-            user_email = payload.get('email')
-            first_name = payload.get('given_name', 'Usuario') # Default seguro
-            last_name = payload.get('family_name', 'Federado') # Default seguro
+        Returns:
+            True si es admin, False en caso contrario
+        """
+        user_role = id_token_payload.get('role')
+        
+        if not user_role:
+            user_role = id_token_payload.get('custom:role')
 
-            if not cognito_sub or not user_email:
-                return {'success': False, 'error': 'Token incompleto. Faltan sub o email.'}
-            
-            # Buscar si el usuario ya existe en la BD  usando el cognito_sub
-            existing_user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
-                
-            if existing_user:
-                # El usuario ya existe y está sincronizado, no se hace nada
-                return {"success": True, "user_id": str(existing_user.user_id), "message": "Usuario sincronizado (existente)."}
+        return user_role == UserRole.ADMIN.value
 
-            # Determinar el AuthType del proveedor (Google/Facebook/Amazon/etc.)
-            issuer = payload.get('iss', '').lower() 
-            auth_type_value = AuthType.EMAIL # Valor por defecto si no se identifica
 
-            if 'google' in issuer:
-                auth_type_value = AuthType.GOOGLE
-            elif 'facebook' in issuer:
-                auth_type_value = AuthType.FACEBOOK
-
-            # Cear el registro local 
-            new_db_user = User(
-                cognito_sub=cognito_sub,
-                email=user_email,
-                first_name=first_name,
-                last_name=last_name,
-                auth_type=auth_type_value, 
-                password_hash=None, # IMPORTANTE: Null para federados
-                gender=Gender.PREFER_NOT_SAY, 
-                date_of_birth=datetime.today(),
-                profile_picture=payload.get('picture'),
-                role=UserRole.USER,
-                account_status=True
-            )
-                
-            db.add(new_db_user)
-            db.commit()
-            db.refresh(new_db_user)
-
-            return {
-                "success": True,
-                "user_id": str(new_db_user.user_id),
-                "message": "Usuario creado y sincronizado exitosamente."
-            }
-        except Exception as e:
-            return {'success': False, 'error': f"Error interno durante la sincronización: {str(e)}"}
-
-       
+# Instancia única del servicio
 cognito_service = CognitoService()
