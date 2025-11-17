@@ -8,8 +8,8 @@ const StarIcon = ({ filled }) => (
   </svg>
 );
 
-// --- 2. SIDEBAR DE FILTROS ---
-const Sidebar = ({ currentFilters, onFilterChange }) => {
+// --- 2. SIDEBAR DE FILTROS (VERSIÓN RESPONSIVA MEJORADA) ---
+const Sidebar = ({ currentFilters, onFilterChange, isMobileOpen, onMobileClose }) => {
   const categoryItems = [
     { label: "Proteínas", value: "proteinas" },
     { label: "Pre-Entreno", value: "pre-entreno" },
@@ -47,58 +47,119 @@ const Sidebar = ({ currentFilters, onFilterChange }) => {
     }
   ];
 
+  /**
+   * Función centralizada para manejar clics en filtros.
+   * Llama a `onFilterChange` y luego cierra el menú si está en móvil.
+   */
+  const handleItemClick = (type, value) => {
+    onFilterChange(type, value);
+    if (isMobileOpen) {
+      onMobileClose();
+    }
+  };
+
   return (
-    <aside className="w-full lg:w-64 flex-shrink-0">
-      <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-4">
-        <button onClick={() => onFilterChange('reset', null)} className="text-xs text-red-500 hover:underline mb-4 w-full text-left font-medium">
-            Limpiar filtros
-        </button>
+    <>
+      {/* Overlay para móvil */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
+      )}
+      
+      {/* Contenedor del Sidebar */}
+      <aside className={`
+        w-full max-w-xs sm:max-w-sm lg:w-64 flex-shrink-0
+        fixed lg:sticky top-0 left-0 h-screen lg:h-auto
+        transform transition-transform duration-300 ease-in-out z-50
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        bg-white
+      `}>
+        <div className="rounded-none lg:rounded-2xl shadow-xl lg:shadow-sm h-full flex flex-col">
+          
+          {/* Header Fijo (con botón de cerrar en móvil) */}
+          <div className="flex-shrink-0 p-4 lg:p-6 pb-2 lg:pb-4">
+            <div className="flex justify-between items-center mb-4 lg:hidden">
+              <h2 className="text-xl font-bold text-gray-900">Filtros</h2>
+              <button 
+                onClick={onMobileClose}
+                className="p-2 text-gray-500 hover:text-gray-700"
+                aria-label="Cerrar filtros"
+              >
+                ✕
+              </button>
+            </div>
 
-        <div className="mt-0">
-            <h3 className="font-bold text-gray-900 text-lg mb-3 pb-1 border-b border-gray-200">Categorías</h3>
-            <ul className="space-y-2">
-                {categoryItems.map((item) => {
-                    const isActive = currentFilters.category === item.value;
-                    return (
-                        <li 
-                            key={item.value} 
-                            onClick={() => onFilterChange('category', item.value)}
-                            className={`cursor-pointer text-sm transition-colors flex justify-between items-center py-1 ${isActive ? "text-blue-800 font-bold bg-blue-50 px-2 rounded" : "text-gray-600 hover:text-blue-800 hover:font-medium"}`}
-                        >
-                            <span>{item.label}</span>
-                            {isActive && <span className="text-blue-600 text-xs">✕</span>}
-                        </li>
-                    );
-                })}
-            </ul>
-        </div>
-
-        {otherSections.map((section) => (
-          <div key={section.id} className="mt-6">
-            <h3 className="font-bold text-gray-900 text-lg mb-3 pb-1 border-b border-gray-200">{section.title}</h3>
-            <ul className="space-y-2">
-              {section.items.map((item) => {
-                const isActive = currentFilters[section.id] === item.value;
-                return (
-                  <li key={item.value} onClick={() => onFilterChange(section.id, item.value)}
-                    className={`cursor-pointer text-sm transition-colors flex justify-between items-center py-1 ${isActive ? "text-blue-800 font-bold bg-blue-50 px-2 rounded" : "text-gray-600 hover:text-blue-800 hover:font-medium"}`}>
-                    <span>{item.label}</span>
-                    {isActive && <span className="text-blue-600 text-xs">✕</span>}
-                  </li>
-                );
-              })}
-            </ul>
+            <button 
+              onClick={() => handleItemClick('reset', null)}
+              className="text-xs text-red-500 hover:underline w-full text-left font-medium"
+            >
+              Limpiar filtros
+            </button>
           </div>
-        ))}
-      </div>
-    </aside>
+
+          {/* Contenido Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6 pt-2 lg:pt-0">
+            <div className="mt-0">
+              <h3 className="font-bold text-gray-900 text-lg mb-3 pb-1 border-b border-gray-200">Categorías</h3>
+              <ul className="space-y-1">
+                {categoryItems.map((item) => {
+                  const isActive = currentFilters.category === item.value;
+                  return (
+                    <li key={item.value}>
+                      <button
+                        type="button"
+                        onClick={() => handleItemClick('category', item.value)}
+                        className={`w-full text-left text-sm transition-colors flex justify-between items-center py-1 px-2 rounded
+                          ${isActive ? "text-blue-800 font-bold bg-blue-50" : "text-gray-600 hover:text-blue-800 hover:bg-blue-50/50"}
+                        `}
+                      >
+                        <span>{item.label}</span>
+                        {isActive && <span className="text-blue-600 text-xs">✕</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            {otherSections.map((section) => (
+              <div key={section.id} className="mt-6">
+                <h3 className="font-bold text-gray-900 text-lg mb-3 pb-1 border-b border-gray-200">{section.title}</h3>
+                <ul className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = currentFilters[section.id] === item.value;
+                    return (
+                      <li key={item.value}>
+                        <button
+                          type="button"
+                          onClick={() => handleItemClick(section.id, item.value)}
+                          className={`w-full text-left text-sm transition-colors flex justify-between items-center py-1 px-2 rounded
+                            ${isActive ? "text-blue-800 font-bold bg-blue-50" : "text-gray-600 hover:text-blue-800 hover:bg-blue-50/50"}
+                          `}
+                        >
+                          <span>{item.label}</span>
+                          {isActive && <span className="text-blue-600 text-xs">✕</span>}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </aside>
+    </>
   );
 };
 
+
 // --- 3. PRODUCT CARD ---
 const ProductCard = ({ product, onAddToCart }) => {
-  // --- CAMBIO: Generar URL amigable ---
-  // Reemplaza espacios con guiones para la URL (Ej: "Whey Gold" -> "Whey-Gold")
+  // Genera URL amigable
   const productSlug = product.title.replace(/\s+/g, '-');
 
   return (
@@ -175,6 +236,9 @@ const MarketplaceView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 6;
+  
+  // --- MODIFICACIÓN: Estado para sidebar móvil ---
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const { addToCart, allProducts } = useOutletContext();
 
@@ -223,21 +287,36 @@ const MarketplaceView = () => {
     <div className="min-h-screen bg-[#FFFDF5] py-10 font-sans text-gray-800">
       <div className="container mx-auto px-4 xl:px-20 max-w-screen-2xl">
         
-        <div className="flex flex-col md:flex-row justify-between items-end mb-8 pb-4 border-b border-gray-200">
-            <div>
-                <p className="text-sm text-gray-400 uppercase tracking-wider font-semibold mb-1">Tienda</p>
-                <h1 className="text-3xl lg:text-4xl font-bold text-[#334173]">{pageTitle}</h1>
+        {/* --- MODIFICACIÓN: Header de página responsivo --- */}
+        <div className="flex flex-col md:flex-row justify-between md:items-end mb-8 pb-4 border-b border-gray-200">
+            <div className="w-full md:w-auto">
+              <p className="text-sm text-gray-400 uppercase tracking-wider font-semibold mb-1">Tienda</p>
+              <h1 className="text-3xl lg:text-4xl font-bold text-[#334173]">{pageTitle}</h1>
             </div>
-            <div className="text-sm text-gray-500 mt-2 md:mt-0">
-                Mostrando <strong>{filteredProducts.length}</strong> resultados
+            <div className="text-sm text-gray-500 mt-2 md:mt-0 w-full md:w-auto text-left md:text-right">
+              Mostrando <strong>{filteredProducts.length}</strong> resultados
             </div>
         </div>
 
+        {/* --- MODIFICACIÓN: Botón de filtros móvil --- */}
+        <button
+          onClick={() => setIsMobileSidebarOpen(true)}
+          className="lg:hidden mb-6 w-full flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm text-lg font-bold text-[#334173]"
+          aria-label="Mostrar filtros"
+        >
+          <span>Filtros</span>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+
+
         <div className="flex flex-col lg:flex-row gap-8">
           
+          {/* --- MODIFICACIÓN: Props pasadas al Sidebar --- */}
           <Sidebar 
             currentFilters={currentFilters} 
-            onFilterChange={handleFilterChange} 
+            onFilterChange={handleFilterChange}
+            isMobileOpen={isMobileSidebarOpen}
+            onMobileClose={() => setIsMobileSidebarOpen(false)}
           />
 
           <main className="flex-1">

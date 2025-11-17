@@ -9,21 +9,21 @@ const VerificationPage = () => {
   const handleChange = (e, index) => {
     const value = e.target.value;
 
-    // Solo números
+    // Solo numeros
     if (!/^\d*$/.test(value)) return;
 
     const newCode = [...code];
     newCode[index] = value.slice(-1);
     setCode(newCode);
 
-    // Avanzar al siguiente input automáticamente
+    // Avanzar al siguiente input automaticamente
     if (value && index < 5) {
       inputRefs.current[index + 1].focus();
     }
   };
 
   const handleKeyDown = (e, index) => {
-    // Retroceder si se borra y está vacío
+    // Retroceder si se borra y esta vacio
     if (e.key === "Backspace" && !code[index] && index > 0) {
       inputRefs.current[index - 1].focus();
     }
@@ -55,7 +55,7 @@ const VerificationPage = () => {
           </p>
 
           {/* Inputs del código */}
-          <div className="flex justify-center gap-3 mb-8">
+          <div className="flex justify-center gap-2 md:gap-3 mb-8">
             {code.map((digit, index) => (
               <React.Fragment key={index}>
                 <input
@@ -65,26 +65,26 @@ const VerificationPage = () => {
                   value={digit}
                   onChange={(e) => handleChange(e, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="w-12 h-14 md:w-14 md:h-16 border-2 border-gray-400 rounded-xl text-center text-2xl font-bold text-gray-700 
-                  focus:outline-none focus:border-[#354a7d] focus:ring-2 focus:ring-[#354a7d]/20 transition-all"
+                  className="w-10 h-12 text-xl md:w-14 md:h-16 md:text-2xl border-2 border-gray-400 rounded-xl text-center font-bold text-gray-700 
+                    focus:outline-none focus:border-[#354a7d] focus:ring-2 focus:ring-[#354a7d]/20 transition-all"
                 />
                 {index === 2 && <div className="w-2"></div>}
               </React.Fragment>
             ))}
           </div>
 
-          {/* Botón continuar */}
+          {/* Boton continuar */}
           <Link
             to="/RecoveryPassword"
-            className="block w-full bg-[#354a7d] hover:bg-[#2c3e69] text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider mb-4 transition-colors shadow-md"
+            className="block w-full bg-[#354a7d] hover:bg-[#2c3e69] text-white font-bold py-3 rounded-xl text-base md:text-lg uppercase tracking-wider mb-4 transition-colors shadow-md"
             style={{ fontFamily: "Oswald, sans-serif" }}
           >
             Continuar
           </Link>
 
-          {/* Botón reenviar */}
+          {/* Boton reenviar */}
           <button
-            className="w-full bg-[#a8c49a] hover:bg-[#95b386] text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider mb-6 transition-colors shadow-md"
+            className="w-full bg-[#a8c49a] hover:bg-[#95b386] text-white font-bold py-3 rounded-xl text-base md:text-lg uppercase tracking-wider mb-6 transition-colors shadow-md"
             style={{ fontFamily: "Oswald, sans-serif" }}
           >
             Reenviar Código
