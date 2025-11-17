@@ -18,7 +18,7 @@ const LoginPage = () => {
       <div className="relative flex w-full flex-col justify-center bg-[#FFFCF2] p-8 md:w-1/2 lg:px-20">
         
         {/* Texto de fondo */}
-        <div className="w-[669px] h-0">
+        <div className="hidden md:block w-[669px] h-0">
           <span className="fixed top-[560px] -left-px text-[150px] font-bold text-gray-200 opacity-60 md:text-[180px] font-bebas tracking-[40.00px] leading-[normal]">
             B E F I T
           </span>

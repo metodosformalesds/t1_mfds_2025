@@ -9,7 +9,7 @@ const RegisterPage = () => {
       <div className="relative flex w-full flex-col justify-center bg-[#FFFCF2] p-8 md:w-1/2 lg:px-20">
         
         {/* Texto de fondo */}
-        <div className="pointer-events-none absolute bottom-0 left-0 w-full overflow-hidden">
+        <div className="hidden md:block w-[669px] h-0">
           <span className="fixed top-[560px] -left-px text-[150px] font-bold text-gray-200 opacity-60 md:text-[180px] font-bebas tracking-[40.00px] leading-[normal]">
             B E F I T
           </span>
@@ -21,11 +21,11 @@ const RegisterPage = () => {
           {/* Encabezado */}
         <div className="mb-12 flex w-full justify-center">
           <div className="relative mb-0 text-center inline-block">
-            <h1 className="font-bebas text-8xl font-Regular tracking-[0.3em] text-black">
+            <h1 className="font-bebas text-7xl tracking-wider text-black md:text-8xl md:tracking-[0.3em]">
               REGISTER
             </h1>
             {/* Estrella */}
-            <div className="absolute -right-8 -top-14 animate-pulse">
+            <div className="absolute -right-6 -top-10 animate-pulse md:-right-8 md:-top-14">
               <svg width="80" height="100" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth=".5" className="text-gray-800">
                 <path d="M12 2 Q12 12 22 12 Q12 12 12 22 Q12 12 2 12 Q12 12 12 2 Z" />
               </svg>

@@ -233,7 +233,7 @@ export default function App() {
 
       {/* ------------------ DERECHA ------------------ */}
       <div className="hidden h-screen w-1/2 bg-[#70AA77] md:flex"></div>
-        <div className="pointer-events-none absolute bottom-0 right-0 w-full overflow-hidden">
+        <div className="hidden md:block pointer-events-none absolute bottom-0 right-0 w-full overflow-hidden">
             <span className="fixed top-[560px] -right-px text-[150px] font-bold text-gray-200 opacity-60 md:text-[145px] font-bebas tracking-[40px] leading-normal">
             B E F I T
             </span>
