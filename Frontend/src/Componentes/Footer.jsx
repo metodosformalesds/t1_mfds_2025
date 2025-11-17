@@ -37,7 +37,7 @@ const Footer = () => {
                             </Link>
                         </li>
                        <li>
-                            <Link to="/AboutUs" className="hover:underline cursor-pointer">
+                            <Link to="/AboutUsPage" className="hover:underline cursor-pointer">
                             Sobre nosotros
                             </Link>
                         </li>

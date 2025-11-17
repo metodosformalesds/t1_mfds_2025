@@ -1,8 +1,37 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import logo from '../assets/Befitwhite.png';
 
+const MotionLink = motion(Link);
+
 export default function VerifyAccount() {
+  const mainCardVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { delay: 0.2, type: 'spring', stiffness: 100, damping: 15 } 
+    }
+  };
+  
+  const contentStagger = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.08,
+        delayChildren: 0.3
+      } 
+    }
+  };
+  
+  const itemVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { ease: 'easeOut' } }
+  };
+
+
   // Datos simulados
   const options = [
     {
@@ -40,65 +69,89 @@ export default function VerifyAccount() {
   return (
     <div className="min-h-screen flex flex-col bg-[#fcfbf5]">
       
-      {/* 1. Contenedor Superior Verde */}
       <div className="bg-[#70AA77] pb-48 shadow-sm">
         <header className="w-full px-6 py-4 flex items-center border-b border-[#A5C8A1]">
-          <img src={logo} alt="Logo Befit" className="h-12 object-contain" />
+          <motion.img 
+            src={logo} 
+            alt="Logo Befit" 
+            className="h-12 object-contain"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, ease: 'easeOut', duration: 0.5 }}
+          />
         </header>
       </div>
 
-      {/* 2. Contenido Principal con Margen Negativo */}
       <main className="flex-grow flex items-start justify-center px-4 -mt-40 pb-10">
-        <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 md:p-10 relative z-10">
+        {/* --- Tarjeta principal con animacion --- */}
+        <motion.div 
+          className="bg-white rounded-3xl shadow-xl w-full max-w-lg p-8 md:p-10 relative z-10"
+          variants={mainCardVariants}
+          initial="hidden"
+          animate="visible"
+        >
           
-          {/* Titulos */}
-          <div className="text-center mb-8">
-            <h1 className="font-bebas text-xl md:text-4xl font-regular text-gray-900 uppercase tracking-tight mb-3">
-              Verifica que esta cuenta te pertenece
-            </h1>
-            <p className="font-poppins text-gray-600 text-sm md:text-base font-light">
-              Elige cómo recibir el código de verificación
-            </p>
-          </div>
+          {/* --- Contenedor Stagger para el contenido --- */}
+          <motion.div
+            variants={contentStagger}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Titulos */}
+            <motion.div className="text-center mb-8" variants={itemVariant}>
+              <h1 className="font-bebas text-xl md:text-4xl font-regular text-gray-900 uppercase tracking-tight mb-3">
+                Verifica que esta cuenta te pertenece
+              </h1>
+              <p className="font-poppins text-gray-600 text-sm md:text-base font-light">
+                Elige cómo recibir el código de verificación
+              </p>
+            </motion.div>
 
-          {/* Lista de Opciones */}
-          <div className="space-y-0">
-            {options.map((option, index) => (
-              <div key={option.id}>
-                {/* Separador */}
-                {index > 0 && <div className="h-px bg-gray-100"></div>}
-                
-                <Link to="/RecoveryCode" className="group w-full flex items-center justify-between py-5 hover:bg-gray-50 transition-colors rounded-lg px-2 -mx-2">
-                  <div className="flex items-center gap-4">
-                    {/* Circulo del icono */}
-                    <div className="w-12 h-12 rounded-full bg-[#B8D2B1] group-hover:bg-[#A5C8A1] transition-colors flex items-center justify-center flex-shrink-0 text-[#fcfbf5]">
-                      {option.icon}
-                    </div>
-                    <div className="text-left">
-                      <p className="font-bold text-gray-900 text-sm md:text-base">{option.title}</p>
-                      <p className="text-gray-500 text-xs md:text-sm">{option.detail}</p>
-                    </div>
-                  </div>
+            {/* Lista de Opciones */}
+            <div className="space-y-0">
+              {options.map((option, index) => (
+                <motion.div key={option.id} variants={itemVariant}>
+                  {index > 0 && <div className="h-px bg-gray-100"></div>}
                   
-                  {/* Icono de flecha */}
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 group-hover:text-[#70AA77] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-            ))}
-            {/* Separador final */}
-            <div className="h-px bg-gray-100"></div>
-          </div>
+                  <MotionLink 
+                    to="/RecoveryCode" 
+                    className="group w-full flex items-center justify-between py-5 transition-colors rounded-lg px-2 -mx-2"
+                    whileHover={{ backgroundColor: "rgb(249 250 251)" }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-[#B8D2B1] group-hover:bg-[#A5C8A1] transition-colors flex items-center justify-center flex-shrink-0 text-[#fcfbf5]">
+                        {option.icon}
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-gray-900 text-sm md:text-base">{option.title}</p>
+                        <p className="text-gray-500 text-xs md:text-sm">{option.detail}</p>
+                      </div>
+                    </div>
+                    
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 group-hover:text-[#70AA77] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </MotionLink>
+                </motion.div>
+              ))}
+              <div className="h-px bg-gray-100"></div>
+            </div>
 
-          {/* Boton Volver */}
-          <div className="mt-10 text-center">
-            <Link to='/' className="font-montserrat text-gray-500 font-medium text-sm hover:text-[#70AA77] transition-colors">
-              Volver
-            </Link>
-          </div>
-
-        </div>
+            {/* Boton Volver */}
+            <motion.div className="mt-10 text-center" variants={itemVariant}>
+              <MotionLink 
+                to='/' 
+                className="font-montserrat text-gray-500 font-medium text-sm transition-colors"
+                whileHover={{ color: "#70AA77" }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Volver
+              </MotionLink>
+            </motion.div>
+          </motion.div>
+        
+        </motion.div>
       </main>
     </div>
   );
