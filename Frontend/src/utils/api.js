@@ -111,7 +111,7 @@ export const API_ENDPOINTS = {
     USER_PROFILE_DELETE: "/api/v1/profile/me",
     
     // ============ PLACEMENT TEST ============
-    PLACEMENT_TEST: "/api/v1/placement-test",
+    PLACEMENT_TEST: "/api/v1/placement-test/placement-test",
     
     // ============ BÚSQUEDA Y FILTROS ============
     SEARCH_PRODUCTS: "/api/v1/search",
@@ -175,6 +175,11 @@ export const API_ENDPOINTS = {
     ADMIN_PRODUCTS_UPDATE: (productId) => `/api/v1/admin/products/${productId}`,
     ADMIN_PRODUCTS_DELETE: (productId) => `/api/v1/admin/products/${productId}`,
     ADMIN_PRODUCTS_BULK_ACTION: "/api/v1/admin/products/bulk-action",
+    
+    // ============ ADMINISTRACIÓN DE USUARIOS (ADMIN) ============
+    ADMIN_USERS_CREATE_ADMIN: "/api/v1/admin/users/create-admin",
+    ADMIN_USERS_PROMOTE_TO_ADMIN: "/api/v1/admin/users/promote-to-admin",
+    ADMIN_USERS_LIST_ADMINS: "/api/v1/admin/users/admins",
     
     // ============ ANALYTICS Y REPORTES (ADMIN) ============
     ANALYTICS_DASHBOARD: "/api/v1/analytics/dashboard",
@@ -1201,6 +1206,76 @@ export const downloadLowStockReportCSV = (threshold = 10) => {
     const queryString = new URLSearchParams({ threshold }).toString();
     window.open(`${API_BASE}${API_ENDPOINTS.ANALYTICS_LOW_STOCK_CSV}?${queryString}`, '_blank');
 };
+
+// ============ ADMINISTRACIÓN DE USUARIOS (ADMIN) ============
+
+/**
+ * Autor: Diego Jasso
+ * Descripción: Crea un nuevo usuario con rol de administrador con imagen de perfil opcional.
+ *              TEMPORALMENTE ACCESIBLE: Cualquier usuario autenticado puede crear admins.
+ *              TODO: Cambiar a require_admin cuando esté listo.
+ * Endpoint: POST /api/v1/admin/users/create-admin
+ * Parámetros:
+ *   @param {FormData} formData - FormData con campos:
+ *     - email (string): Email del nuevo administrador
+ *     - password (string): Contraseña del administrador
+ *     - first_name (string): Nombre del administrador
+ *     - last_name (string): Apellido del administrador
+ *     - gender (string, opcional): Género (M, F, prefer_not_say)
+ *     - birth_date (string, opcional): Fecha de nacimiento en formato ISO
+ *     - profile_image (File, opcional): Imagen de perfil del administrador
+ * Retorna: AdminUserResponse con información del administrador creado
+ * Excepciones: 400 si hay error en la creación o el email ya existe
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
+ * Nota: Utiliza multipart/form-data para soportar imagen de perfil
+ */
+export const createAdminUser = (formData) => {
+    const token = localStorage.getItem("token");
+    return fetch(`${API_BASE}${API_ENDPOINTS.ADMIN_USERS_CREATE_ADMIN}`, {
+        method: "POST",
+        headers: {
+            ...(token && { "Authorization": `Bearer ${token}` })
+        },
+        body: formData
+    }).then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || data.message || `Error ${res.status}`);
+        return data;
+    });
+};
+
+/**
+ * Autor: Diego Jasso
+ * Descripción: Convierte un usuario regular existente a administrador.
+ *              TEMPORALMENTE ACCESIBLE: Cualquier usuario autenticado puede promover a otros.
+ *              TODO: Cambiar a require_admin cuando esté listo.
+ * Endpoint: PATCH /api/v1/admin/users/promote-to-admin
+ * Parámetros:
+ *   @param {number} userId - ID del usuario a promover a administrador
+ * Retorna: AdminUserResponse con información del usuario promovido
+ * Excepciones: 
+ *   - 400: Si hay error en la promoción
+ *   - 404: Si el usuario no existe
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
+ */
+export const promoteUserToAdmin = (userId) => 
+    apiFetch(API_ENDPOINTS.ADMIN_USERS_PROMOTE_TO_ADMIN, {
+        method: "PATCH",
+        body: JSON.stringify({ user_id: userId })
+    });
+
+/**
+ * Autor: Diego Jasso
+ * Descripción: Obtiene la lista de todos los administradores del sistema.
+ *              TEMPORALMENTE ACCESIBLE: Cualquier usuario autenticado puede ver la lista.
+ *              TODO: Cambiar a require_admin cuando esté listo.
+ * Endpoint: GET /api/v1/admin/users/admins
+ * Retorna: Array de AdminUserResponse con lista de todos los administradores
+ *          Cada objeto incluye: user_id, email, first_name, last_name, role, 
+ *          account_status, created_at, profile_picture
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
+ */
+export const getAllAdmins = () => apiFetch(API_ENDPOINTS.ADMIN_USERS_LIST_ADMINS);
 
 // ============ AUTENTICACIÓN - CAMBIO DE CONTRASEÑA ============
 
