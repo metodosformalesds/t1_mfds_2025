@@ -206,16 +206,6 @@ const RegisterPage = () => {
               />
             </motion.div>
 
-            {/* Olvidaste contraseña */}
-            <motion.div 
-              className="text-right"
-              variants={itemVariants}
-            >
-              <a href="#" className="text-xs font-medium text-gray-600 hover:text-black hover:underline">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </motion.div>
-
             {/* Boton Register */}
             <motion.div
               variants={buttonVariants}
