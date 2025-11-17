@@ -101,6 +101,7 @@ export const API_ENDPOINTS = {
     AUTH_LOGOUT: "/api/v1/auth/logout",
     AUTH_FORGOT_PASSWORD: "/api/v1/auth/forgot-password",
     AUTH_CONFIRM_FORGOT_PASSWORD: "/api/v1/auth/confirm-forgot-password",
+    AUTH_CHANGE_PASSWORD: "/api/v1/auth/change-password",
     
     // ============ PERFIL DE USUARIO ============
     USER_PROFILE: "/api/v1/profile/me",
@@ -109,9 +110,8 @@ export const API_ENDPOINTS = {
     USER_PROFILE_IMAGE: "/api/v1/profile/me/image",
     USER_PROFILE_DELETE: "/api/v1/profile/me",
     
-    // ============ PLACEMENT TEST Y FITNESS PROFILE ============
+    // ============ PLACEMENT TEST ============
     PLACEMENT_TEST: "/api/v1/placement-test",
-    FITNESS_PROFILE: "/api/v1/placement-test/fitness-profile",
     
     // ============ BÚSQUEDA Y FILTROS ============
     SEARCH_PRODUCTS: "/api/v1/search",
@@ -186,6 +186,20 @@ export const API_ENDPOINTS = {
     ANALYTICS_PRODUCTS_CSV: "/api/v1/analytics/reports/products/export/csv",
     ANALYTICS_PRODUCTS_PDF: "/api/v1/analytics/reports/products/export/pdf",
     ANALYTICS_LOW_STOCK_CSV: "/api/v1/analytics/reports/low-stock/export/csv",
+    
+    // ============ ENVÍOS Y RASTREO ============
+    SHIPPING_CREATE_ORDER: "/api/v1/shipping/shipping/crear-pedido",
+    SHIPPING_TRACK_ORDER: (orderId) => `/api/v1/shipping/shipping/rastrear-pedido/${orderId}`,
+    
+    // ============ SUSCRIPCIONES MENSUALES ============
+    SUBSCRIPTIONS_CREATE: "/api/v1/subscriptions/create",
+    SUBSCRIPTIONS_MY_SUBSCRIPTION: "/api/v1/subscriptions/my-subscription",
+    SUBSCRIPTIONS_SUMMARY: "/api/v1/subscriptions/summary",
+    SUBSCRIPTIONS_PAUSE: "/api/v1/subscriptions/pause",
+    SUBSCRIPTIONS_RESUME: "/api/v1/subscriptions/resume",
+    SUBSCRIPTIONS_CANCEL: "/api/v1/subscriptions/cancel",
+    SUBSCRIPTIONS_UPDATE_PAYMENT: "/api/v1/subscriptions/payment-method",
+    SUBSCRIPTIONS_HISTORY: "/api/v1/subscriptions/history",
 };
 
 /**
@@ -333,9 +347,18 @@ export const confirmForgotPassword = (email, code, newPassword) =>
 
 /**
  * Autor: Diego Jasso
- * Descripción: Obtiene el perfil completo del usuario autenticado.
+ * Descripción: Obtiene el perfil completo del usuario autenticado, incluyendo fitness_profile si existe.
  * Endpoint: GET /api/v1/profile/me
- * Retorna: Información completa del usuario incluyendo email, nombre, foto, género, etc.
+ * Retorna: Información completa del usuario incluyendo:
+ *          - Datos básicos: email, nombre, foto, género, fecha de nacimiento, rol
+ *          - fitness_profile (null si no ha hecho el test): {
+ *              profile_id, test_date,
+ *              attributes: {
+ *                age, gender, exercise_freq, activity_type, activity_intensity,
+ *                diet_type, diet_special, supplements, goal_declared, sleep_hours,
+ *                recommended_plan, description, recommended_products
+ *              }
+ *            }
  */
 export const getUserProfile = () => apiFetch(API_ENDPOINTS.USER_PROFILE);
 
@@ -394,37 +417,31 @@ export const deleteUserAccount = () => apiFetch(API_ENDPOINTS.USER_PROFILE_DELET
 /**
  * Autor: Diego Jasso
  * Descripción: Envía las respuestas del test de posicionamiento para obtener plan personalizado.
- * Endpoint: POST /api/v1/placement-test
+ *              Automáticamente crea el fitness profile del usuario en la base de datos.
+ * Endpoint: POST /api/v1/placement-test/
  * Parámetros:
  *   @param {object} testData - Respuestas del test:
- *     - age (number): Edad del usuario
- *     - gender (string): Género
- *     - exercise_freq (number): Frecuencia de ejercicio (días/semana)
+ *     - age (number): Edad del usuario en años
+ *     - gender (string): Género del usuario
+ *     - exercise_freq (number): Frecuencia de ejercicio (días por semana)
  *     - activity_type (string): Tipo de actividad preferida
- *     - activity_intensity (string): Intensidad de actividad
+ *     - activity_intensity (string): Intensidad de la actividad
  *     - diet_type (string): Tipo de dieta
  *     - diet_special (string): Consideraciones dietéticas especiales
  *     - supplements (string): Suplementos actuales
  *     - goal_declared (string): Objetivo fitness declarado
  *     - sleep_hours (number): Horas de sueño promedio
- * Retorna: Plan recomendado, descripción y atributos del perfil fitness
+ * Retorna: PlacementTestOutput con plan recomendado, descripción y atributos calculados
+ * Excepciones: 
+ *   - 400: Datos de entrada inválidos
+ *   - 500: Error interno del servidor
+ *   - 503: Servicio no disponible (modelos ML no cargados)
+ * Nota: Este endpoint crea automáticamente el FitnessProfile en la BD con los resultados
  */
 export const submitPlacementTest = (testData) => apiFetch(API_ENDPOINTS.PLACEMENT_TEST, {
     method: "POST",
     body: JSON.stringify(testData)
 });
-
-/**
- * Autor: Diego Jasso
- * Descripción: Obtiene el perfil fitness del usuario autenticado.
- * Endpoint: GET /api/v1/placement-test/fitness-profile
- * Retorna: Información completa del perfil fitness incluyendo:
- *          - Fecha del test
- *          - Atributos físicos (altura, peso, BMI)
- *          - Nivel de actividad y objetivos fitness
- *          - Restricciones dietéticas
- */
-export const getFitnessProfile = () => apiFetch(API_ENDPOINTS.FITNESS_PROFILE);
 
 // ============ BÚSQUEDA Y FILTROS ============
 
@@ -792,8 +809,9 @@ export const getLoyaltyTierDetail = (tierId) =>
  * Descripción: Obtiene el historial de puntos del usuario.
  * Endpoint: GET /api/v1/loyalty/me/history
  * Parámetros:
- *   @param {number} limit - Cantidad máxima de registros (default: 50, max: 100)
- * Retorna: Lista de transacciones de puntos ordenadas por fecha
+ *   @param {number} limit - Cantidad máxima de registros (default: 50, max: 100, min: 1)
+ * Retorna: Array de PointHistoryResponse con point_history_id, loyalty_id, order_id,
+ *          points_change, event_type y event_date ordenados por fecha
  */
 export const getPointHistory = (limit = 50) => {
     const queryString = new URLSearchParams({ limit }).toString();
@@ -813,11 +831,16 @@ export const expirePoints = () =>
 
 /**
  * Autor: Ricardo Rodriguez
- * Descripción: Genera cupones mensuales para un usuario (ADMIN).
+ * Descripción: Genera cupones mensuales para un usuario (ADMIN ONLY).
+ *              Crea cupones según el tier actual del usuario.
  * Endpoint: POST /api/v1/loyalty/{user_id}/coupons/generate
  * Parámetros:
- *   @param {number} userId - ID del usuario
- * Retorna: Lista de códigos de cupón generados
+ *   @param {number} userId - ID del usuario para generar cupones
+ * Retorna: Object con message y codes (array de códigos de cupón generados)
+ * Excepciones: 
+ *   - 404: Usuario no encontrado
+ *   - 500: Error durante la generación de cupones
+ * Nota: Requiere permisos de administrador
  */
 export const generateMonthlyCoupons = (userId) => 
     apiFetch(API_ENDPOINTS.LOYALTY_GENERATE_COUPONS(userId), {
@@ -877,11 +900,13 @@ export const cancelOrder = (orderId, reason) =>
 
 /**
  * Autor: Diego Jasso
- * Descripción: Obtiene el estado actual de una orden.
+ * Descripción: Obtiene el estado actual de una orden perteneciente al usuario.
  * Endpoint: GET /api/v1/orders/{order_id}/status
  * Parámetros:
  *   @param {number} orderId - ID de la orden
- * Retorna: Estado actual y número de rastreo si está disponible
+ * Retorna: Object con order_status, tracking_number (si disponible) y datos básicos
+ * Excepciones: 404 si la orden no existe o no pertenece al usuario
+ * Nota: Requiere autenticación
  */
 export const getOrderStatus = (orderId) => apiFetch(API_ENDPOINTS.ORDERS_STATUS(orderId));
 
@@ -957,12 +982,13 @@ export const capturePayPalPayment = (captureData) =>
 
 /**
  * Autor: Diego Jasso
- * Descripción: Crea un nuevo producto con sus imágenes (requiere rol admin).
+ * Descripción: Crea un nuevo producto con sus imágenes.
  * Endpoint: POST /api/v1/admin/products
  * Parámetros:
  *   @param {FormData} formData - FormData con campos del producto e imágenes
  * Retorna: Producto creado con todas sus relaciones
  * Nota: Usa FormData para soportar upload de múltiples imágenes
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const createProduct = (formData) => {
     const token = localStorage.getItem("token");
@@ -981,12 +1007,13 @@ export const createProduct = (formData) => {
 
 /**
  * Autor: Diego Jasso
- * Descripción: Actualiza un producto existente (requiere rol admin).
+ * Descripción: Actualiza un producto existente.
  * Endpoint: PUT /api/v1/admin/products/{product_id}
  * Parámetros:
  *   @param {number} productId - ID del producto a actualizar
  *   @param {object} productData - Campos a actualizar (todos opcionales)
  * Retorna: Producto actualizado
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const updateProduct = (productId, productData) => 
     apiFetch(API_ENDPOINTS.ADMIN_PRODUCTS_UPDATE(productId), {
@@ -996,12 +1023,13 @@ export const updateProduct = (productId, productData) =>
 
 /**
  * Autor: Diego Jasso
- * Descripción: Elimina un producto (requiere rol admin).
+ * Descripción: Elimina un producto (soft o hard delete).
  * Endpoint: DELETE /api/v1/admin/products/{product_id}
  * Parámetros:
  *   @param {number} productId - ID del producto a eliminar
  *   @param {boolean} hardDelete - Si es true, elimina permanentemente (default: false)
  * Retorna: null (204 No Content)
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const deleteProduct = (productId, hardDelete = false) => {
     const queryString = hardDelete ? "?hard_delete=true" : "";
@@ -1012,13 +1040,14 @@ export const deleteProduct = (productId, hardDelete = false) => {
 
 /**
  * Autor: Diego Jasso
- * Descripción: Realiza operaciones en lote sobre múltiples productos (requiere rol admin).
+ * Descripción: Realiza operaciones en lote sobre múltiples productos.
  * Endpoint: POST /api/v1/admin/products/bulk-action
  * Parámetros:
  *   @param {object} bulkData - Datos de la operación en lote:
  *     - product_ids (array): Lista de IDs de productos
  *     - action (string): Acción a realizar ('activate', 'deactivate', 'delete')
  * Retorna: Resultado con cantidad de éxitos, fallos y lista de errores
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const bulkProductAction = (bulkData) => 
     apiFetch(API_ENDPOINTS.ADMIN_PRODUCTS_BULK_ACTION, {
@@ -1033,7 +1062,7 @@ export const bulkProductAction = (bulkData) =>
  * Descripción: Obtiene todas las estadísticas del dashboard administrativo.
  * Endpoint: GET /api/v1/analytics/dashboard
  * Retorna: Estadísticas de ventas, usuarios, productos y reviews pendientes
- * Nota: Requiere rol de administrador
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const getDashboardStats = () => apiFetch(API_ENDPOINTS.ANALYTICS_DASHBOARD);
 
@@ -1045,6 +1074,7 @@ export const getDashboardStats = () => apiFetch(API_ENDPOINTS.ANALYTICS_DASHBOAR
  *   @param {string} startDate - Fecha de inicio (ISO format, opcional)
  *   @param {string} endDate - Fecha de fin (ISO format, opcional)
  * Retorna: Reporte con totales, productos más vendidos y gráficas
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const getSalesReport = (startDate = null, endDate = null) => {
     const params = {};
@@ -1062,6 +1092,7 @@ export const getSalesReport = (startDate = null, endDate = null) => {
  *   @param {string} startDate - Fecha de inicio (opcional)
  *   @param {string} endDate - Fecha de fin (opcional)
  * Retorna: Lista de productos con ventas totales, ingresos, stock y rating
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const getProductsReport = (startDate = null, endDate = null) => {
     const params = {};
@@ -1078,6 +1109,7 @@ export const getProductsReport = (startDate = null, endDate = null) => {
  * Parámetros:
  *   @param {number} threshold - Umbral de stock bajo (default: 10)
  * Retorna: Lista de productos con stock por debajo del umbral
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const getLowStockProducts = (threshold = 10) => {
     const queryString = new URLSearchParams({ threshold }).toString();
@@ -1092,6 +1124,7 @@ export const getLowStockProducts = (threshold = 10) => {
  *   @param {string} startDate - Fecha de inicio (opcional)
  *   @param {string} endDate - Fecha de fin (opcional)
  * Retorna: Archivo CSV para descargar
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const downloadSalesReportCSV = (startDate = null, endDate = null) => {
     const params = {};
@@ -1109,6 +1142,7 @@ export const downloadSalesReportCSV = (startDate = null, endDate = null) => {
  *   @param {string} startDate - Fecha de inicio (opcional)
  *   @param {string} endDate - Fecha de fin (opcional)
  * Retorna: Archivo PDF para descargar
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const downloadSalesReportPDF = (startDate = null, endDate = null) => {
     const params = {};
@@ -1126,6 +1160,7 @@ export const downloadSalesReportPDF = (startDate = null, endDate = null) => {
  *   @param {string} startDate - Fecha de inicio (opcional)
  *   @param {string} endDate - Fecha de fin (opcional)
  * Retorna: Archivo CSV para descargar
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const downloadProductsReportCSV = (startDate = null, endDate = null) => {
     const params = {};
@@ -1143,6 +1178,7 @@ export const downloadProductsReportCSV = (startDate = null, endDate = null) => {
  *   @param {string} startDate - Fecha de inicio (opcional)
  *   @param {string} endDate - Fecha de fin (opcional)
  * Retorna: Archivo PDF para descargar
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const downloadProductsReportPDF = (startDate = null, endDate = null) => {
     const params = {};
@@ -1159,8 +1195,177 @@ export const downloadProductsReportPDF = (startDate = null, endDate = null) => {
  * Parámetros:
  *   @param {number} threshold - Umbral de stock bajo (default: 10)
  * Retorna: Archivo CSV para descargar
+ * **REQUIERE ROL: ADMIN** - Validado por dependencia require_admin
  */
 export const downloadLowStockReportCSV = (threshold = 10) => {
     const queryString = new URLSearchParams({ threshold }).toString();
     window.open(`${API_BASE}${API_ENDPOINTS.ANALYTICS_LOW_STOCK_CSV}?${queryString}`, '_blank');
 };
+
+// ============ AUTENTICACIÓN - CAMBIO DE CONTRASEÑA ============
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Cambia la contraseña del usuario autenticado.
+ *              Requiere la contraseña actual y la nueva contraseña.
+ * Endpoint: POST /api/v1/auth/change-password
+ * Parámetros:
+ *   @param {string} oldPassword - Contraseña actual del usuario
+ *   @param {string} newPassword - Nueva contraseña (debe cumplir requisitos de Cognito)
+ * Retorna: Mensaje de confirmación del cambio exitoso
+ * Excepciones: 400 si la contraseña actual es incorrecta o la nueva no cumple requisitos
+ * Nota: Requiere token de autenticación válido
+ */
+export const changePassword = (oldPassword, newPassword) => 
+    apiFetch(API_ENDPOINTS.AUTH_CHANGE_PASSWORD, {
+        method: "POST",
+        body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+    });
+
+// ============ ENVÍOS Y RASTREO ============
+
+/**
+ * Autor: Diego Jasso
+ * Descripción: Crea una nueva orden de compra en el sistema de envíos.
+ *              Procesa el pedido con los detalles del usuario, dirección y pago.
+ * Endpoint: POST /api/v1/shipping/shipping/crear-pedido/
+ * Parámetros:
+ *   @param {object} orderData - Datos de la orden (CreateOrder schema):
+ *     - user_id (number): ID del usuario que realiza el pedido
+ *     - address_id (number): ID de la dirección de envío
+ *     - payment_id (number): ID del método de pago utilizado
+ * Retorna: Order con order_id, items de la orden y totales calculados
+ * Excepciones: 
+ *   - 400: Error de validación en los datos
+ *   - 500: Error interno del servidor
+ * Nota: Este endpoint es parte del módulo de shipping/rastreo
+ */
+export const createShippingOrder = (orderData) => 
+    apiFetch(API_ENDPOINTS.SHIPPING_CREATE_ORDER, {
+        method: "POST",
+        body: JSON.stringify(orderData)
+    });
+
+/**
+ * Autor: Diego Jasso
+ * Descripción: Consulta el estado actual de una orden para rastreo.
+ *              Proporciona información de tracking, estado y productos incluidos.
+ * Endpoint: GET /api/v1/shipping/shipping/rastrear-pedido/{pedido_id}
+ * Parámetros:
+ *   @param {number} orderId - ID único del pedido a rastrear
+ * Retorna: OrderTrackingResponse con tracking_number, status, productos y fecha estimada
+ * Excepciones: 404 si el pedido no existe
+ */
+export const trackShippingOrder = (orderId) => 
+    apiFetch(API_ENDPOINTS.SHIPPING_TRACK_ORDER(orderId));
+
+// ============ SUSCRIPCIONES MENSUALES ============
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Crea una nueva suscripción mensual para el usuario autenticado.
+ *              Valida perfil fitness y método de pago, realiza primer cobro inmediato.
+ * Endpoint: POST /api/v1/subscriptions/create
+ * Parámetros:
+ *   @param {number} paymentMethodId - ID del método de pago guardado a utilizar
+ * Retorna: Información completa de la suscripción creada incluyendo fechas y plan
+ * Excepciones: 400 si el usuario no cumple requisitos (perfil fitness, método de pago, ya tiene suscripción activa)
+ * Requisitos:
+ *   - Usuario debe tener Fitness Profile completo (placement test)
+ *   - Debe tener método de pago guardado
+ *   - No puede tener otra suscripción activa
+ */
+export const createSubscription = (paymentMethodId) => 
+    apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_CREATE, {
+        method: "POST",
+        body: JSON.stringify({ payment_method_id: paymentMethodId })
+    });
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Obtiene la suscripción actual del usuario con toda su información.
+ *              Incluye estado, fechas, método de pago y plan fitness asignado.
+ * Endpoint: GET /api/v1/subscriptions/my-subscription
+ * Retorna: Información completa de la suscripción activa del usuario
+ * Excepciones: 404 si no tiene suscripción activa, 400 si hay error en la consulta
+ */
+export const getMySubscription = () => apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_MY_SUBSCRIPTION);
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Obtiene un resumen rápido del estado de suscripción del usuario.
+ *              Optimizado para mostrar en headers o dashboards sin cargar toda la info.
+ * Endpoint: GET /api/v1/subscriptions/summary
+ * Retorna: Resumen con is_active, status, próxima fecha de entrega y precio
+ *          Si no tiene suscripción retorna is_active=false
+ * Uso: Útil para badges o indicadores en el header
+ */
+export const getSubscriptionSummary = () => apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_SUMMARY);
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Pausa la suscripción activa del usuario temporalmente.
+ *              Durante el pausado no se realizarán cobros ni envíos.
+ * Endpoint: PATCH /api/v1/subscriptions/pause
+ * Retorna: Mensaje de confirmación de la pausa
+ * Excepciones: 400 si no hay suscripción activa o hay error
+ * Nota: Se puede reanudar en cualquier momento
+ */
+export const pauseSubscription = () => 
+    apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_PAUSE, {
+        method: "PATCH"
+    });
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Reanuda una suscripción pausada, reactivando cobros y envíos.
+ *              La suscripción vuelve a su ciclo normal.
+ * Endpoint: PATCH /api/v1/subscriptions/resume
+ * Retorna: Mensaje de confirmación de la reanudación
+ * Excepciones: 400 si no hay suscripción pausada o hay error
+ */
+export const resumeSubscription = () => 
+    apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_RESUME, {
+        method: "PATCH"
+    });
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Cancela permanentemente la suscripción del usuario.
+ *              Esta es una acción definitiva que requiere crear nueva suscripción para reactivar.
+ * Endpoint: DELETE /api/v1/subscriptions/cancel
+ * Retorna: Mensaje de confirmación de la cancelación
+ * Excepciones: 400 si no hay suscripción o hay error
+ * IMPORTANTE: Acción permanente, no se puede revertir. Usuario debe crear nueva suscripción.
+ */
+export const cancelSubscription = () => 
+    apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_CANCEL, {
+        method: "DELETE"
+    });
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Actualiza el método de pago asociado a la suscripción activa.
+ *              El nuevo método debe ser una tarjeta guardada válida del usuario.
+ * Endpoint: PUT /api/v1/subscriptions/payment-method
+ * Parámetros:
+ *   @param {number} paymentMethodId - ID del nuevo método de pago
+ * Retorna: Mensaje de confirmación de la actualización
+ * Excepciones: 400 si el método de pago no es válido o no pertenece al usuario
+ */
+export const updateSubscriptionPaymentMethod = (paymentMethodId) => 
+    apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_UPDATE_PAYMENT, {
+        method: "PUT",
+        body: JSON.stringify({ payment_method_id: paymentMethodId })
+    });
+
+/**
+ * Autor: Ricardo Rodriguez
+ * Descripción: Obtiene el historial completo de órdenes de la suscripción.
+ *              Incluye todas las órdenes generadas, totales gastados y detalles de envío.
+ * Endpoint: GET /api/v1/subscriptions/history
+ * Retorna: Historial con información de suscripción y lista completa de órdenes
+ *          Incluye total_orders y total_spent
+ * Excepciones: 400 si no hay suscripción o hay error
+ */
+export const getSubscriptionHistory = () => apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_HISTORY);
