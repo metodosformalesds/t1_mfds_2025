@@ -53,6 +53,7 @@ export default function PerfilUsuario() {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmAction, setConfirmAction] = useState(null);
     const [processingSubscription, setProcessingSubscription] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     // Cargar datos del usuario y lealtad al montar el componente
     useEffect(() => {
@@ -79,6 +80,11 @@ export default function PerfilUsuario() {
             setUserData(userProfile);
             setLoyaltyData(loyaltyStatus);
             setSubscriptionData(subscriptionStatus);
+            
+            // TODO: Verificar permisos reales desde el backend
+            // const isAdminUser = userProfile.role === 'admin' || userProfile.is_admin;
+            // Mock: establecer como admin para desarrollo
+            setIsAdmin(true);
         } catch (err) {
             console.error("Error loading user data:", err);
             setError("Error al cargar la información del usuario.");
@@ -310,6 +316,33 @@ export default function PerfilUsuario() {
                         </button>
                     </div>
                 </div>
+
+                {/* Admin Panel Button - Solo visible para administradores */}
+                {isAdmin && (
+                    <div className="bg-gradient-to-r from-[#31478F] to-[#4A5FA0] rounded-2xl shadow-lg p-6 md:p-8 mb-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <svg className="size-10 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                <div>
+                                    <h3 className="text-xl md:text-2xl font-semibold text-white font-popins">Panel de Administración</h3>
+                                    <p className="text-white/80 text-sm">Accede a las herramientas de administrador</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => navigate('/admin/dashboard')}
+                                className="bg-white/20 hover:bg-white/30 text-white font-semibold py-3 px-6 rounded-lg transition-colors backdrop-blur-sm flex items-center gap-2"
+                            >
+                                <span>Ir al panel</span>
+                                <svg className="size-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* General section */}
                 <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-4">
