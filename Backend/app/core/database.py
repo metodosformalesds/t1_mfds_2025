@@ -1,71 +1,35 @@
-# Autor: Luis & Gabriel
-# Fecha: 16/11/2025
-# Descripción: Configuración de base de datos usando SQLAlchemy 2.0
-# Soporta SQLite (desarrollo) y PostgreSQL/MySQL (producción)
-
+# Autor: Gabriel Vilchis
+# Fecha: 08/11/2025
+# Descripción: Este archivo configura la conexión a la base de datos utilizando SQLAlchemy.
+# Incluye la creación del motor de base de datos, la sesión y el modelo base,
+# así como una función generadora para obtener sesiones de manera segura.
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from typing import Generator
-from app.config import settings
-import logging
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
 
-logger = logging.getLogger(__name__)
-
-# Obtener URL desde configuración
-DATABASE_URL = settings.DATABASE_URL
-
-# Validar que existe
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv()
+#load_dotenv(os.path.join(basedir, "../../.env"))  # ajusta la ruta si tu .env está en la raíz
+# obtenemos el url de la bd desde las variables de entorno ubicados en .env
+DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise ValueError("No se encontró DATABASE_URL en el archivo .env")
+    raise ValueError("No se encontró DATABASE_URL en .env")
 
-# Configurar parámetros específicos según el tipo de base de datos
-connect_args = {}
-if "sqlite" in DATABASE_URL:
-    connect_args = {"check_same_thread": False}
-    logger.info("Usando SQLite como base de datos")
-else:
-    logger.info("Usando base de datos remota (PostgreSQL/MySQL)")
+# parametros de conexion a sqlite
+#engine = create_engine(
+ #   DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+#
 
-# Crear engine
-engine = create_engine(
-    DATABASE_URL,
-    connect_args=connect_args,
-    echo=settings.DEBUG,  # Mostrar SQL queries solo en DEBUG
-    pool_pre_ping=True,  # Verificar conexiones antes de usarlas
-)
+engine = create_engine(DATABASE_URL)  # no uses connect_args para SQLite
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) 
+Base = declarative_base()
 
-# Crear sesión
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
-
-# Base moderna para SQLAlchemy 2.0
-class Base(DeclarativeBase):
-    """
-    Clase base para todos los modelos de la base de datos.
-    Usa DeclarativeBase de SQLAlchemy 2.0 para mejor typing y features.
-    """
-    pass
-
-
-def get_db() -> Generator:
-    """
-    Dependencia de FastAPI que proporciona una sesión de base de datos.
-    
-    La sesión se cierra automáticamente después de cada request.
-    
-    Yields:
-        Session: Sesión de SQLAlchemy para operaciones de base de datos
-        
-    Example:
-```python
-        @app.get("/users")
-        def get_users(db: Session = Depends(get_db)):
-            return db.query(User).all()
-```
-    """
+"""
+Esta funcion se utiliza para obtener una sesion de base de datos.
+"""
+def get_db():
     db = SessionLocal()
     try:
         yield db

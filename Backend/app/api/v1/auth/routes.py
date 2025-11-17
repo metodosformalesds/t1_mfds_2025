@@ -12,15 +12,16 @@ from fastapi import (
     UploadFile, 
     status, 
     Form, 
-    Security
 )
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from typing import Optional, Dict
 from app.api.v1.auth.service import cognito_service
 from app.api.v1.auth import schemas
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.api.deps import get_token_from_header
+
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

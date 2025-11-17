@@ -1,3 +1,9 @@
+# Autor: Gabriel Vilchis
+# Fecha: 09/11/2025
+# Descripción: Servicio centralizado para la gestión de usuarios y autenticación
+# utilizando AWS Cognito. Maneja la lógica de negocio para el registro, login,
+# recuperación de contraseñas, validación de tokens y sincronización de usuarios locales (DB)
+# con Cognito, incluyendo la subida de imágenes de perfil a S3.
 import boto3
 from jose import jwt, JWTError
 from typing import Dict, Optional
@@ -33,7 +39,8 @@ class CognitoService:
         self.jwks = None
     
     def _get_jwks(self):
-        """Obtiene las claves públicas de Cognito con cache"""
+        """ Obtiene las claves públicas (JWKS) del User Pool de Cognito.
+        Implementa un mecanismo de caché para reducir las peticiones a AWS."""
         now = datetime.now()
         
         if (CognitoService._jwks_cache is None or 
@@ -78,17 +85,18 @@ class CognitoService:
         """
         profile_image_url = None
         s3_service_instance = S3Service()
+        profile_img = None # Usado para la URL que va a la DB y al retorno
+        current_time = datetime.now()
 
         try:
             email = user_data.email
-            profile_image_url = None
+            temp_s3_id = None # id temporal para subir cosas al s3 y cumplir el campo obligatorio de cognito
             
             # Generar ID temporal ANTES de subir la imagen
             temp_s3_id = str(uuid.uuid4())
 
-            # Subir imagen si se proporciona
             if profile_image:
-                # Validar tamaño de imagen (máximo 5MB)
+                # Validar tamaño de imagen
                 if len(profile_image) > 5 * 1024 * 1024:
                     return {
                         "success": False, 
@@ -100,10 +108,19 @@ class CognitoService:
                     user_id=temp_s3_id
                 )
 
+                temp_s3_id = str(uuid.uuid4())
+
+                upload_result = s3_service_instance.upload_profile_img(
+                    file_content=profile_image,
+                    user_id=temp_s3_id
+                )
+                 
                 if not upload_result["success"]:
                     return {"success": False, "error": upload_result["error"]}
-                
+            
                 profile_image_url = upload_result["file_url"]
+                profile_img = profile_image_url # placeholder inicial de la imagen
+
 
             # Construir atributos para Cognito
             user_attributes = [
@@ -146,7 +163,8 @@ class CognitoService:
                 date_of_birth=user_data.birth_date,
                 profile_picture=profile_image_url,
                 role=UserRole.USER,
-                account_status=True
+                account_status=True,
+                created_at=current_time
             )
 
             db.add(new_db_user)
