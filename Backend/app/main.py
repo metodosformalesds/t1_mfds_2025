@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 import logging
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.v1.router import api_router  # ✅ AGREGAR ESTA LÍNEA
+from app.api.v1.router import api_router
 
 logging.basicConfig(
     level=logging.INFO,
