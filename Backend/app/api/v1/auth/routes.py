@@ -41,12 +41,12 @@ def get_token_from_header(
 
 @router.post("/signup", response_model=schemas.SignUpResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     first_name: str = Form(...),
     last_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-    background_tasks: BackgroundTasks = Depends(),
     gender: Optional[str] = Form(None),
     birth_date: Optional[str] = Form(None), 
     profile_image: Optional[UploadFile] = None,
