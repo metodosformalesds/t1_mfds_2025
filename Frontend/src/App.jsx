@@ -11,6 +11,8 @@ import AdminSidebar from "./Componentes/AdminSidebar";
 
 // Componentes de Páginas
 import Home from "./Home/HomePage";
+import AboutUs from "./Home/AboutUsPage";
+// Componentes de Login y Registro
 import Login from "./Login/LoginPage";
 import Register from "./Login/RegisterPage";
 import RSelect from "./Login/RecoverySelect";
@@ -146,6 +148,7 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Home />} />
           <Route path="/profile" element={<ProfileUser />} />
+          <Route path="/about-us" element={<AboutUs />} />
           
           {/* Rutas de la Tienda */}
           <Route path="/Productos" element={<Tienda />} />

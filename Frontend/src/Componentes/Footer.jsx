@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 import logo from '../assets/Befitwhite.png';
 const Footer = () => {
@@ -25,9 +26,21 @@ const Footer = () => {
                 <div>
                     <h3 className="text-lg font-semibold mb-3 text-black">Links</h3>
                     <ul className="font-bold space-y-2 text-sm">
-                        <li className="hover:underline cursor-pointer">Productos</li>
-                        <li className="hover:underline cursor-pointer">Suscripción</li>
-                        <li className="hover:underline cursor-pointer">Sobre nosotros</li>
+                        <li>
+                            <Link to="/Productos" className="hover:underline cursor-pointer">
+                            Productos 
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/Subscription" className="hover:underline cursor-pointer">
+                            Suscripción
+                            </Link>
+                        </li>
+                       <li>
+                            <Link to="/AboutUs" className="hover:underline cursor-pointer">
+                            Sobre nosotros
+                            </Link>
+                        </li>
                     </ul>
                 </div>
 
@@ -54,10 +67,10 @@ const Footer = () => {
                 </div>
             </div>
 
-                {/* 🔹 LÍNEA DIVISORA */}
+                {/* LÍNEA DIVISORA */}
                 <div className="border-t border-white/40"></div>
 
-                {/* 🔹 COPYRIGHT */}
+                {/* COPYRIGHT */}
             <div className="p-4 text-sm md:text-base font-bold text-black">
                 2025 Befit. Todos los derechos reservados.
             </div>
