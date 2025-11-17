@@ -104,14 +104,14 @@ class CognitoService:
                         "error": "La imagen es demasiado grande (máximo 5MB)"
                     }
                 
-                upload_result = s3_service_instance.upload_profile_img(
+                upload_result = await s3_service_instance.upload_profile_img(
                     profile_image, 
                     user_id=temp_s3_id
                 )
 
                 temp_s3_id = str(uuid.uuid4())
 
-                upload_result = s3_service_instance.upload_profile_img(
+                upload_result = await s3_service_instance.upload_profile_img(
                     file_content=profile_image,
                     user_id=temp_s3_id
                 )
