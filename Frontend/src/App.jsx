@@ -7,6 +7,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import Header from "./Componentes/Header";
 import Footer from "./Componentes/Footer";
 import CartSidebar from "./Componentes/CartSidebar";
+import AdminSidebar from "./Componentes/AdminSidebar";
 
 // Componentes de Páginas
 import Home from "./Home/HomePage";
@@ -33,6 +34,9 @@ import DoReviews from "./Products/Reviews";
 import PlacementTest from "./PositioningTest/Test";
 import PlacementTestQuestions from "./PositioningTest/PlacementTestQuestions";
 import TestResults from "./PositioningTest/TestResults";
+import ManageProducts from "./Admin/ManageProducts";
+import Dashboard from "./Admin/Dashboard";
+//import CRUDView from "./Admin/CRUDView";
 
 // Inicializar Stripe con tu clave pública
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_tu_clave_publica');
@@ -111,6 +115,18 @@ const MainLayout = () => {
   );
 };
 
+// Layout de Administración con AdminSidebar
+const AdminLayout = () => {
+  return (
+    <div className="flex min-h-screen">
+      <AdminSidebar />
+      <main className="flex-1 ml-20">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <Router>
@@ -159,7 +175,19 @@ export default function App() {
           <Route path="/payment-methods" element={<Elements stripe={stripePromise}><PaymentMethods /></Elements>}/>
           {/* Programa de Lealtad */}
           <Route path="/loyalty-program" element={<LoyaltyProgram />} />
-        </Route>    
+        </Route>
+
+        {/* Rutas de Administración (Con AdminSidebar, sin Header/Footer) */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="products" element={<ManageProducts />} />
+          {/* Aquí puedes agregar más rutas de admin como:
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="orders" element={<ManageOrders />} />
+          <Route path="users" element={<ManageUsers />} />
+          */}
+        </Route>
       </Routes>
     </Router>
   );
