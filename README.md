@@ -104,7 +104,194 @@ npm run dev
 
 ## Estructura del Proyecto
 
+```
+Backend/
+├── app/
+│   ├── __init__.py
+│   ├── main.py                      # Punto de entrada de FastAPI
+│   ├── config.py                    # Configuración y variables de entorno
+│   │
+│   ├── api/                         # Endpoints organizados por módulos
+│   │   ├── __init__.py
+│   │   ├── deps.py                  # Dependencias compartidas
+│   │   │
+│   │   ├── v1/
+│   │   │   ├── __init__.py
+│   │   │   ├── router.py            # Router principal v1
+│   │   │   │
+│   │   │   ├── address/             # Módulo de Direcciones de envío
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Lizbeth
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── admin/               # Módulo Administrador
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Luis
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── analytics/           # Módulo de Análitica
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Gabriel
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── auth/                # Módulo Auth/User con Cognito
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Gabriel
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── cart/                # Módulo Carrito de compras
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Luis
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── loyalty/             # Módulo Programa de puntos/lealtad
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Lizbeth
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── orders/              # Módulo Órdenes
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Lizbeth
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── payment_method/      # Módulo Métodos de pago
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Lizbeth
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── payments/            # Módulo Procesamiento de pagos
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Lizbeth
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── placement_test/      # Módulo Test de posicionamiento
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Diego
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── products/            # Módulo Productos
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Luis
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   └── search/              # Módulo Búsqueda y filtrado
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Lizbeth
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   ├── shipping/            # Módulo Shipping
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Gabriel
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │   │   │
+│   │   │   └── user_profile/        # Módulo perfil
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── routes.py        # Lizbeth
+│   │   │   │   ├── schemas.py
+│   │   │   │   └── service.py
+│   │
+│   ├── models/                      # Modelos SQLAlchemy
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── fitness_profile.py
+│   │   ├── product.py
+│   │   ├── category.py
+│   │   ├── shopping_cart.py
+│   │   ├── cart_item.py
+│   │   ├── order.py
+│   │   ├── order_item.py
+│   │   ├── payment_method.py
+│   │   ├── address.py
+│   │   ├── review.py
+│   │   ├── product_image.py
+│   │   └── coupon.py
+│   │   └── enum.py
+│   │   └── loyalty_tier.py
+│   │   └── point_history.py
+│   │   └── subscription.py
+│   │   └── user_coupon.py
+│   │   └── user_loyalty.py
+│   │
+│   ├── core/                        # Funcionalidad core
+│   │   ├── __init__.py
+│   │   ├── security.py              # JWT, hashing
+│   │   └── database.py              # Conexión DB
+│   │
+│   ├── services/                    # Servicios externos
+│   │   ├── __init__.py
+│   │   ├── stripe_service.py
+│   │   ├── paypal_service.py
+│   │   ├── scheduler.py
+│   │   └── s3_service.py
+│   
+├── alembic/                         # Migraciones de DB
+│   ├── versions/
+│   └── env.py
+│
+├── tests/                           # Tests unitarios e integración
+│   ├── __init__.py
+│   ├── test_auth.py
+│   ├── test_productos.py
+│   ├── test_carrito.py
+│   ├── test_pagos.py
+│   ├── test_ordenes.py
+│   └── ...
+│
+├── .env.example                     # Variables de entorno ejemplo
+├── .gitignore
+├── alembic.ini
+├── requirements.txt
+└── README.md
 
+Frontend/
+├── public/                     # Archivos estáticos accesibles públicamente
+│   ├── Befitcolor.png          # Logo o imagen principal del proyecto
+│   └── vite.svg                # Icono por defecto de Vite
+│
+├── src/                        # Código fuente del frontend
+│   ├── Admin/                  # Componentes y vistas relacionadas con el panel de administrador
+│   ├── Componentes/            # Componentes reutilizables de la aplicación
+│   ├── Home/                   # Código correspondiente a la página de inicio
+│   ├── Login/                  # Componentes y lógica para autenticación
+│   ├── Payments/               # Módulo para manejo de pagos y pasarelas
+│   ├── PositioningTest/        # Pruebas o experimentos de posicionamiento y layout
+│   ├── Products/               # Vistas y componentes enfocados en productos
+│   ├── Profile/                # Módulo para el perfil del usuario
+│   ├── assets/                 # Recursos locales (imágenes, íconos, fuentes)
+│   │
+│   ├── utils/                  # Utilidades y funciones auxiliares
+│   │   ├── api.js              # Configuración de endpoints y cliente API
+│   │   └── auth.js             # Funciones relacionadas con autenticación/token
+│   │
+│   ├── App.css                 # Estilos globales de la aplicación
+│   ├── App.jsx                 # Componente raíz del proyecto
+│   ├── index.css               # Estilos base y configuración general
+│   └── main.jsx                # Punto de entrada principal (monta React)
+│
+├── .gitignore                  # Especifica archivos/carpetas ignoradas por Git
+├── README.md                   # Documentación principal del proyecto
+├── eslint.config.js            # Configuración de ESLint para mantener estilo y calidad
+├── index.html                  # Plantilla HTML principal usada por Vite
+├── package-lock.json           # Versionado preciso de dependencias instaladas
+├── package.json                # Scripts del proyecto, dependencias y metadatos
+├── postcss.config.js           # Configuración de PostCSS
+├── rd                          # (Archivo o carpeta personalizada del proyecto)
+├── tailwind.config.js          # Configuración de Tailwind CSS
+└── vite.config.js              # Configuración del bundler Vite
+```
 ---
 
 ## Credenciales de Uso
