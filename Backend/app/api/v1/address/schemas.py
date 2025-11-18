@@ -1,3 +1,7 @@
+# Autor: Lizbeth Barajas
+# Fecha: 11-11-25
+# Descripción: Esquemas Pydantic para el módulo de direcciones
+
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 import re

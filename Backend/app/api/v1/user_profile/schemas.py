@@ -1,3 +1,7 @@
+# Autor: Lizbeth Barajas
+# Fecha: 10-11-25
+# Descripción: Esquemas Pydantic para el módulo de perfil de usuario
+
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date, datetime

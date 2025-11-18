@@ -1,3 +1,7 @@
+# Autor: Lizbeth Barajas
+# Fecha: 11-11-25
+# Descripción: Rutas para la gestión de direcciones de usuario
+
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -41,14 +45,26 @@ def get_current_user(token: str = Depends(get_token_from_header)) -> Dict:
         )
     return payload
 
-"""
-Obtiene todas las direcciones del usuario
-"""
 @router.get("", response_model=schemas.AddressListResponse, status_code=status.HTTP_200_OK)
 async def get_all_addresses(
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user)
 ):
+    """
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Obtiene la lista completa de direcciones registradas por el usuario
+        autenticado. Solo devuelve direcciones pertenecientes al Cognito Sub
+        del usuario actual.
+
+    Parámetros:
+        db (Session): Sesión activa de la base de datos.
+        current_user (dict): Payload del usuario autenticado.
+
+    Retorna:
+        AddressListResponse: Lista de direcciones del usuario.
+    """
     cognito_sub = current_user.get("sub")
     
     result = address_service.get_user_addresses(db=db, cognito_sub=cognito_sub)
@@ -61,15 +77,27 @@ async def get_all_addresses(
     
     return result
 
-"""
-Obtiene una direccion específica por id
-"""
 @router.get("/{address_id}", response_model=schemas.AddressResponse, status_code=status.HTTP_200_OK)
 async def get_address(
     address_id: int,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user)
 ):
+    """
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Obtiene una dirección específica utilizando su ID, validando que
+        pertenezca al usuario actualmente autenticado.
+
+    Parámetros:
+        address_id (int): ID de la dirección a obtener.
+        db (Session): Sesión de la base de datos.
+        current_user (dict): Usuario autenticado.
+
+    Retorna:
+        AddressResponse: Datos de la dirección solicitada.
+    """
     cognito_sub = current_user.get("sub")
     
     result = address_service.get_address_by_id(db=db, cognito_sub=cognito_sub, address_id=address_id)
@@ -82,15 +110,28 @@ async def get_address(
     
     return result["address"]
 
-"""
-Crea una nueva direccion
-"""
 @router.post("", response_model=schemas.AddressResponse, status_code=status.HTTP_201_CREATED)
 async def create_address(
     address_data: schemas.CreateAddressRequest,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user)
 ):
+    """
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Crea una nueva dirección asociada al usuario autenticado. Permite
+        registrar direcciones completas e indicar si será la dirección
+        predeterminada.
+
+    Parámetros:
+        address_data (CreateAddressRequest): Datos de la dirección a crear.
+        db (Session): Sesión activa de la base de datos.
+        current_user (dict): Usuario autenticado.
+
+    Retorna:
+        AddressResponse: Dirección recién creada.
+    """
     cognito_sub = current_user.get("sub")
     
     result = address_service.create_address(
@@ -116,9 +157,6 @@ async def create_address(
     
     return result["address"]
 
-"""
-Actualiza una direccion existente
-"""
 @router.put("/{address_id}", response_model=schemas.AddressResponse, status_code=status.HTTP_200_OK)
 async def update_address(
     address_id: int,
@@ -126,6 +164,23 @@ async def update_address(
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user)
 ):
+    """
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Actualiza una dirección existente validando que pertenezca al usuario
+        actual. Permite modificar cualquier campo de la dirección, incluida la
+        opción de marcarla como predeterminada.
+
+    Parámetros:
+        address_id (int): ID de la dirección a actualizar.
+        address_data (UpdateAddressRequest): Datos nuevos de la dirección.
+        db (Session): Sesión de la base de datos.
+        current_user (dict): Usuario autenticado.
+
+    Retorna:
+        AddressResponse: Dirección actualizada.
+    """
     cognito_sub = current_user.get("sub")
     
     result = address_service.update_address(
@@ -152,15 +207,27 @@ async def update_address(
     
     return result["address"]
 
-"""
-Elimina una direccion
-"""
 @router.delete("/{address_id}", response_model=schemas.MessageResponse, status_code=status.HTTP_200_OK)
 async def delete_address(
     address_id: int,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user)
 ):
+    """
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Elimina lógicamente una dirección del usuario autenticado. La operación
+        falla si la dirección no pertenece al usuario o no existe.
+
+    Parámetros:
+        address_id (int): ID de la dirección a eliminar.
+        db (Session): Sesión activa de la base de datos.
+        current_user (dict): Usuario autenticado.
+
+    Retorna:
+        MessageResponse: Mensaje confirmando la eliminación.
+    """
     cognito_sub = current_user.get("sub")
     
     result = address_service.delete_address(db=db, cognito_sub=cognito_sub, address_id=address_id)
@@ -173,15 +240,27 @@ async def delete_address(
     
     return result
 
-"""
-Establece una direccion como predeterminada
-"""
 @router.patch("/{address_id}/set-default", response_model=schemas.AddressResponse, status_code=status.HTTP_200_OK)
 async def set_default_address(
     address_id: int,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user)
 ):
+    """
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Establece una dirección como la predeterminada del usuario autenticado.
+        Automáticamente desactiva la anterior dirección marcada como default.
+
+    Parámetros:
+        address_id (int): ID de la dirección a establecer como predeterminada.
+        db (Session): Sesión activa de la base de datos.
+        current_user (dict): Usuario autenticado.
+
+    Retorna:
+        AddressResponse: Dirección marcada como predeterminada.
+    """
     cognito_sub = current_user.get("sub")
     
     result = address_service.set_default_address(db=db, cognito_sub=cognito_sub, address_id=address_id)
