@@ -40,7 +40,7 @@ class S3Service:
                 - error (str, opcional): Mensaje en caso de fallo.
         """
         try:
-            def process_and_upload():
+            def process_and_upload(file_content_original):
                 # Tamaño del archivo en MB
                 file_size = len(file_content) / (1024 * 1024)
                 if file_size > max_size_mb:
@@ -57,13 +57,15 @@ class S3Service:
                 except Exception as e:
                     return {"success": False, "error": f"El archivo no es una imagen válida o está corrupto. Detalle: {str(e)}"}
                 
+                content_to_upload = file_content_original
                 # Redimensiona la imagen
                 max_dimension = 1024
                 if max(img.size) > max_dimension:
                     img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
                     output = io.BytesIO()
                     img.save(output, format=img_format, optimize=True, quality=85)
-                    file_content = output.getvalue()
+                    #file_content = output.getvalue()
+                    content_to_upload = output.getvalue()
 
                 # Lógica para S3
                 file_ext = img_format.lower()
@@ -82,7 +84,7 @@ class S3Service:
                 self.s3_client.put_object(
                     Bucket=self.bucket_name,
                     Key=file_name,
-                    Body=file_content, 
+                    Body=content_to_upload, 
                     ContentType=content_type,
                     Metadata={'user_id': user_id}
                 )
@@ -91,7 +93,7 @@ class S3Service:
 
                 return {"success": True, "file_url": img_url, "file_name": file_name}
         
-            return await run_in_threadpool(process_and_upload)
+            return await run_in_threadpool(process_and_upload, file_content)
  
         except ClientError as e:
             return {"success": False, "error": f"Error al subir a S3: {str(e)}"}
