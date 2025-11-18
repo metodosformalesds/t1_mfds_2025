@@ -15,7 +15,7 @@ class PointHistory(Base):
 
     # Attributes
     points_change: Mapped[int] = mapped_column(Integer, nullable=False)  # Positive for earned - negative for expired
-    event_type: Mapped[PointEventType] = mapped_column(Enum(PointEventType, native_enum=False), nullable=False)
+    event_type: Mapped[PointEventType] = mapped_column(Enum(PointEventType, native_enum=False, values_callable=lambda x: [e.value for e in x]), nullable=False)
     event_date: Mapped[date] = mapped_column(Date, nullable=False)
     #expiration_date: Mapped[Optional[date]] = mapped_column(Date, nullable=False) / This didnt go here... had to delete T.T - added to user_loyalty
 

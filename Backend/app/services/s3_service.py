@@ -8,6 +8,7 @@ from botocore.exceptions import ClientError
 from PIL import Image
 from app.config import settings
 from typing import Dict
+from starlette.concurrency import run_in_threadpool
 
 class S3Service:
     def __init__(self):
@@ -19,7 +20,7 @@ class S3Service:
         )
         self.bucket_name = settings.S3_BUCKET_NAME
 
-    def upload_profile_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
+    def _upload_profile_img_sync(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
         """
         Autor: Gabriel Vilchis
         Sube una imagen de perfil al bucket de S3 con validación de tamaño, formato,
@@ -50,7 +51,8 @@ class S3Service:
                 img_format = img.format
 
                 if img_format not in allowed_formats:
-                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {", ".join(allowed_formats)}"}
+                    formats_str = ", ".join(allowed_formats)
+                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {formats_str}"}
 
             except Exception as e:
                 return {"success": False, "error": f"El archivo no es una imagen válida o está corrupto. Detalle: {str(e)}"}
@@ -66,21 +68,21 @@ class S3Service:
             # Lógica para S3
             file_ext = img_format.lower()
             # corregi el nombre del archivo de la imagen aqui
-            # Ahora en S3 sale el 1 del usuario como su carpeta, y posteriormente su imagen con el formato de imagen 
-            file_name = f"profile_images/{user_id}/picture.{file_ext}" 
+            # Ahora en S3 sale el 1 del usuario como su carpeta, y posteriormente su imagen con el formato de imagen
+            file_name = f"profile_images/{user_id}/picture.{file_ext}"
 
             content_types = {
                 'jpeg': 'image/jpeg',
                 'png': 'image/png',
                 'webp': 'image/webp'
             }
-            content_type = content_types.get(file_ext, 'image/jpeg') 
+            content_type = content_types.get(file_ext, 'image/jpeg')
 
             # Subir el archivo
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=file_name,
-                Body=file_content, 
+                Body=file_content,
                 ContentType=content_type,
                 Metadata={'user_id': user_id}
             )
@@ -94,7 +96,20 @@ class S3Service:
         
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
-         
+
+    async def upload_profile_img(self, file_content: bytes, user_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
+        """
+        Async wrapper for uploading profile images.
+        Uses run_in_threadpool to avoid blocking the event loop.
+        """
+        return await run_in_threadpool(
+            self._upload_profile_img_sync,
+            file_content,
+            user_id,
+            max_size_mb,
+            allowed_formats
+        )
+
     def upload_product_img(self, file_content: bytes, product_id: str, max_size_mb: int = 5, allowed_formats: tuple = ('JPEG', 'PNG', 'WEBP')) -> dict:
         """
         Autor: Gabriel Vilchis
@@ -127,7 +142,8 @@ class S3Service:
                 img_format = img.format
 
                 if img_format not in allowed_formats:
-                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {", ".join(allowed_formats)}"}
+                    formats_str = ", ".join(allowed_formats)
+                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {formats_str}"}
             
             except Exception as e:
                 return {"success": False, "error": f"El archivo no es una imagen válida o está corrupto. Detalle: {str(e)}"}
@@ -142,20 +158,20 @@ class S3Service:
 
             # Lógica para S3
             file_ext = img_format.lower()
-            file_name = f"product_images/{product_id}/picture.{file_ext}" # de igual forma aqui 
+            file_name = f"product_images/{product_id}/picture.{file_ext}" # de igual forma aqui
 
             content_types = {
                 'jpeg': 'image/jpeg',
                 'png': 'image/png',
                 'webp': 'image/webp'
             }
-            content_type = content_types.get(file_ext, 'image/jpeg') 
+            content_type = content_types.get(file_ext, 'image/jpeg')
 
             # Subir el archivo
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=file_name,
-                Body=file_content, 
+                Body=file_content,
                 ContentType=content_type,
                 Metadata={'product_id': product_id}
             )
@@ -170,7 +186,7 @@ class S3Service:
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
             
-    def delete_profile_img(self, old_url: str, user_id: str) -> Dict:
+    def _delete_profile_img_sync(self, old_url: str, user_id: str) -> Dict:
         """
         Autor: Gabriel Vilchis
         Elimina una imagen de perfil antigua del bucket de S3 buscando su ruta
@@ -191,7 +207,7 @@ class S3Service:
         try:
             # busca el patron del sub de cognito en las carpetas
             key_match = re.search(r"profile_images/[^/?]+/[^/?]+", old_url)
-            
+
             if not key_match:
                 return {"success": True, "message": "URL antigua no válida o vacía, no se requiere eliminación."}
 
@@ -201,7 +217,7 @@ class S3Service:
                 Bucket=self.bucket_name,
                 Key=s3_key_to_delete
             )
-            
+
             return {"success": True, "message": f"Objeto eliminado: {s3_key_to_delete}"}
             
         except ClientError as e:
@@ -211,4 +227,15 @@ class S3Service:
             return {"success": False, "error": f"Error al eliminar de S3: {str(e)}"}
         
         except Exception as e:
-            return {"success": False, "error": f"Error inesperado al intentar eliminar: {str(e)}"} 
+            return {"success": False, "error": f"Error inesperado al intentar eliminar: {str(e)}"}
+
+    async def delete_profile_img(self, old_url: str, user_id: str) -> Dict:
+        """
+        Async wrapper for deleting profile images.
+        Uses run_in_threadpool to avoid blocking the event loop.
+        """
+        return await run_in_threadpool(
+            self._delete_profile_img_sync,
+            old_url,
+            user_id
+        )

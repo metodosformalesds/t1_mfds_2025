@@ -14,7 +14,7 @@ class Subscription(Base):
     subscription_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
     profile_id: Mapped[int] = mapped_column(ForeignKey("fitness_profile.profile_id", ondelete="CASCADE"), unique=True, nullable=False)
-    payment_method_id: Mapped[int] = mapped_column(ForeignKey("payment_method.payment_id"), nullable=False)  # ✅ CORREGIDO
+    payment_method_id: Mapped[int] = mapped_column(ForeignKey("payment_method.payment_id"), nullable=False)  # CORREGIDO
 
     # Attributes
     subscription_status: Mapped[SubscriptionStatus] = mapped_column(Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.ACTIVE)

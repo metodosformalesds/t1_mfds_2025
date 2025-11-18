@@ -1,7 +1,9 @@
-"""
-Scheduler para tareas programadas (Cron Jobs)
-Este archivo maneja todas las tareas que se ejecutan automaticamente en intervalos programados
-"""
+# Autor: Lizbeth Barajas y Luis Flores
+# Fecha: 12/11/25
+# Descripción: Scheduler para la ejecución automática de tareas programadas (cron jobs),
+#              incluyendo expiración de puntos diarios y procesamiento de suscripciones.
+#              Este módulo inicia, detiene y monitorea el scheduler global utilizado
+#              por la aplicación, además de ofrecer funciones para ejecutar jobs manualmente.
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -25,8 +27,18 @@ def get_db_session() -> Session:
 
 def expire_points_daily_job():
     """
-    Job que expira puntos de todos los usuarios diariamente
-    Se ejecuta a medianoche (00:00) todos los dias
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Job programado que expira los puntos de fidelidad de todos los usuarios.
+        Se ejecuta diariamente a las 00:00. Registra información detallada del proceso
+        incluyendo puntos expirados, usuarios afectados y cualquier error.
+
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        None: Este job solo ejecuta procesos y registra logs.
     """
     logger.info("="*50)
     logger.info(f"[{datetime.now()}] Iniciando job: Expiración de puntos")
@@ -56,14 +68,18 @@ def expire_points_daily_job():
 
 def process_subscriptions_daily_job():
     """
-    Job que procesa los cobros de suscripciones diarias
-    Se ejecuta a las 00:30 todos los días
-    
-    Procesa todas las suscripciones activas que tienen fecha de cobro hoy:
-    - Realiza cobro con Stripe
-    - Crea orden automática con productos seleccionados
-    - Actualiza próxima fecha de entrega
-    - Maneja fallos de pago (pausa después de 3 intentos)
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Job programado que procesa los cobros de suscripciones diarias.
+        Se ejecuta a las 00:30. Realiza cobro en Stripe, genera órdenes,
+        actualiza fechas de entrega y maneja fallos o reintentos de pago.
+
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        None: Solo ejecuta lógica de procesamiento y guarda logs del resultado.
     """
     logger.info("="*50)
     logger.info(f"[{datetime.now()}] Iniciando job: Procesamiento de suscripciones")
@@ -109,8 +125,18 @@ _scheduler = None
 
 def start_scheduler():
     """
-    Inicia el scheduler y registra todos los jobs programados
-    Esta funcion es llamada al iniciar la aplicacion
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Inicia el scheduler global de la aplicación y registra todos los cron jobs
+        configurados (expiración de puntos y procesamiento de suscripciones).
+        Esta función se ejecuta al iniciar la aplicación.
+
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        BackgroundScheduler: Instancia del scheduler activo con los jobs cargados.
     """
     global _scheduler
     
@@ -164,8 +190,17 @@ def start_scheduler():
 
 def stop_scheduler():
     """
-    Detiene el scheduler de forma segura
-    Esta funcion es llamada al apagar la aplicacion
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Detiene de forma segura el scheduler global. Esta función es llamada
+        cuando la aplicación se apaga o requiere detener las tareas programadas.
+
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        None
     """
     global _scheduler
     
@@ -207,16 +242,34 @@ def get_scheduler_status():
 
 def run_expire_points_now():
     """
-    Ejecuta el job de expiracion de puntos inmediatamente
-    Para testing y debugging - NO prod
+    Autor: Lizbeth Barajas
+
+    Descripción:
+        Ejecuta inmediatamente el job de expiración de puntos.
+        Usado únicamente para pruebas o debugging en entornos no productivos.
+
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        None
     """
     logger.info("Ejecutando expiración de puntos manualmente (testing)...")
     expire_points_daily_job()
 
 def run_process_subscriptions_now():
     """
-    Ejecuta el job de procesamiento de suscripciones inmediatamente
-    Para testing y debugging - NO prod
+    Autor: Luis Flores
+
+    Descripción:
+        Ejecuta de inmediato el job de procesamiento de suscripciones.
+        Usado para pruebas o debugging fuera de producción.
+
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        None
     """
     logger.info("Ejecutando procesamiento de suscripciones manualmente (testing)...")
     process_subscriptions_daily_job()
