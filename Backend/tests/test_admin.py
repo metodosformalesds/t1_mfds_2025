@@ -6,13 +6,13 @@
 import pytest
 from sqlalchemy.orm import Session
 from decimal import Decimal  # <-- IMPORTADO
-from app.api.v1.admin.service import AdminProductService
+from app.api.v1.admin.service import admin_product_service
 from app.api.v1.admin import schemas
 from app.api.v1.products import schemas as product_schemas
 from app.models.product import Product
 from app.models.product_image import ProductImage
 from app.models.user import User
-from app.api.v1.products.service import ProductService
+from app.api.v1.products.service import product_service
 
 
 # ==================== PRUEBAS UNITARIAS ====================
@@ -56,7 +56,7 @@ class TestAdminProductServiceUnit:
             product_ids=product_ids,
             action="activate"
         )
-        result = AdminProductService.bulk_update_products(db, action_data)
+        result = admin_product_service.bulk_update_products(db, action_data)
         
         # Assert
         assert result.success == 3
@@ -100,7 +100,7 @@ class TestAdminProductServiceUnit:
             product_ids=product_ids,
             action="deactivate"
         )
-        result = AdminProductService.bulk_update_products(db, action_data)
+        result = admin_product_service.bulk_update_products(db, action_data)
         
         # Assert
         assert result.success == 3
@@ -144,7 +144,7 @@ class TestAdminProductServiceUnit:
             product_ids=product_ids,
             action="delete"
         )
-        result = AdminProductService.bulk_update_products(db, action_data)
+        result = admin_product_service.bulk_update_products(db, action_data)
         
         # Assert
         assert result.success == 3
@@ -188,7 +188,7 @@ class TestAdminProductServiceUnit:
             product_ids=product_ids,
             action="activate"
         )
-        result = AdminProductService.bulk_update_products(db, action_data)
+        result = admin_product_service.bulk_update_products(db, action_data)
         
         # Assert
         assert result.success == 1  # Solo el producto existente
@@ -209,7 +209,7 @@ class TestAdminProductServiceUnit:
         )
         
         # Act
-        result = AdminProductService.bulk_update_products(db, action_data)
+        result = admin_product_service.bulk_update_products(db, action_data)
         
         # Assert
         assert result.success == 0
@@ -355,7 +355,7 @@ class TestAdminFunctional:
             db (Session): Sesión de base de datos.
             test_admin (User): Usuario administrador.
         """
-        from app.api.v1.products.service import ProductService
+        from app.api.v1.products.service import product_service
         
         # Paso 1: Crear nuevo producto
         product_data = product_schemas.ProductCreate(
@@ -376,7 +376,7 @@ class TestAdminFunctional:
             ]
         )
         
-        product = ProductService.create_product(db, product_data)
+        product = product_service.create_product(db, product_data)
         assert product.product_id is not None
         assert product.is_active is True
         
@@ -386,7 +386,7 @@ class TestAdminFunctional:
             stock=150,
             description="Descripción actualizada por admin"
         )
-        updated_product = ProductService.update_product(
+        updated_product = product_service.update_product(
             db,
             product.product_id,
             update_data
@@ -395,20 +395,20 @@ class TestAdminFunctional:
         assert updated_product.stock == 150
         
         # Paso 3: Desactivar producto (soft delete)
-        ProductService.delete_product(db, product.product_id)
+        product_service.delete_product(db, product.product_id)
         db.refresh(product)
         assert product.is_active is False
         
         # Paso 4: Reactivar producto
         reactivate_data = product_schemas.ProductUpdate(is_active=True)
-        reactivated = ProductService.update_product(
+        reactivated = product_service.update_product(
             db,
             product.product_id,
             reactivate_data
         )
         assert reactivated.is_active is True
         
-        print("✅ Prueba funcional de gestión de productos completada")
+        print("Prueba funcional de gestión de productos completada")
     
     def test_bulk_operations_workflow(self, db, test_admin):
         """
@@ -444,7 +444,7 @@ class TestAdminFunctional:
             product_ids=product_ids,
             action="deactivate"
         )
-        result = AdminProductService.bulk_update_products(db, deactivate_action)
+        result = admin_product_service.bulk_update_products(db, deactivate_action)
         assert result.success == 5
         
         # Verificar desactivación
@@ -458,7 +458,7 @@ class TestAdminFunctional:
             product_ids=products_to_activate,
             action="activate"
         )
-        result = AdminProductService.bulk_update_products(db, activate_action)
+        result = admin_product_service.bulk_update_products(db, activate_action)
         assert result.success == 3
         
         # Verificar estado mixto
@@ -474,7 +474,7 @@ class TestAdminFunctional:
             product_ids=product_ids,
             action="delete"
         )
-        result = AdminProductService.bulk_update_products(db, delete_action)
+        result = admin_product_service.bulk_update_products(db, delete_action)
         assert result.success == 5
         
         # Verificar eliminación
@@ -484,7 +484,7 @@ class TestAdminFunctional:
             ).first()
             assert deleted is None
         
-        print("✅ Prueba funcional de operaciones en lote completada")
+        print("Prueba funcional de operaciones en lote completada")
     
     def test_inventory_management_workflow(self, db, test_admin):
         """
@@ -535,18 +535,18 @@ class TestAdminFunctional:
         db.commit()
         
         # Paso 2: Detectar productos con stock bajo
-        from app.api.v1.analytics.service import AnalyticsService
-        
-        low_stock_list = AnalyticsService.get_low_stock_products(db, threshold=10)
+        from app.api.v1.analytics.service import analytics_service
+
+        low_stock_list = analytics_service.get_low_stock_products(db=db, threshold=10)
         assert len(low_stock_list) >= 3
         
         # Paso 3: Actualizar stock de productos con stock bajo
         for product in low_stock_products:
             update_data = product_schemas.ProductUpdate(stock=100)
-            ProductService.update_product(db, product.product_id, update_data)
+            product_service.update_product(db, product.product_id, update_data)
         
         # Paso 4: Verificar que ya no aparecen en la lista de stock bajo
-        low_stock_list_after = AnalyticsService.get_low_stock_products(db, threshold=10)
+        low_stock_list_after = analytics_service.get_low_stock_products(db=db, threshold=10)
         low_stock_ids_after = [p.product_id for p in low_stock_list_after]
         
         for product in low_stock_products:
@@ -591,7 +591,7 @@ class TestAdminFunctional:
             product_ids=inactive_ids,
             action="activate"
         )
-        result = AdminProductService.bulk_update_products(db, activate_action)
+        result = admin_product_service.bulk_update_products(db, activate_action)
         assert result.success == 5
         
         # Paso 4: Verificar que todos están activos
@@ -605,7 +605,7 @@ class TestAdminFunctional:
             product_ids=half_ids,
             action="deactivate"
         )
-        result = AdminProductService.bulk_update_products(db, deactivate_action)
+        result = admin_product_service.bulk_update_products(db, deactivate_action)
         assert result.success == 5
         
         # Paso 6: Contar productos activos e inactivos
