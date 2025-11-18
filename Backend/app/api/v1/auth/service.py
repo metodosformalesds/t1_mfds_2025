@@ -68,16 +68,25 @@ class CognitoService:
         
         return CognitoService._jwks_cache
     
-    async def sign_up( # <--- AHORA ES ASÍNCRONO
-        self, 
-        db: Session, 
-        user_data: SignUpRequest, 
+    async def sign_up(
+        self,
+        db: Session,
+        user_data: SignUpRequest,
         profile_image: Optional[bytes] = None
     ) -> Dict:
         """
-        Registra un nuevo usuario en Cognito y DB. Usa run_in_threadpool para operaciones bloqueantes.
+        Registra un nuevo usuario en Cognito y en la base de datos local.
+
+        Args:
+            db: Sesión de base de datos
+            user_data: Datos del usuario
+            profile_image: Imagen de perfil opcional (bytes)
+
+        Returns:
+            Dict con success, user_sub, user_id, profile_image_url, temp_s3_id, message o error
         """
         profile_image_url = None
+        temp_s3_id = None
         s3_service_instance = S3Service()
         temp_s3_id = None
         current_time = datetime.now()
@@ -93,7 +102,7 @@ class CognitoService:
                     file_content=profile_image,
                     user_id=temp_s3_id
                 )
-                 
+
                 if not upload_result["success"]:
                     return {"success": False, "error": upload_result["error"]}
             
@@ -520,18 +529,75 @@ class CognitoService:
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
+    def process_s3_and_cognito_updates_sync(
+        self,
+        db: Session,
+        temp_s3_id: str,
+        final_user_id: str,
+        cognito_sub: str,
+        profile_image: bytes
+    ):
+        """
+        Procesa la migración de imagen de S3 del ID temporal al ID final del usuario.
+        Ejecutado como tarea en segundo plano para no bloquear la respuesta de signup.
+
+        Args:
+            db: Sesión de base de datos
+            temp_s3_id: ID temporal usado inicialmente en S3
+            final_user_id: ID definitivo del usuario en la BD
+            cognito_sub: Sub de Cognito del usuario
+            profile_image: Bytes de la imagen original
+        """
+        try:
+            s3_service = S3Service()
+
+            # Subir imagen con el ID final del usuario (sync porque está en background)
+            upload_result = s3_service._upload_profile_img_sync(
+                file_content=profile_image,
+                user_id=final_user_id
+            )
+
+            if upload_result["success"]:
+                final_url = upload_result["file_url"]
+
+                # Actualizar URL en la base de datos
+                user = db.query(User).filter(User.user_id == int(final_user_id)).first()
+                if user:
+                    user.profile_picture = final_url
+                    db.commit()
+
+                # Eliminar imagen temporal de S3
+                temp_url = f"https://{s3_service.bucket_name}.s3.{settings.AWS_REGION}.amazonaws.com/profile_images/{temp_s3_id}/picture.jpeg"
+                s3_service._delete_profile_img_sync(temp_url, temp_s3_id)
+
+                # Actualizar atributo picture en Cognito
+                try:
+                    self.client.admin_update_user_attributes(
+                        UserPoolId=self.user_pool_id,
+                        Username=cognito_sub,
+                        UserAttributes=[
+                            {"Name": "picture", "Value": final_url}
+                        ]
+                    )
+                    logger.info(f"Successfully migrated S3 image for user {final_user_id}")
+                except Exception as e:
+                    logger.error(f"Failed to update Cognito picture attribute: {str(e)}")
+
+        except Exception as e:
+            logger.error(f"Error in background S3 migration: {str(e)}")
+
     def is_admin(self, id_token_payload: Dict) -> bool:
         """
         Verifica si el payload del token contiene el rol de administrador.
-        
+
         Args:
             id_token_payload: Payload decodificado del ID token
-            
+
         Returns:
             True si es admin, False en caso contrario
         """
         user_role = id_token_payload.get('role')
-        
+
         if not user_role:
             user_role = id_token_payload.get('custom:role')
 

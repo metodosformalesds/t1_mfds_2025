@@ -6,7 +6,7 @@
 import pytest
 from sqlalchemy.orm import Session
 from decimal import Decimal  # <-- IMPORTADO
-from app.api.v1.cart.service import CartService
+from app.api.v1.cart.service import cart_service
 from app.api.v1.cart import schemas
 from app.models.shopping_cart import ShoppingCart
 from app.models.cart_item import CartItem
@@ -34,7 +34,7 @@ class TestCartServiceUnit:
         user_id = test_cart.user_id
         
         # Act
-        cart = CartService.get_or_create_cart(db, user_id)
+        cart = cart_service.get_or_create_cart(db, user_id)
         
         # Assert
         assert cart is not None
@@ -52,7 +52,7 @@ class TestCartServiceUnit:
         # Arrange - Usuario sin carrito
         
         # Act
-        cart = CartService.get_or_create_cart(db, test_user.user_id)
+        cart = cart_service.get_or_create_cart(db, test_user.user_id)
         
         # Assert
         assert cart is not None
@@ -75,7 +75,7 @@ class TestCartServiceUnit:
         )
         
         # Act
-        cart_item = CartService.add_item_to_cart(
+        cart_item = cart_service.add_item_to_cart(
             db, 
             test_cart.user_id, 
             item_data
@@ -101,10 +101,10 @@ class TestCartServiceUnit:
             product_id=test_product.product_id,
             quantity=2
         )
-        first_item = CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+        first_item = cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         # Act - Agregar más cantidad del mismo producto
-        second_item = CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+        second_item = cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         # Assert
         assert second_item.cart_item_id == first_item.cart_item_id
@@ -127,7 +127,7 @@ class TestCartServiceUnit:
         
         # Act & Assert
         with pytest.raises(Exception) as exc_info:
-            CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+            cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         assert "stock insuficiente" in str(exc_info.value).lower()
     
@@ -145,11 +145,11 @@ class TestCartServiceUnit:
             product_id=test_product.product_id,
             quantity=2
         )
-        cart_item = CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+        cart_item = cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         # Act
         update_data = schemas.CartItemUpdate(quantity=5)
-        updated_item = CartService.update_cart_item(
+        updated_item = cart_service.update_cart_item(
             db,
             test_cart.user_id,
             cart_item.cart_item_id,
@@ -174,10 +174,10 @@ class TestCartServiceUnit:
             product_id=test_product.product_id,
             quantity=2
         )
-        cart_item = CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+        cart_item = cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         # Act
-        result = CartService.remove_item_from_cart(
+        result = cart_service.remove_item_from_cart(
             db,
             test_cart.user_id,
             cart_item.cart_item_id
@@ -204,10 +204,10 @@ class TestCartServiceUnit:
             product_id=test_product.product_id,
             quantity=2
         )
-        CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+        cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         # Act
-        result = CartService.clear_cart(db, test_cart.user_id)
+        result = cart_service.clear_cart(db, test_cart.user_id)
         
         # Assert
         assert result is True
@@ -230,10 +230,10 @@ class TestCartServiceUnit:
             product_id=test_product.product_id,
             quantity=3
         )
-        CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+        cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         # Act
-        summary = CartService.get_cart_summary(db, test_cart.user_id)
+        summary = cart_service.get_cart_summary(db, test_cart.user_id)
         
         # Assert
         assert "total_items" in summary
@@ -255,10 +255,10 @@ class TestCartServiceUnit:
             product_id=test_product.product_id,
             quantity=2
         )
-        CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+        cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         # Act
-        validation = CartService.validate_cart_stock(db, test_cart.user_id)
+        validation = cart_service.validate_cart_stock(db, test_cart.user_id)
         
         # Assert
         assert validation["valid"] is True
@@ -278,14 +278,14 @@ class TestCartServiceUnit:
             product_id=test_product.product_id,
             quantity=2
         )
-        cart_item = CartService.add_item_to_cart(db, test_cart.user_id, item_data)
+        cart_item = cart_service.add_item_to_cart(db, test_cart.user_id, item_data)
         
         # Reducir stock del producto manualmente
         test_product.stock = 1
         db.commit()
         
         # Act
-        validation = CartService.validate_cart_stock(db, test_cart.user_id)
+        validation = cart_service.validate_cart_stock(db, test_cart.user_id)
         
         # Assert
         assert validation["valid"] is False
@@ -364,7 +364,7 @@ class TestCartAPIIntegration:
             product_id=test_product.product_id,
             quantity=2
         )
-        CartService.add_item_to_cart(db, test_user.user_id, item_data)
+        cart_service.add_item_to_cart(db, test_user.user_id, item_data)
         
         # Act
         response = user_client.get("/api/v1/cart/summary")
@@ -397,7 +397,7 @@ class TestCartFunctional:
             test_product (Product): Producto de prueba.
         """
         # Paso 1: Obtener carrito vacío
-        cart = CartService.get_or_create_cart(db, test_user.user_id)
+        cart = cart_service.get_or_create_cart(db, test_user.user_id)
         assert len(cart.cart_items) == 0
         
         # Paso 2: Agregar producto al carrito
@@ -405,12 +405,12 @@ class TestCartFunctional:
             product_id=test_product.product_id,
             quantity=2
         )
-        cart_item = CartService.add_item_to_cart(db, test_user.user_id, item_data)
+        cart_item = cart_service.add_item_to_cart(db, test_user.user_id, item_data)
         assert cart_item.quantity == 2
         
         # Paso 3: Actualizar cantidad
         update_data = schemas.CartItemUpdate(quantity=3)
-        updated_item = CartService.update_cart_item(
+        updated_item = cart_service.update_cart_item(
             db,
             test_user.user_id,
             cart_item.cart_item_id,
@@ -419,7 +419,7 @@ class TestCartFunctional:
         assert updated_item.quantity == 3
         
         # Paso 4: Obtener resumen
-        summary = CartService.get_cart_summary(db, test_user.user_id)
+        summary = cart_service.get_cart_summary(db, test_user.user_id)
         assert summary["total_items"] == 3
         
         # --- CORREGIDO: Cálculo y aserción con Decimal ---
@@ -427,15 +427,15 @@ class TestCartFunctional:
         assert abs(summary["total_price"] - expected_price) < Decimal('0.01')
         
         # Paso 5: Validar stock
-        validation = CartService.validate_cart_stock(db, test_user.user_id)
+        validation = cart_service.validate_cart_stock(db, test_user.user_id)
         assert validation["valid"] is True
         
         # Paso 6: Limpiar carrito
-        CartService.clear_cart(db, test_user.user_id)
-        summary_after = CartService.get_cart_summary(db, test_user.user_id)
+        cart_service.clear_cart(db, test_user.user_id)
+        summary_after = cart_service.get_cart_summary(db, test_user.user_id)
         assert summary_after["total_items"] == 0
         
-        print("✅ Prueba funcional de flujo de compra completada")
+        print("Prueba funcional de flujo de compra completada")
     
     def test_cart_multi_product_management(self, db, test_user):
         """
@@ -465,13 +465,13 @@ class TestCartFunctional:
         db.commit()
         
         # Paso 2: Agregar todos los productos al carrito
-        cart = CartService.get_or_create_cart(db, test_user.user_id)
+        cart = cart_service.get_or_create_cart(db, test_user.user_id)
         for product in products:
             item_data = schemas.CartItemAdd(
                 product_id=product.product_id,
                 quantity=2
             )
-            CartService.add_item_to_cart(db, test_user.user_id, item_data)
+            cart_service.add_item_to_cart(db, test_user.user_id, item_data)
         
         # Paso 3: Verificar que todos están en el carrito
         db.refresh(cart)
@@ -479,7 +479,7 @@ class TestCartFunctional:
         
         # Paso 4: Eliminar un producto específico
         first_item = cart.cart_items[0]
-        CartService.remove_item_from_cart(
+        cart_service.remove_item_from_cart(
             db,
             test_user.user_id,
             first_item.cart_item_id
@@ -490,10 +490,10 @@ class TestCartFunctional:
         assert len(cart.cart_items) == 2
         
         # Paso 6: Obtener resumen final
-        summary = CartService.get_cart_summary(db, test_user.user_id)
+        summary = cart_service.get_cart_summary(db, test_user.user_id)
         assert summary["total_items"] == 4  # 2 productos x 2 unidades
         
-        print("✅ Prueba funcional de gestión multi-producto completada")
+        print("Prueba funcional de gestión multi-producto completada")
     
     def test_cart_stock_validation_workflow(self, db, test_user, test_product):
         """
@@ -509,10 +509,10 @@ class TestCartFunctional:
             product_id=test_product.product_id,
             quantity=10
         )
-        CartService.add_item_to_cart(db, test_user.user_id, item_data)
+        cart_service.add_item_to_cart(db, test_user.user_id, item_data)
         
         # Paso 2: Validar - debería pasar
-        validation = CartService.validate_cart_stock(db, test_user.user_id)
+        validation = cart_service.validate_cart_stock(db, test_user.user_id)
         assert validation["valid"] is True
         
         # Paso 3: Reducir el stock del producto
@@ -521,15 +521,15 @@ class TestCartFunctional:
         db.commit()
         
         # Paso 4: Validar nuevamente - debería fallar
-        validation = CartService.validate_cart_stock(db, test_user.user_id)
+        validation = cart_service.validate_cart_stock(db, test_user.user_id)
         assert validation["valid"] is False
         assert len(validation["issues"]) > 0
         
         # Paso 5: Ajustar cantidad en el carrito
-        cart = CartService.get_cart(db, test_user.user_id)
+        cart = cart_service.get_cart(db, test_user.user_id)
         cart_item = cart.cart_items[0]
         update_data = schemas.CartItemUpdate(quantity=3)
-        CartService.update_cart_item(
+        cart_service.update_cart_item(
             db,
             test_user.user_id,
             cart_item.cart_item_id,
@@ -537,11 +537,11 @@ class TestCartFunctional:
         )
         
         # Paso 6: Validar nuevamente - debería pasar
-        validation = CartService.validate_cart_stock(db, test_user.user_id)
+        validation = cart_service.validate_cart_stock(db, test_user.user_id)
         assert validation["valid"] is True
         
         # Restaurar stock original
         test_product.stock = original_stock
         db.commit()
         
-        print("✅ Prueba funcional de validación de stock completada")
+        print("Prueba funcional de validación de stock completada")

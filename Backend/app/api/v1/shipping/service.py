@@ -24,7 +24,7 @@ class ShippingService:
     Clase de servicio que encapsula la lógica de negocio para la creación y gestión
     de pedidos (órdenes de compra).
     """
-    def create_order_db(db: Session, order_in: CreateOrder) -> OrderModel:
+    def create_order_db(self, db: Session, order_in: CreateOrder) -> OrderModel:
         # Genero un numero de rastreo de pedido simulado
         tracking_number = ShippingService.generate_tracking_number()
         total_subtotal = Decimal("0.0")
@@ -121,7 +121,7 @@ class ShippingService:
         numbers = "".join(random.choices(string.digits, k=10))
         return f"{letters}{numbers}"
     
-    def get_details(db: Session, pedido_id: int) -> Optional[OrderTrackingResponse]:
+    def get_details(self, db: Session, pedido_id: int) -> Optional[OrderTrackingResponse]:
         """
         Autor: Gabriel Vilchis
         Obtiene los detalles clave para el rastreo de un pedido específico.

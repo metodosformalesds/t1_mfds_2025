@@ -6,49 +6,25 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Depends,
-    status,
-    Security
+    status
 )
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import Dict
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
 from app.api.v1.address import schemas
 from app.api.v1.address.service import address_service
 
 router = APIRouter()
 
-security = HTTPBearer()
-
-"""Extrae el token del header Authorization"""
-def get_token_from_header(
-    credentials: HTTPAuthorizationCredentials = Security(security)
-) -> str:
-    if not credentials or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No se proporcionaron credenciales de autenticación",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
-
-"""Verifica el token JWT y devuelve el payload del usuario"""
-def get_current_user(token: str = Depends(get_token_from_header)) -> Dict:
-    from app.api.v1.auth.service import cognito_service
-    
-    payload = cognito_service.verify_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return payload
+"""
+Extrae el token del header Authorization
+"""
 
 @router.get("", response_model=schemas.AddressListResponse, status_code=status.HTTP_200_OK)
 async def get_all_addresses(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -65,7 +41,8 @@ async def get_all_addresses(
     Retorna:
         AddressListResponse: Lista de direcciones del usuario.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = address_service.get_user_addresses(db=db, cognito_sub=cognito_sub)
     
@@ -81,7 +58,7 @@ async def get_all_addresses(
 async def get_address(
     address_id: int,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -98,7 +75,8 @@ async def get_address(
     Retorna:
         AddressResponse: Datos de la dirección solicitada.
     """
-    cognito_sub = current_user.get("sub")
+    
+    cognito_sub = current_user.cognito_sub
     
     result = address_service.get_address_by_id(db=db, cognito_sub=cognito_sub, address_id=address_id)
     
@@ -114,7 +92,7 @@ async def get_address(
 async def create_address(
     address_data: schemas.CreateAddressRequest,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -132,7 +110,8 @@ async def create_address(
     Retorna:
         AddressResponse: Dirección recién creada.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = address_service.create_address(
         db=db,
@@ -162,7 +141,7 @@ async def update_address(
     address_id: int,
     address_data: schemas.UpdateAddressRequest,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -181,7 +160,8 @@ async def update_address(
     Retorna:
         AddressResponse: Dirección actualizada.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = address_service.update_address(
         db=db,
@@ -211,7 +191,7 @@ async def update_address(
 async def delete_address(
     address_id: int,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -228,7 +208,8 @@ async def delete_address(
     Retorna:
         MessageResponse: Mensaje confirmando la eliminación.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = address_service.delete_address(db=db, cognito_sub=cognito_sub, address_id=address_id)
     
@@ -244,7 +225,7 @@ async def delete_address(
 async def set_default_address(
     address_id: int,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -261,7 +242,8 @@ async def set_default_address(
     Retorna:
         AddressResponse: Dirección marcada como predeterminada.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = address_service.set_default_address(db=db, cognito_sub=cognito_sub, address_id=address_id)
     

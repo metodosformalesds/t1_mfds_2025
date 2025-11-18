@@ -267,3 +267,6 @@ class AdminUserService:
                 "success": False,
                 "error": f"Error al obtener administradores: {str(e)}"
             }
+# Instancias singleton de los servicios
+admin_product_service = AdminProductService()
+admin_user_service = AdminUserService()

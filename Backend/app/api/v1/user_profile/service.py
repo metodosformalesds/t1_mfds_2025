@@ -30,6 +30,24 @@ class UserProfileService:
             dict: Resultado de la operación, incluyendo los datos completos del usuario
                 si existe y está activo.
         """
+
+        """
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Obtiene el perfil completo del usuario desde la base de datos utilizando
+            su identificador de Cognito. Valida que la cuenta esté activa y retorna
+            toda la información relevante del perfil.
+
+        Parámetros:
+            db (Session): Sesión activa de la base de datos.
+            cognito_sub (str): Identificador único del usuario en Cognito.
+
+        Retorna:
+            dict: Resultado de la operación, incluyendo los datos completos del usuario
+                si existe y está activo.
+        """
+
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
             
@@ -86,6 +104,27 @@ class UserProfileService:
         Retorna:
             dict: Resultado de la operación, incluyendo el perfil actualizado.
         """
+
+        """
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Actualiza los datos personales del usuario, modificando únicamente
+            los campos que se hayan proporcionado. Valida existencia y estado de
+            la cuenta antes de realizar cambios.
+
+        Parámetros:
+            db (Session): Sesión activa de la base de datos.
+            cognito_sub (str): Identificador único del usuario en Cognito.
+            first_name (str | None): Nuevo nombre del usuario.
+            last_name (str | None): Nuevo apellido del usuario.
+            gender (Gender | None): Nuevo género del usuario.
+            date_of_birth (date | None): Nueva fecha de nacimiento.
+
+        Retorna:
+            dict: Resultado de la operación, incluyendo el perfil actualizado.
+        """
+
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
             
@@ -153,6 +192,23 @@ class UserProfileService:
         Retorna:
             dict: Resultado de la operación, incluyendo la nueva URL de la imagen.
         """
+
+        """
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Actualiza la imagen de perfil del usuario. Elimina la imagen anterior de S3,
+            sube la nueva imagen y actualiza la URL en la base de datos.
+
+        Parámetros:
+            db (Session): Sesión activa de la base de datos.
+            cognito_sub (str): Identificador único del usuario en Cognito.
+            image_content (bytes): Contenido en bytes de la nueva imagen.
+
+        Retorna:
+            dict: Resultado de la operación, incluyendo la nueva URL de la imagen.
+        """
+
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
 
@@ -205,6 +261,22 @@ class UserProfileService:
         Retorna:
             dict: Mensaje confirmando la operación o detalle del error.
         """
+
+        """
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Realiza un borrado lógico del usuario cambiando el campo account_status
+            a falso. No elimina los datos del usuario, solo desactiva la cuenta.
+
+        Parámetros:
+            db (Session): Sesión activa de la base de datos.
+            cognito_sub (str): Identificador único del usuario en Cognito.
+
+        Retorna:
+            dict: Mensaje confirmando la operación o detalle del error.
+        """
+
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
             
@@ -240,6 +312,22 @@ class UserProfileService:
         Retorna:
             dict: Datos básicos del usuario autenticado.
         """
+
+        """
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Obtiene la información básica del perfil del usuario, incluyendo nombre,
+            apellido, correo e imagen de perfil. Se utiliza para vistas simplificadas.
+
+        Parámetros:
+            db (Session): Sesión activa de la base de datos.
+            cognito_sub (str): Identificador único del usuario en Cognito.
+
+        Retorna:
+            dict: Datos básicos del usuario autenticado.
+        """
+
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
             

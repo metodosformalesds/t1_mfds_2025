@@ -11,6 +11,7 @@ from app.models.loyalty_tier import LoyaltyTier
 from app.models.point_history import PointHistory
 from app.models.user_coupon import UserCoupon
 from app.models.coupon import Coupon
+from app.models.enum import PointEventType
 from decimal import Decimal
 import random
 import string

@@ -6,11 +6,11 @@
 # confirmación de email, inicio de sesión, cierre de sesión, recuperación y
 # restablecimiento de contraseñas utilizando AWS Cognito como proveedor de identidad.
 from fastapi import (
-    APIRouter, 
-    HTTPException, 
-    Depends, 
-    UploadFile, 
-    status, 
+    APIRouter,
+    HTTPException,
+    Depends,
+    UploadFile,
+    status,
     Form,
     Security, 
     BackgroundTasks
@@ -22,8 +22,9 @@ from app.api.v1.auth import schemas
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.config import settings
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter()
 
 security = HTTPBearer()
 
@@ -82,6 +83,7 @@ async def register_user(
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors())
 
+    # Read image bytes before processing
     image_bytes = await profile_image.read() if profile_image else None
 
     result = await cognito_service.sign_up(db=db, user_data=user_data, profile_image=image_bytes)

@@ -392,3 +392,6 @@ class ReviewService:
         product = db.query(Product).filter(Product.product_id == product_id).first()
         if product:
             product.average_rating = float(avg_rating) if avg_rating else None
+# Instancias singleton de los servicios
+product_service = ProductService()
+review_service = ReviewService()

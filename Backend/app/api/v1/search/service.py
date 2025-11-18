@@ -172,3 +172,5 @@ class SearchService:
             "physical_activities": sorted(list(activities)),
             "fitness_objectives": sorted(list(objectives))
         }
+# Instancia singleton del servicio
+search_service = SearchService()

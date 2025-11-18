@@ -10,50 +10,24 @@ from fastapi import (
     Depends,
     UploadFile,
     File,
-    status,
-    Security
+    status
 )
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import Dict
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
 from app.api.v1.user_profile import schemas
 from app.api.v1.user_profile.service import user_profile_service
 
 router = APIRouter()
 
-security = HTTPBearer()
-
-"""Extrae el token del header Authorization"""
-def get_token_from_header(credentials: HTTPAuthorizationCredentials = Security(security)) -> str:
-    if not credentials or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No se proporcionaron credenciales de autenticación",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
-
 """
-Verifica el token JWT y devuelve el payload del usuario.
-Reutiliza la función de auth para mantener consistencia.
+Obtiene el perfil completo del usuario autenticado
 """
-def get_current_user(token: str = Depends(get_token_from_header)) -> Dict:
-    from app.api.v1.auth.service import cognito_service
-    
-    payload = cognito_service.verify_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return payload
-
 @router.get("/me", response_model=schemas.UserProfileResponse, status_code=status.HTTP_200_OK)
 async def get_my_profile(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -69,7 +43,8 @@ async def get_my_profile(
     Retorna:
         UserProfileResponse: Perfil completo del usuario.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = user_profile_service.get_user_profile(db=db, cognito_sub=cognito_sub)
     
@@ -84,7 +59,7 @@ async def get_my_profile(
 @router.get("/me/basic", response_model=schemas.BasicProfileResponse, status_code=status.HTTP_200_OK)
 async def get_my_basic_profile(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -100,7 +75,8 @@ async def get_my_basic_profile(
     Retorna:
         BasicProfileResponse: Datos esenciales del perfil del usuario.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = user_profile_service.get_basic_profile(db=db, cognito_sub=cognito_sub)
     
@@ -116,7 +92,7 @@ async def get_my_basic_profile(
 async def update_my_profile(
     profile_data: schemas.UpdateProfileRequest,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -133,7 +109,8 @@ async def update_my_profile(
     Retorna:
         UserProfileResponse: Perfil actualizado del usuario.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = user_profile_service.update_user_profile(
         db=db,
@@ -156,7 +133,7 @@ async def update_my_profile(
 async def update_profile_image(
     profile_image: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -174,7 +151,8 @@ async def update_profile_image(
     Retorna:
         ProfileImageResponse: Información sobre la nueva imagen de perfil.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     # Validar que es una imagen
     if not profile_image.content_type.startswith("image/"):
@@ -203,7 +181,7 @@ async def update_profile_image(
 @router.delete("/me", response_model=schemas.DeleteAccountResponse, status_code=status.HTTP_200_OK)
 async def delete_my_account(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -220,7 +198,8 @@ async def delete_my_account(
     Retorna:
         DeleteAccountResponse: Resultado de la operación de eliminación.
     """
-    cognito_sub = current_user.get("sub")
+
+    cognito_sub = current_user.cognito_sub
     
     result = user_profile_service.soft_delete_account(db=db, cognito_sub=cognito_sub)
     

@@ -6,7 +6,7 @@
 import pytest
 from sqlalchemy.orm import Session
 from decimal import Decimal  # <-- IMPORTADO
-from app.api.v1.products.service import ProductService, ReviewService
+from app.api.v1.products.service import product_service, review_service
 from app.api.v1.products import schemas
 from app.models.product import Product
 from app.models.product_image import ProductImage
@@ -32,7 +32,7 @@ class TestProductServiceUnit:
         """
         
         # Act
-        product = ProductService.get_product_by_id(db, test_product.product_id)
+        product = product_service.get_product_by_id(db, test_product.product_id)
         
         # Assert
         assert product is not None
@@ -53,7 +53,7 @@ class TestProductServiceUnit:
         
         # Act & Assert
         with pytest.raises(Exception) as exc_info:
-            ProductService.get_product_by_id(db, non_existent_id)
+            product_service.get_product_by_id(db, non_existent_id)
         
         assert "no encontrado" in str(exc_info.value).lower()
     
@@ -84,7 +84,7 @@ class TestProductServiceUnit:
         )
         
         # Act
-        product = ProductService.create_product(db, product_data)
+        product = product_service.create_product(db, product_data)
         
         # Assert
         assert product.product_id is not None
@@ -109,7 +109,7 @@ class TestProductServiceUnit:
         )
         
         # Act
-        updated_product = ProductService.update_product(
+        updated_product = product_service.update_product(
             db, 
             test_product.product_id, 
             update_data
@@ -132,7 +132,7 @@ class TestProductServiceUnit:
         product_id = test_product.product_id
         
         # Act
-        result = ProductService.delete_product(db, product_id)
+        result = product_service.delete_product(db, product_id)
         
         # Assert
         assert result is True
@@ -164,7 +164,7 @@ class TestProductServiceUnit:
         db.commit()
         
         # Act
-        related = ProductService.get_related_products(db, test_product.product_id, limit=5)
+        related = product_service.get_related_products(db, test_product.product_id, limit=5)
         
         # Assert
         assert len(related) >= 0  # Puede tener 0 o más relacionados
@@ -243,7 +243,7 @@ class TestReviewServiceUnit:
         )
         
         # Act
-        review = ReviewService.create_review(
+        review = review_service.create_review(
             db, 
             test_product.product_id, 
             test_user.user_id,
@@ -325,7 +325,7 @@ class TestReviewServiceUnit:
         db.commit()
         
         # Act
-        reviews, total = ReviewService.get_product_reviews(
+        reviews, total = review_service.get_product_reviews(
             db, 
             test_product.product_id,
             skip=0,
@@ -447,11 +447,11 @@ class TestProductFunctional:
         assert product.product_id in product_ids
         
         # Paso 4: Verificar soft delete
-        ProductService.delete_product(db, product.product_id)
+        product_service.delete_product(db, product.product_id)
         db.refresh(product)
         assert product.is_active is False
         
-        print("✅ Prueba funcional de ciclo de vida de producto completada")
+        print("Prueba funcional de ciclo de vida de producto completada")
     
     def test_product_review_workflow(self, client, db, test_product, test_user):
         """
@@ -513,7 +513,7 @@ class TestProductFunctional:
         
         # Paso 1: Crear reseña
         review_data = schemas.ReviewCreate(rating=5, review_text="Excelente")
-        review = ReviewService.create_review(
+        review = review_service.create_review(
             db,
             test_product.product_id,
             test_user.user_id,
