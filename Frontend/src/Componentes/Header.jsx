@@ -109,7 +109,7 @@ function Header({ cartItems = [], onCartClick }) {
               src={logo} 
               alt="Logo Befit" 
               className="w-16 md:w-32 h-auto object-contain cursor-pointer"
-              onClick={() => navigate("/home")}
+              onClick={() => navigate("/")}
             />
           </motion.div>
 

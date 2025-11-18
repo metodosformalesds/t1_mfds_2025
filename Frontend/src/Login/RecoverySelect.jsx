@@ -180,7 +180,7 @@ export default function VerifyAccount() {
             {/* Boton Volver */}
             <motion.div className="mt-10 text-center" variants={itemVariant}>
               <MotionLink 
-                to='/' 
+                to='/login' 
                 className="font-montserrat text-gray-500 font-medium text-sm transition-colors"
                 whileHover={{ color: "#70AA77" }}
                 whileTap={{ scale: 0.95 }}

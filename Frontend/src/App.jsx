@@ -151,7 +151,7 @@ export default function App() {
     <Router>
       <Routes>
         {/* Rutas Públicas - Accesibles sin autenticación */}
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/RegisterPage" element={<Register />} />
         <Route path="/RecoverySelect" element={<RSelect />} />
         <Route path="/RecoveryCode" element={<RCode />} />
@@ -161,7 +161,7 @@ export default function App() {
         {/* Layout principal */}
         <Route element={<MainLayout />}>
           {/* HomePage - Accesible sin autenticación */}
-          <Route path="/home" element={<Home />} />
+          <Route path="/" element={<Home />} />
           <Route path="/aboutUsPage" element={<AboutUs />} />
 
           {/* Rutas Protegidas - Requieren autenticación */}

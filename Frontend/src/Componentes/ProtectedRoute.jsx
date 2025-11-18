@@ -17,7 +17,7 @@ import { isAuthenticated } from '../utils/auth';
 export const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated()) {
     // Redirigir al login si no está autenticado
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Si está autenticado, renderizar el contenido solicitado

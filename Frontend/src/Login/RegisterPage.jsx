@@ -295,7 +295,7 @@ const RegisterPage = () => {
                             ¿Ya tienes cuenta?
                             <motion.span className="ml-1">
                                 <Link
-                                    to="/"
+                                    to="/login"
                                     className="font-bold text-[#5DA586] hover:underline"
                                 >
                                     Inicia Sesión
