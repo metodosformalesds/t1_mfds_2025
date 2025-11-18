@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: PersonalInfo
+ * Descripción: Muestra y permite al usuario editar su información personal (nombre, apellido, género, fecha de nacimiento) y actualizar su foto de perfil. Gestiona la carga de datos y las operaciones de guardado (actualizar perfil y subir imagen) a través de la API.
+ */
+}
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserProfile, updateUserProfile, updateProfileImage } from "../utils/api";

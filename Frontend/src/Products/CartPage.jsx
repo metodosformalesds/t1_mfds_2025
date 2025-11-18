@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: CartPage
+ * Descripción: Muestra la vista detallada del carrito de compras. Permite gestionar la cantidad de artículos, removerlos, calcular el resumen del pedido (subtotal, envío) y muestra productos recomendados.
+ */
+}
 import { useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";

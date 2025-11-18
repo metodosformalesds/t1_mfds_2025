@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: PerfilUsuario
+ * Descripción: Muestra la vista principal del perfil de usuario, agrupando enlaces a secciones clave (Personal, Fitness, Pagos, Órdenes). Carga datos de usuario, lealtad y suscripción, y permite gestionar la suscripción (pausar/reanudar/cancelar) y eliminar la cuenta.
+ */
+}
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserProfile, deleteUserAccount, logout, getLoyaltyStatus, getMySubscription, pauseSubscription, resumeSubscription, cancelSubscription } from "../utils/api";

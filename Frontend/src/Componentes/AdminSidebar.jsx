@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: AdminSidebar
+ * Descripción: Barra lateral de navegación flotante para el panel de administración. Se expande al pasar el mouse (hover) y dirige a las diferentes vistas de gestión (Dashboard, Productos), manteniendo el estado activo.
+ */
+}
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 

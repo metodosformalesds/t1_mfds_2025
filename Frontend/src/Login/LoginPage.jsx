@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: LoginPage
+ * Descripción: Maneja el inicio de sesión de usuarios, incluyendo validación de credenciales y animaciones con Framer Motion.
+ */
+}
 import React, { useState } from 'react';
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";

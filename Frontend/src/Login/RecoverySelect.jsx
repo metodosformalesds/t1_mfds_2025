@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: RecoverySelect
+ * Descripción: Primera etapa del flujo de recuperación de contraseña. Permite al usuario ingresar su email para solicitar el envío de un código de verificación a través de la API.
+ */
+}
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';

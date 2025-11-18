@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: OrderHistoryPage
+ * Descripción: Muestra el historial completo de pedidos del usuario. Permite buscar productos dentro de las órdenes y aplicar filtros por periodo de fecha, tipo de compra y rango de precio. Los detalles de cada orden pueden ser expandidos.
+ */
+}
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getOrders } from '../utils/api';

@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: Dashboard
+ * Descripción: Panel principal de administración. Muestra estadísticas clave (ventas, ingresos, usuarios) y reportes en gráficos (recharts) y tablas. Se conecta a múltiples endpoints de la API para obtener datos en tiempo real.
+ */
+}
 import React, { useState, useEffect } from 'react';
 import {
     AreaChart,

@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: PlacementTestQuestions
+ * Descripción: Maneja la lógica y la interfaz de usuario de un test de colocación (quiz) en múltiples fases. Gestiona las respuestas del usuario, la navegación entre preguntas y utiliza GSAP para animar la barra de progreso y las transiciones de la tarjeta principal.
+ */
+}
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { gsap } from "gsap";

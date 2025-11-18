@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: TestResults
+ * Descripción: Muestra los resultados y las recomendaciones personalizadas obtenidas del test de colocación. Muestra un estado de carga inicial con animación y, al finalizar, presenta el plan de fitness del usuario, utilizando GSAP para la transición de entrada.
+ */
+}
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { gsap } from "gsap";

@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: SubscriptionPage
+ * Descripción: Muestra la oferta de suscripción personalizada al usuario. Carga el perfil fitness y el kit de productos recomendados, presenta un resumen del plan y permite al usuario agregar el plan de suscripción a su carrito para proceder al pago.
+ */
+}
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addItemToCart, getUserProfile, getMySubscription } from '../utils/api';

@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: ProductDetail
+ * Descripción: Muestra la vista detallada de un producto específico. Carga datos del producto y recomendaciones relacionadas, maneja la selección de cantidad, las pestañas (tabs) de información y la funcionalidad de añadir al carrito.
+ */
+}
 import React, { useState, useEffect } from "react";
 import { useParams, useOutletContext, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";

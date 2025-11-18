@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: ShippingAddresses
+ * Descripción: Permite al usuario visualizar, añadir, editar, eliminar y establecer como predeterminadas sus direcciones de envío. Gestiona el estado de las direcciones y las operaciones CRUD a través de la API del backend.
+ */
+}
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 

@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: PointsProgram
+ * Descripción: Muestra la vista del programa de lealtad (puntos). Presenta el nivel actual del usuario, el progreso hacia el siguiente nivel, los beneficios activos y la gestión de cupones, cargando los datos desde la API.
+ */
+}
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getLoyaltyStatus, getLoyaltyTiers, generateMonthlyCoupons } from '../utils/api';

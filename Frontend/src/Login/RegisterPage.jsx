@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: RegisterPage
+ * Descripción: Página que permite a los usuarios registrarse. Valida contraseñas y gestiona la navegación al perfil de configuración tras el registro exitoso, utilizando animaciones de Framer Motion.
+ */
+}
 import React, { useState } from 'react';
 import manIMG from '../assets/FitnessMen.png';
 import { Link, useNavigate } from 'react-router-dom';

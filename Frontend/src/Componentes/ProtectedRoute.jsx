@@ -1,8 +1,10 @@
-/**
- * Componente de protección de rutas
- * Verifica si el usuario está autenticado antes de permitir el acceso
- * Si no está autenticado, redirige al login
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: ProtectedRoute
+ * Descripción: Componente de orden superior que garantiza la seguridad de las rutas. Verifica el estado de autenticación del usuario mediante la función 'isAuthenticated' y lo redirige a la página de login si no ha iniciado sesión.
  */
+}
 import { Navigate } from 'react-router-dom';
 import { isAuthenticated } from '../utils/auth';
 

@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: OrderReview
+ * Descripción: Permite al usuario calificar y comentar los productos de un pedido específico que ya fue entregado. Carga los detalles de la orden, gestiona el estado de las reseñas y las envía al backend a través de la API.
+ */
+}
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getOrderDetail, createProductReview } from '../utils/api';

@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: ChangePasswordPage
+ * Descripción: Permite al usuario restablecer su contraseña. Valida las nuevas contraseñas, utiliza el código de verificación previamente guardado y confirma el cambio a través de la API.
+ */
+}
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";

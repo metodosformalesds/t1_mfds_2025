@@ -1,4 +1,10 @@
-// src/PaymentMethods.jsx
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: PaymentMethods
+ * Descripción: Permite al usuario gestionar sus métodos de pago guardados (tarjetas de crédito/débito). Utiliza la integración de Stripe (CardElement) para añadir nuevas tarjetas de forma segura y permite establecer, editar y eliminar las tarjetas existentes a través de la API del backend.
+ */
+}
 import React, { useState, useEffect } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useNavigate } from "react-router-dom";

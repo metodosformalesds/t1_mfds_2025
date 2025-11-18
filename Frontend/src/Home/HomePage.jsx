@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: HomeView
+ * Descripción: Componente principal de la página de inicio para clientes. Agrupa las secciones Hero, HowItWorks, FeaturedProducts, PersonalizedPlan y Testimonials, aplicando animaciones globales de Framer Motion.
+ */
+}
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';

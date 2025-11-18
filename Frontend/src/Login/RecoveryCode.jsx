@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: VerificationPage
+ * Descripción: Interfaz para que el usuario ingrese un código de verificación (OTP) enviado por correo, utilizado para la confirmación de cuenta o la recuperación de contraseña.
+ */
+}
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";

@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: CheckoutPage
+ * Descripción: Página final para completar la compra. Muestra y selecciona la dirección de envío y el método de pago guardados, calcula el total final y procesa el pedido mediante la API de Stripe/Pagos.
+ */
+}
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';

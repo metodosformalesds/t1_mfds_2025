@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: AboutUs
+ * Descripción: Página informativa que presenta la misión y filosofía de la compañía. Utiliza animaciones de Framer Motion para una experiencia de usuario atractiva.
+ */
+}
 import React from 'react';
 import { motion } from 'framer-motion';
 import UsLogo from '../assets/AboutUs.png';

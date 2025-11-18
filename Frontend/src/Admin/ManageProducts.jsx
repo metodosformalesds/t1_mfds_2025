@@ -1,9 +1,11 @@
+{
 /**
  * Autor: Diego Jasso
+ * Componente: ManageProducts
  * Descripción: Componente de administración para gestión de productos.
  *              Permite crear, editar, eliminar y visualizar productos en formato tabla.
  */
-
+}
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchProducts, createProduct, updateProduct, deleteProduct } from "../utils/api";

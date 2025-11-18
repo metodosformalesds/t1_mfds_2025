@@ -1,10 +1,12 @@
+{
 /**
  * Autor: Diego Jasso
+ * Componente: FitnessProfile
  * Descripción: Componente que muestra el perfil fitness del usuario con resultados del test,
  *              recomendaciones de productos personalizadas según objetivos fitness,
  *              y opciones para retomar el test.
  */
-
+}
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserProfile, getRelatedProducts } from "../utils/api";

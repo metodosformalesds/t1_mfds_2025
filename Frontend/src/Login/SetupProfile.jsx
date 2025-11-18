@@ -53,6 +53,16 @@ export default function App() {
     }
   }, []);
 
+  // ⭐ NUEVA LÓGICA: Ajustar día seleccionado cuando cambia mes o año
+  useEffect(() => {
+    if (dia && mes && año) {
+      const maxDays = getDaysInMonth(parseInt(mes), parseInt(año));
+      if (parseInt(dia) > maxDays) {
+        setDia(maxDays.toString()); // Ajustar al último día válido del mes
+      }
+    }
+  }, [mes, año, dia]);
+
   // Variantes de animación
   const containerVariants = {
     hidden: { 
@@ -177,11 +187,22 @@ export default function App() {
   };
 
   // --- Helpers Fecha ---
+  // ⭐ NUEVA LÓGICA: Obtener días correctos
+  const getDaysInMonth = (month, year) => {
+    if (!month) return 31; // Si no hay mes seleccionado, mostrar 31 días
+    if (!year) year = new Date().getFullYear(); // Usar año actual si no está seleccionado
+    // month está en base 1 (1-12), convertir a base 0 para Date
+    return new Date(year, month, 0).getDate(); // Día 0 del mes siguiente = último día del mes actual
+  };
+
   const getDays = () => {
-    let days = [];
-    for (let i = 1; i <= 31; i++) {
+    // ⭐ NUEVA LÓGICA: Calcula días basado en mes/año
+    const maxDays = getDaysInMonth(parseInt(mes) || 0, parseInt(año) || 0);
+    const days = [];
+    for (let i = 1; i <= maxDays; i++) {
+      // Usando key con prefijo para asegurar unicidad absoluta
       days.push(
-        <option key={i} value={i}>
+        <option key={`day-${i}`} value={i}>
           {i}
         </option>
       );
@@ -196,19 +217,21 @@ export default function App() {
     ];
 
     return monthNames.map((month, index) => (
-      <option key={index} value={index + 1}>
+      // Usando key con prefijo para asegurar unicidad absoluta
+      <option key={`month-${index + 1}`} value={index + 1}>
         {month}
       </option>
     ));
   };
 
   const getYears = () => {
-    let years = [];
+    const years = [];
     const currentYear = new Date().getFullYear();
 
     for (let i = currentYear; i >= currentYear - 100; i--) {
+      // Usando key con prefijo para asegurar unicidad absoluta
       years.push(
-        <option key={i} value={i}>
+        <option key={`year-${i}`} value={i}>
           {i}
         </option>
       );
@@ -247,17 +270,48 @@ export default function App() {
       return;
     }
     
+    // ⭐ NUEVA LÓGICA: Validación de fecha de nacimiento
+    const date = new Date(año, mes - 1, dia);
+    const today = new Date();
+    
+    // Verificar que la fecha sea válida (mes y día existen)
+    if (date.getMonth() !== mes - 1 || date.getDate() !== parseInt(dia)) {
+      setError('La fecha de nacimiento no es válida');
+      return;
+    }
+    
+    // Verificar que no sea fecha futura
+    if (date > today) {
+      setError('La fecha de nacimiento no puede ser en el futuro');
+      return;
+    }
+    
+    // Verificar edad mínima (13 años)
+    const age = Math.floor((today - date) / (365.25 * 24 * 60 * 60 * 1000));
+    if (age < 13) {
+      setError('Debes tener al menos 13 años para registrarte');
+      return;
+    }
+    
     setLoading(true);
     
     try {
       // Construir fecha de nacimiento en formato ISO
       const birthDate = `${año}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
       
+      // ⭐ NUEVA LÓGICA: Mapear género al formato del backend (si aplica)
+      const genderMap = {
+        'masculino': 'male',
+        'femenino': 'female',
+        'no-decir': 'other'
+      };
+      
       // Actualizar perfil básico
       await updateUserProfile({
         first_name: nombre,
         last_name: apellido,
-        gender: genero,
+        // Usar el mapeo de género para enviarlo al API
+        gender: genderMap[genero] || genero, 
         date_of_birth: birthDate
       });
       

@@ -156,6 +156,7 @@ export default function App() {
         <Route path="/RecoverySelect" element={<RSelect />} />
         <Route path="/RecoveryCode" element={<RCode />} />
         <Route path="/RecoveryPassword" element={<RPassword />} />
+        <Route path="/SetupProfile" element={<ProtectedRoute><SetupP /></ProtectedRoute>} />
 
         {/* Layout principal */}
         <Route element={<MainLayout />}>
@@ -164,7 +165,6 @@ export default function App() {
           <Route path="/aboutUsPage" element={<AboutUs />} />
 
           {/* Rutas Protegidas - Requieren autenticación */}
-          <Route path="/SetupProfile" element={<ProtectedRoute><SetupP /></ProtectedRoute>} />
           <Route path="/placement-test/questions" element={<ProtectedRoute><PlacementTestQuestions /></ProtectedRoute>} />
           <Route path="/placement-test/results" element={<ProtectedRoute><TestResults /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfileUser /></ProtectedRoute>} />

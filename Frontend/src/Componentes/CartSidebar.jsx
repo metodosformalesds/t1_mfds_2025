@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: CartSidebar
+ * Descripción: Sidebar deslizable que muestra los artículos añadidos al carrito. Permite al usuario ver el total, ajustar la cantidad de productos, eliminar artículos y proceder al pago.
+ */
+}
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -49,16 +56,17 @@ const CartSidebar = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity })
           ) : (
             <div className="space-y-6">
               {cartItems.map((item) => {
-                // Compatibilidad con backend y mock data
-                const productId = item.product_id || item.id;
-                const productTitle = item.name || item.title || "Producto";
-                const productImage = item.images?.[0]?.image_url || item.imageSrc;
+                // --- CORRECCIÓN DE SEGURIDAD ---
+                // Usamos 'item.title' porque así viene de Tienda.jsx.
+                // Si por alguna razón no viene, usamos 'item.name' o un texto por defecto.
+                const productTitle = item.title || item.name || "Producto";
                 
                 return (
-                  <div key={productId} className="flex gap-4 items-start">
+                  <div key={item.id} className="flex gap-4 items-start">
                     <div className="w-20 h-20 flex-shrink-0 bg-gray-50 rounded-lg flex items-center justify-center p-2">
                       <img 
-                        src={productImage || `https://placehold.co/300x400/png?text=${productTitle.split(' ')[0]}`} 
+                        // Aquí estaba el error. Ahora usamos la variable segura 'productTitle'
+                        src={item.imageSrc || `https://placehold.co/300x400/png?text=${productTitle.split(' ')[0]}`} 
                         alt={productTitle} 
                         className="w-full h-full object-contain mix-blend-multiply"
                       />
@@ -69,7 +77,7 @@ const CartSidebar = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity })
                             {productTitle}
                           </h3>
                           <button 
-                              onClick={() => onRemove(productId)}
+                              onClick={() => onRemove(item.id)}
                               className="text-gray-400 hover:text-red-500 transition-colors ml-2"
                           >
                              <TrashIcon /> 
@@ -78,7 +86,7 @@ const CartSidebar = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity })
                       <div className="flex justify-between items-center mt-4">
                         <div className="flex items-center border border-gray-200 rounded-md">
                           <button 
-                            onClick={() => onUpdateQuantity(productId, item.quantity - 1)}
+                            onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                             className="px-2 py-1 text-gray-600 hover:bg-gray-100 text-xs"
                             disabled={item.quantity <= 1}
                           >
@@ -88,7 +96,7 @@ const CartSidebar = ({ isOpen, onClose, cartItems, onRemove, onUpdateQuantity })
                             {item.quantity}
                           </span>
                           <button 
-                            onClick={() => onUpdateQuantity(productId, item.quantity + 1)}
+                            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
                             className="px-2 py-1 text-gray-600 hover:bg-gray-100 text-xs"
                           >
                             +

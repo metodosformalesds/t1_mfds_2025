@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: MarketplaceView
+ * Descripción: Componente principal de la tienda. Gestiona la carga, filtrado (por URL params) y paginación de productos. Incluye el layout de la barra lateral de filtros (Sidebar) y el listado de tarjetas de producto (ProductCard).
+ */
+}
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useOutletContext, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
