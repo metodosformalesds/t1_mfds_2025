@@ -1,16 +1,43 @@
-import React from 'react';
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: LoginPage
+ * Descripción: Maneja el inicio de sesión de usuarios, incluyendo validación de credenciales y animaciones con Framer Motion.
+ */
+}
+import React, { useState } from 'react';
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import CreatinaIMG from '../assets/Creatina.png';
 import ScoopIMG from '../assets/Scoop.png';
 import SocialMediaButtons from '../Componentes/SocialMediaButtons';
+import { login } from '../utils/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    navigate('/Home');
+    setError('');
+    setLoading(true);
+    
+    try {
+      const response = await login(formData.email, formData.password);
+      
+      // Guardar tokens en localStorage
+      localStorage.setItem('token', response.access_token);
+      localStorage.setItem('refresh_token', response.refresh_token);
+      localStorage.setItem('id_token', response.id_token);
+      
+      navigate('/Home');
+    } catch (err) {
+      setError(err.message || 'Error al iniciar sesión. Verifica tus credenciales.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const containerVariants = {
@@ -22,7 +49,7 @@ const LoginPage = () => {
       opacity: 1,
       x: 0,
       transition: {
-        duration: 0.6,
+        duration: 0.4,
         ease: "easeOut",
         when: "beforeChildren",
         staggerChildren: 0.1
@@ -32,7 +59,7 @@ const LoginPage = () => {
       opacity: 0,
       x: 50,
       transition: {
-        duration: 0.5,
+        duration: 0.3,
         ease: "easeIn"
       }
     }
@@ -130,6 +157,18 @@ const LoginPage = () => {
               </div>
             </motion.div>
 
+            {error && (
+              <motion.div 
+                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                {error}
+              </motion.div>
+            )}
+
             <motion.div 
               className="flex flex-col"
               variants={itemVariants}
@@ -137,6 +176,9 @@ const LoginPage = () => {
               <label className="font-oswald mb-1 text-s font-semibold text-gray-600">Correo</label>
               <motion.input 
                 type="email" 
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
                 className="border-b border-gray-300 bg-transparent py-1 text-gray-900 outline-none transition-colors focus:border-black"
                 whileFocus={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 300 }}
@@ -150,6 +192,9 @@ const LoginPage = () => {
               <label className="font-oswald mb-1 text-s font-semibold text-gray-600">Contraseña</label>
               <motion.input 
                 type="password" 
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
                 className="border-b border-gray-300 bg-transparent py-1 text-gray-900 outline-none transition-colors focus:border-black"
                 whileFocus={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 300 }}
@@ -167,15 +212,16 @@ const LoginPage = () => {
 
             <motion.button 
               type="submit"
-              className="font-bebas tracking-[3px] w-full rounded-md bg-[#3b4d82] py-3 font-medium text-white text-center shadow-md transition-all duration-150 border border-transparent hover:bg-transparent hover:border-[#3b4d82] hover:text-black"
+              disabled={loading}
+              className="font-bebas tracking-[3px] w-full rounded-md bg-[#3b4d82] py-3 font-medium text-white text-center shadow-md transition-all duration-150 border border-transparent hover:bg-transparent hover:border-[#3b4d82] hover:text-black disabled:opacity-50 disabled:cursor-not-allowed"
               variants={itemVariants}
-              whileHover={{ 
+              whileHover={!loading ? { 
                 scale: 1.05,
                 boxShadow: "0 10px 25px rgba(59, 77, 130, 0.3)"
-              }}
-              whileTap={{ scale: 0.95 }}
+              } : {}}
+              whileTap={!loading ? { scale: 0.95 } : {}}
             >
-              Iniciar Sesión
+              {loading ? 'Iniciando...' : 'Iniciar Sesión'}
             </motion.button>
 
             <motion.div 

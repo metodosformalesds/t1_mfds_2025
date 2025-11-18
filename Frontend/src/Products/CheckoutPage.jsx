@@ -1,6 +1,14 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: CheckoutPage
+ * Descripción: Página final para completar la compra. Muestra y selecciona la dirección de envío y el método de pago guardados, calcula el total final y procesa el pedido mediante la API de Stripe/Pagos.
+ */
+}
 import { useState, useEffect } from 'react';
 import { useOutletContext, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getAddresses, getPaymentMethods, createStripeCheckout, initializePayPalCheckout } from '../utils/api';
 
 const BackArrowIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-700">
@@ -118,6 +126,13 @@ export default function CheckoutPage() {
   const { cartItems, allProducts, clearCart } = useOutletContext();
   
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   useEffect(() => {
     if (cartItems.length === 0 && !showSuccessModal) {
@@ -125,20 +140,39 @@ export default function CheckoutPage() {
     }
   }, [cartItems, navigate, showSuccessModal]);
 
-
-  const defaultAddress = {
-    name: "Nombre Apellido",
-    street: "Calle Ejemplo 1234, Fraccionamiento tal",
-    city: "Ciudad tal, Estado tal, País",
-    zip: "CP 12345",
-    phone: "Tel. 000 123 4567"
-  };
-
-  const defaultCard = {
-    type: "VISA",
-    lastFour: "4532",
-    expiry: "10/2029"
-  };
+  // Cargar direcciones y métodos de pago del usuario
+  useEffect(() => {
+    const loadCheckoutData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const [addressesData, paymentsData] = await Promise.all([
+          getAddresses(),
+          getPaymentMethods()
+        ]);
+        
+        setAddresses(addressesData);
+        setPaymentMethods(paymentsData);
+        
+        // Seleccionar automáticamente dirección y método de pago por defecto
+        const defaultAddr = addressesData.find(addr => addr.is_default) || addressesData[0];
+        const defaultPm = paymentsData.find(pm => pm.is_default) || paymentsData[0];
+        
+        setSelectedAddress(defaultAddr);
+        setSelectedPaymentMethod(defaultPm);
+      } catch (err) {
+        console.error('Error al cargar datos de checkout:', err);
+        setError(err.message || 'Error al cargar información de pago');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (cartItems.length > 0) {
+      loadCheckoutData();
+    }
+  }, [cartItems.length]);
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const shipping = subtotal > 2000 ? 0 : 150; 
@@ -146,17 +180,73 @@ export default function CheckoutPage() {
   const total = subtotal + shipping - discount;
 
 
-  const handleCompleteOrder = () => {
-    setShowSuccessModal(true);
+  const handleCompleteOrder = async () => {
+    if (!selectedAddress) {
+      alert('Por favor selecciona una dirección de envío');
+      return;
+    }
     
-    clearCart(); 
+    if (!selectedPaymentMethod) {
+      alert('Por favor selecciona un método de pago');
+      return;
+    }
     
+    try {
+      setProcessingPayment(true);
+      
+      // Crear sesión de pago con Stripe
+      const checkoutData = {
+        address_id: selectedAddress.address_id,
+        payment_method_id: selectedPaymentMethod.payment_id
+      };
+      
+      const response = await createStripeCheckout(checkoutData);
+      
+      // El backend debería retornar una URL de checkout o client_secret
+      // Por ahora mostramos modal de éxito (ajustar según implementación real)
+      clearCart();
+      setShowSuccessModal(true);
+    } catch (err) {
+      console.error('Error al procesar el pago:', err);
+      alert(err.message || 'Error al procesar el pago. Por favor intenta nuevamente.');
+    } finally {
+      setProcessingPayment(false);
+    }
   };
 
   const closeAndNavigate = () => {
     navigate('/Home'); 
     setShowSuccessModal(false);
   };
+
+  // Estado de loading
+  if (loading) {
+    return (
+      <div className="bg-[#FDFBF7] min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2D3A96] mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando información de pago...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Estado de error
+  if (error) {
+    return (
+      <div className="bg-[#FDFBF7] min-h-screen flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <p className="text-lg text-gray-700 mb-4">{error}</p>
+          <button
+            onClick={() => navigate('/CartPage')}
+            className="bg-[#2D3A96] text-white px-6 py-2 rounded-lg hover:bg-opacity-90"
+          >
+            Volver al carrito
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0 && !showSuccessModal) {
     return (
@@ -197,20 +287,28 @@ export default function CheckoutPage() {
               {/* Seccion: Direccion de envio */}
               <motion.div variants={itemFadeInUp}>
                 <h2 className="text-xl font-bold mb-4">Dirección de envío</h2>
-                {/* ... (Detalles de la dirección) ... */}
-                <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-6">
-                  <p className="font-bold text-lg mb-2">Casa</p>
-                  <p className="text-gray-700 text-sm">{defaultAddress.street}</p>
-                  <p className="text-gray-700 text-sm">{defaultAddress.city}</p>
-                  <p className="text-gray-700 text-sm">{defaultAddress.zip}</p>
-                  <div className="flex justify-between items-center mt-3 text-sm">
-                    <p className="text-gray-700">{defaultAddress.name}</p>
-                    <p className="text-gray-700">{defaultAddress.phone}</p>
+                {selectedAddress ? (
+                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-6">
+                    <p className="font-bold text-lg mb-2">{selectedAddress.address_name || 'Dirección'}</p>
+                    <p className="text-gray-700 text-sm">{selectedAddress.address_line1}</p>
+                    {selectedAddress.address_line2 && (
+                      <p className="text-gray-700 text-sm">{selectedAddress.address_line2}</p>
+                    )}
+                    <p className="text-gray-700 text-sm">{selectedAddress.city}, {selectedAddress.state}</p>
+                    <p className="text-gray-700 text-sm">{selectedAddress.country} - {selectedAddress.zip_code}</p>
+                    <div className="flex justify-between items-center mt-3 text-sm">
+                      <p className="text-gray-700">{selectedAddress.recipient_name}</p>
+                      <p className="text-gray-700">{selectedAddress.phone_number}</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-6">
+                    <p className="text-red-700 text-sm">No tienes direcciones guardadas.</p>
+                  </div>
+                )}
                 <motion.div whileHover={{ x: 2 }} className="inline-block">
-                  <Link to="/addresses" className="text-blue-600 font-semibold hover:underline flex items-center gap-1 mb-10">
-                    Seleccionar otra dirección 
+                  <Link to="/profile/addresses" className="text-blue-600 font-semibold hover:underline flex items-center gap-1 mb-10">
+                    {addresses.length > 1 ? 'Seleccionar otra dirección' : 'Agregar dirección'}
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </Link>
                 </motion.div>
@@ -220,35 +318,33 @@ export default function CheckoutPage() {
               <motion.div variants={itemFadeInUp}>
                 <h2 className="text-xl font-bold mb-4">Método de pago</h2>
                 
-                {/* Bloque Tarjeta principal (VISA/Mastercard) */}
-                <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-4">
-                  <p className="font-bold text-lg mb-3">Tarjeta principal</p>
-                  <div className="flex items-center gap-4">
-                    {/* REEMPLAZO 1: Usar VisaIcon */}
-                    <VisaIcon width="40" height="25" /> 
-                    {/* Ten en cuenta que el SVG que pasaste para Visa es de Mastercard */}
-                    
-                    <div>
-                      <p className="font-semibold text-lg">**** **** **** {defaultCard.lastFour}</p>
-                      <p className="text-gray-500 text-sm">Vence {defaultCard.expiry}</p>
+                {selectedPaymentMethod ? (
+                  <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-6">
+                    <p className="font-bold text-lg mb-3">Tarjeta seleccionada</p>
+                    <div className="flex items-center gap-4">
+                      {selectedPaymentMethod.card_brand?.toLowerCase() === 'visa' ? (
+                        <VisaIcon width="40" height="25" />
+                      ) : selectedPaymentMethod.card_brand?.toLowerCase() === 'mastercard' ? (
+                        <VisaIcon width="40" height="25" />
+                      ) : (
+                        <div className="w-10 h-6 bg-gray-300 rounded"></div>
+                      )}
+                      
+                      <div>
+                        <p className="font-semibold text-lg">**** **** **** {selectedPaymentMethod.card_last4}</p>
+                        <p className="text-gray-500 text-sm">Vence {selectedPaymentMethod.card_exp_month?.toString().padStart(2, '0')}/{selectedPaymentMethod.card_exp_year}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Bloque PayPal */}
-                <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 mb-6">
-                  <p className="font-bold text-lg mb-3">PayPal</p>
-                  <div className="flex items-center gap-4">
-                    {/* REEMPLAZO 2: Usar PaypalIcon */}
-                    <PaypalIcon width="40" height="25" /> 
-                    
-                    <p className="font-semibold text-lg text-gray-700">Pagar con PayPal</p>
+                ) : (
+                  <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-6">
+                    <p className="text-red-700 text-sm">No tienes métodos de pago guardados.</p>
                   </div>
-                </div>
+                )}
 
                 <motion.div whileHover={{ x: 2 }} className="inline-block">
-                  <Link to="/payment-methods" className="text-blue-600 font-semibold hover:underline flex items-center gap-1 mb-10">
-                    Seleccionar otro método de pago
+                  <Link to="/profile/payment-methods" className="text-blue-600 font-semibold hover:underline flex items-center gap-1 mb-10">
+                    {paymentMethods.length > 1 ? 'Seleccionar otro método' : 'Agregar método de pago'}
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </Link>
                 </motion.div>
@@ -258,11 +354,19 @@ export default function CheckoutPage() {
               <motion.button
                 variants={itemFadeInUp}
                 onClick={handleCompleteOrder}
-                className="w-full bg-[#2D3A96] text-white py-3 rounded-full font-bold hover:bg-[#1e2a7a] transition shadow-lg shadow-blue-900/20"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                disabled={!selectedAddress || !selectedPaymentMethod || processingPayment}
+                className="w-full bg-[#2D3A96] text-white py-3 rounded-full font-bold hover:bg-[#1e2a7a] transition shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                whileHover={{ scale: selectedAddress && selectedPaymentMethod && !processingPayment ? 1.02 : 1 }}
+                whileTap={{ scale: selectedAddress && selectedPaymentMethod && !processingPayment ? 0.98 : 1 }}
               >
-                Completar orden
+                {processingPayment ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Procesando...
+                  </>
+                ) : (
+                  'Completar orden'
+                )}
               </motion.button>
             </motion.div>
           </motion.div>

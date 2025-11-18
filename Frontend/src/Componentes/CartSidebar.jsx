@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: CartSidebar
+ * Descripción: Sidebar deslizable que muestra los artículos añadidos al carrito. Permite al usuario ver el total, ajustar la cantidad de productos, eliminar artículos y proceder al pago.
+ */
+}
 import React from 'react';
 import { Link } from 'react-router-dom';
 

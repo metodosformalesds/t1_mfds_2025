@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: Test
+ * Descripción: Muestra la pantalla de introducción al test de colocación. Explica el propósito del test, requiere la aceptación del consentimiento y utiliza GSAP para animar la transición a la pantalla de preguntas.
+ */
+}
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { gsap } from "gsap";

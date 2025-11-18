@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: SocialLoginButtons
+ * Descripción: Muestra botones para inicio de sesión social (Google/Facebook) a través de la interfaz de Cognito. Construye dinámicamente las URLs de autenticación.
+ */
+}
 import React from 'react';
 import { motion } from "framer-motion";
 

@@ -1,13 +1,37 @@
-import React, { useState, useRef } from "react";
-import { Link } from "react-router-dom";
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: VerificationPage
+ * Descripción: Interfaz para que el usuario ingrese un código de verificación (OTP) enviado por correo, utilizado para la confirmación de cuenta o la recuperación de contraseña.
+ */
+}
+import React, { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import logo from '../assets/Befitwhite.png';
+import { resendConfirmationCode } from '../utils/api';
 
 const MotionLink = motion(Link);
 
 const VerificationPage = () => {
+  const navigate = useNavigate();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const inputRefs = useRef([]);
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Recuperar email de sessionStorage
+    const recoveryEmail = sessionStorage.getItem('recoveryEmail') || sessionStorage.getItem('pendingConfirmEmail');
+    if (recoveryEmail) {
+      setEmail(recoveryEmail);
+    } else {
+      // Si no hay email, redirigir
+      navigate('/RecoverySelect');
+    }
+  }, [navigate]);
 
   const handleChange = (e, index) => {
     const value = e.target.value;
@@ -23,6 +47,38 @@ const VerificationPage = () => {
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !code[index] && index > 0) {
       inputRefs.current[index - 1].focus();
+    }
+  };
+
+  const handleContinue = () => {
+    const verificationCode = code.join('');
+    
+    if (verificationCode.length !== 6) {
+      setError('Por favor ingresa el código completo de 6 dígitos');
+      return;
+    }
+    
+    // Guardar código y navegar a cambio de contraseña
+    sessionStorage.setItem('verificationCode', verificationCode);
+    navigate('/RecoveryPassword');
+  };
+
+  const handleResendCode = async () => {
+    if (!email) return;
+    
+    setError('');
+    setSuccess('');
+    setLoading(true);
+    
+    try {
+      await resendConfirmationCode(email);
+      setSuccess('Código reenviado exitosamente');
+      setCode(["", "", "", "", "", ""]); // Limpiar código
+      inputRefs.current[0]?.focus();
+    } catch (err) {
+      setError(err.message || 'Error al reenviar código');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,11 +151,44 @@ const VerificationPage = () => {
             </motion.h2>
 
             <motion.p 
-              className="text-gray-600 mb-8 font-roboto text-sm md:text-base"
+              className="text-gray-600 mb-4 font-roboto text-sm md:text-base"
               variants={itemVariant}
             >
               Es el número de 6 dígitos que recibiste por correo.
             </motion.p>
+
+            {email && (
+              <motion.p 
+                className="text-gray-500 mb-8 font-roboto text-xs md:text-sm"
+                variants={itemVariant}
+              >
+                Código enviado a: <span className="font-semibold">{email}</span>
+              </motion.p>
+            )}
+
+            {error && (
+              <motion.div 
+                className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                {error}
+              </motion.div>
+            )}
+
+            {success && (
+              <motion.div 
+                className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded text-sm"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                {success}
+              </motion.div>
+            )}
 
             {/* Inputs del codigo */}
             <motion.div className="flex justify-center gap-2 md:gap-3 mb-8" variants={itemVariant}>
@@ -127,26 +216,29 @@ const VerificationPage = () => {
 
             {/* Boton continuar */}
             <motion.div variants={itemVariant}>
-              <MotionLink
-                to="/RecoveryPassword"
-                className="block w-full bg-[#354a7d] hover:bg-[#2c3e69] text-white font-bold py-3 rounded-xl text-base md:text-lg uppercase tracking-wider mb-4 transition-colors shadow-md"
+              <motion.button
+                onClick={handleContinue}
+                disabled={loading}
+                className="w-full bg-[#354a7d] hover:bg-[#2c3e69] text-white font-bold py-3 rounded-xl text-base md:text-lg uppercase tracking-wider mb-4 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ fontFamily: "Oswald, sans-serif" }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={!loading ? { scale: 1.03 } : {}}
+                whileTap={!loading ? { scale: 0.98 } : {}}
               >
                 Continuar
-              </MotionLink>
+              </motion.button>
             </motion.div>
 
             {/* Boton reenviar */}
             <motion.div variants={itemVariant}>
               <motion.button
-                className="w-full bg-[#a8c49a] hover:bg-[#95b386] text-white font-bold py-3 rounded-xl text-base md:text-lg uppercase tracking-wider mb-6 transition-colors shadow-md"
+                onClick={handleResendCode}
+                disabled={loading}
+                className="w-full bg-[#a8c49a] hover:bg-[#95b386] text-white font-bold py-3 rounded-xl text-base md:text-lg uppercase tracking-wider mb-6 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ fontFamily: "Oswald, sans-serif" }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={!loading ? { scale: 1.03 } : {}}
+                whileTap={!loading ? { scale: 0.98 } : {}}
               >
-                Reenviar Código
+                {loading ? 'Reenviando...' : 'Reenviar Código'}
               </motion.button>
             </motion.div>
 

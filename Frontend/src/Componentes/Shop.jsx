@@ -1,6 +1,14 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: MarketplaceView
+ * Descripción: Componente principal de la tienda. Gestiona la carga, filtrado (por URL params) y paginación de productos. Incluye el layout de la barra lateral de filtros (Sidebar) y el listado de tarjetas de producto (ProductCard).
+ */
+}
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useOutletContext, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { searchProducts, getAvailableFilters } from '../utils/api';
 
 // --- Variantes de animación (Sin cambios) ---
 const gridVariants = {
@@ -374,40 +382,86 @@ const Pagination = ({ totalPages, currentPage, setCurrentPage }) => {
   );
 };
 
-// --- Componente Principal (CORREGIDO PARA LA ANIMACIÓN) ---
+// --- Componente Principal (CONECTADO CON BACKEND) ---
 const MarketplaceView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { addToCart, allProducts = [] } = useOutletContext();
+  const { addToCart } = useOutletContext();
+
+  // Estados para datos del backend
+  const [products, setProducts] = useState([]);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [availableFilters, setAvailableFilters] = useState({
+    categories: [],
+    fitness_objectives: [],
+    physical_activities: []
+  });
 
   const productsPerPage = 6;
 
   const currentFilters = useMemo(() => ({
     category: searchParams.get('category'),
-    goal: searchParams.get('goal'),
-    activity: searchParams.get('activity')
+    fitness_objective: searchParams.get('goal'),
+    physical_activity: searchParams.get('activity')
   }), [searchParams]);
   
-  const filtersKey = JSON.stringify(currentFilters);
+  // Cargar filtros disponibles al montar
+  useEffect(() => {
+    const loadFilters = async () => {
+      try {
+        const filters = await getAvailableFilters();
+        setAvailableFilters(filters);
+      } catch (err) {
+        console.error('Error cargando filtros:', err);
+      }
+    };
+    loadFilters();
+  }, []);
 
-  const filteredProducts = useMemo(() => {
-    return allProducts.filter(product => {
-      if (currentFilters.category && product.category !== currentFilters.category) return false;
-      if (currentFilters.goal && product.goal !== currentFilters.goal) return false;
-      if (currentFilters.activity && product.activity !== currentFilters.activity) return false;
-      return true;
-    });
-  }, [currentFilters, allProducts]);
+  // Cargar productos con filtros y paginación
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const params = {
+          page: currentPage,
+          limit: productsPerPage,
+          is_active: true
+        };
+        
+        if (currentFilters.category) params.category = currentFilters.category;
+        if (currentFilters.fitness_objective) params.fitness_objective = currentFilters.fitness_objective;
+        if (currentFilters.physical_activity) params.physical_activity = currentFilters.physical_activity;
+        
+        const response = await searchProducts(params);
+        setProducts(response.items || []);
+        setTotalProducts(response.total || 0);
+      } catch (err) {
+        setError(err.message || 'Error cargando productos');
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadProducts();
+  }, [currentPage, currentFilters.category, currentFilters.fitness_objective, currentFilters.physical_activity]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [currentFilters]);
+  }, [currentFilters.category, currentFilters.fitness_objective, currentFilters.physical_activity]);
 
-  const lastIndex = currentPage * productsPerPage;
-  const firstIndex = lastIndex - productsPerPage;
-  const currentProducts = filteredProducts.slice(firstIndex, lastIndex);
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  // Variables derivadas para el renderizado
+  const filteredProducts = products;
+  const filtersKey = `${currentFilters.category || 'all'}-${currentFilters.fitness_objective || 'all'}-${currentFilters.physical_activity || 'all'}`;
+  const startIndex = (currentPage - 1) * productsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
 
   const handleFilterChange = (key, value) => {
     const newParams = new URLSearchParams(searchParams);
@@ -449,7 +503,7 @@ const MarketplaceView = () => {
             <h1 className="text-3xl lg:text-4xl font-bold text-[#334173] mb-2">{pageTitle}</h1>
           </div>
           <div className="text-sm text-gray-500 mt-2 md:mt-0 w-full md:w-auto text-left md:text-right">
-            Mostrando <strong>{filteredProducts.length}</strong> resultado{filteredProducts.length !== 1 ? 's' : ''}
+            Mostrando <strong>{totalProducts}</strong> resultado{totalProducts !== 1 ? 's' : ''}
           </div>
         </motion.div>
 
@@ -467,6 +521,16 @@ const MarketplaceView = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </motion.button>
+
+        {error && (
+          <motion.div 
+            className="mb-6 bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl text-sm"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {error}
+          </motion.div>
+        )}
 
         <div className="flex flex-col lg:flex-row gap-8">
           <Sidebar 

@@ -1,45 +1,13 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: PerfilUsuario
+ * Descripción: Muestra la vista principal del perfil de usuario, agrupando enlaces a secciones clave (Personal, Fitness, Pagos, Órdenes). Carga datos de usuario, lealtad y suscripción, y permite gestionar la suscripción (pausar/reanudar/cancelar) y eliminar la cuenta.
+ */
+}
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { getUserProfile, getSubscriptionOrders, deleteUserAccount, logout, getLoyaltyStatus } from "../utils/api";
-
-// --- Datos Mock para Desarrollo ---
-const MOCK_USER_DATA = {
-    user_id: 1,
-    first_name: "Nombre",
-    last_name: "Apellido",
-    email: "nombre.apellido@ejemplo.com",
-    gender: "M",
-    date_of_birth: "1999-12-25",
-    profile_image_url: null,
-    cognito_user_sub: "mock-cognito-sub"
-};
-
-const MOCK_LOYALTY_DATA = {
-    user_loyalty_id: 1,
-    user_id: 1,
-    tier_id: 1,
-    tier_name: "Nivel 1",
-    total_points: 450,
-    points_earned_this_period: 450,
-    period_start_date: "2025-05-16T00:00:00",
-    period_end_date: "2025-11-16T23:59:59",
-    next_tier_points: 1000,
-    current_benefits: {
-        points_multiplier: 1.0,
-        discount_percentage: 0,
-        free_shipping_threshold: 1500,
-        monthly_coupons: 1,
-        available_coupons: 1,
-        early_access: false
-    }
-};
-
-const MOCK_SUBSCRIPTION_DATA = {
-    subscription_id: 1,
-    status: "active", // puede ser: "active", "paused", "cancelled"
-    next_billing_date: "2025-12-16",
-    plan_name: "Premium Monthly"
-};
+import { getUserProfile, deleteUserAccount, logout, getLoyaltyStatus, getMySubscription, pauseSubscription, resumeSubscription, cancelSubscription } from "../utils/api";
 
 export default function PerfilUsuario() {
     const navigate = useNavigate();
@@ -65,29 +33,22 @@ export default function PerfilUsuario() {
             setLoading(true);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // const [userProfile, loyaltyStatus, subscriptionStatus] = await Promise.all([
-            //     getUserProfile(),
-            //     getLoyaltyStatus(),
-            //     getSubscriptionOrders()
-            // ]);
-            
-            // Mock data para desarrollo
-            const userProfile = MOCK_USER_DATA;
-            const loyaltyStatus = MOCK_LOYALTY_DATA;
-            const subscriptionStatus = MOCK_SUBSCRIPTION_DATA;
-            
+            // Cargar datos del usuario, lealtad y suscripción desde el backend
+            const [userProfile, loyaltyStatus, subscriptionStatus] = await Promise.all([
+                getUserProfile(),
+                getLoyaltyStatus(),
+                getMySubscription().catch(() => ({ status: 'inactive' })) // Si no tiene suscripción, retornar estado inactivo
+            ]);
+
             setUserData(userProfile);
             setLoyaltyData(loyaltyStatus);
             setSubscriptionData(subscriptionStatus);
             
-            // TODO: Verificar permisos reales desde el backend
-            // const isAdminUser = userProfile.role === 'admin' || userProfile.is_admin;
-            // Mock: establecer como admin para desarrollo
-            setIsAdmin(true);
+            // Verificar si es admin
+            setIsAdmin(userProfile.role === 'admin');
         } catch (err) {
-            console.error("Error loading user data:", err);
-            setError("Error al cargar la información del usuario.");
+            console.error('Error al cargar datos del usuario:', err);
+            setError(err.message || 'Error al cargar la información del perfil');
         } finally {
             setLoading(false);
         }
@@ -143,38 +104,27 @@ export default function PerfilUsuario() {
             setProcessingSubscription(true);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // Dependiendo de la acción, llamar al endpoint correspondiente
-            // switch(confirmAction) {
-            //     case 'pause':
-            //         await pauseSubscription(subscriptionId);
-            //         break;
-            //     case 'resume':
-            //         await resumeSubscription(subscriptionId);
-            //         break;
-            //     case 'cancel':
-            //         await cancelSubscription(subscriptionId);
-            //         break;
-            // }
-
-            // Mock para desarrollo
-            console.log(`Ejecutando acción de suscripción: ${confirmAction}`);
+            // Ejecutar acción según el tipo
+            switch(confirmAction) {
+                case 'pause':
+                    await pauseSubscription();
+                    break;
+                case 'resume':
+                    await resumeSubscription();
+                    break;
+                case 'cancel':
+                    await cancelSubscription();
+                    break;
+            }
             
-            // Simular delay de API
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Actualizar el estado de la suscripción localmente
-            setSubscriptionData(prev => ({
-                ...prev,
-                status: confirmAction === 'pause' ? 'paused' : 
-                        confirmAction === 'resume' ? 'active' : 
-                        'cancelled'
-            }));
+            // Recargar datos de suscripción
+            const updatedSubscription = await getMySubscription().catch(() => ({ status: 'inactive' }));
+            setSubscriptionData(updatedSubscription);
 
             setShowConfirmModal(false);
             setConfirmAction(null);
             
-            // Mostrar mensaje de éxito (puedes agregar un estado para esto)
+            // Mostrar mensaje de éxito
             alert(`Suscripción ${confirmAction === 'pause' ? 'pausada' : confirmAction === 'resume' ? 'reanudada' : 'cancelada'} exitosamente`);
         } catch (err) {
             console.error(`Error ${confirmAction}ing subscription:`, err);
@@ -186,16 +136,16 @@ export default function PerfilUsuario() {
 
     const handleLogout = async () => {
         try {
-            // TODO: Descomentar cuando el backend esté listo
-            // await logout();
+            // Cerrar sesión en el backend
+            await logout();
             
-            // Mock para desarrollo
-            console.log("Cerrando sesión...");
-            localStorage.removeItem("token");
-            navigate("/");
+            localStorage.clear();
+            navigate("/login");
         } catch (err) {
             console.error("Error logging out:", err);
-            setError("Error al cerrar sesión.");
+            // Aún así limpiar y redirigir
+            localStorage.clear();
+            navigate("/login");
         }
     };
 
@@ -205,14 +155,12 @@ export default function PerfilUsuario() {
 
     const confirmDeleteAccount = async () => {
         try {
-            // TODO: Descomentar cuando el backend esté listo
-            // await deleteUserAccount();
+            // Eliminar cuenta desde el backend
+            await deleteUserAccount();
             
-            // Mock para desarrollo
-            console.log("Eliminando cuenta...");
-            localStorage.removeItem("token");
+            localStorage.clear();
             setShowDeleteModal(false);
-            navigate("/");
+            navigate("/login");
         } catch (err) {
             console.error("Error deleting account:", err);
             setError("Error al eliminar la cuenta.");

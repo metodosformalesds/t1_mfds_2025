@@ -1,10 +1,12 @@
+{
 /**
  * Autor: Diego Jasso
+ * Componente: FitnessProfile
  * Descripción: Componente que muestra el perfil fitness del usuario con resultados del test,
  *              recomendaciones de productos personalizadas según objetivos fitness,
  *              y opciones para retomar el test.
  */
-
+}
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getUserProfile, getRelatedProducts } from "../utils/api";
@@ -119,47 +121,7 @@ const FitnessProfile = () => {
     // Productos recomendados según perfil fitness
     const [recommendations, setRecommendations] = useState(null);
 
-    // ============ DATOS MOCK ============
-    // Datos de prueba mientras se integra la API real del backend
-    // TODO: Eliminar cuando los endpoints estén listos en producción
-    
-    const mockUserProfile = {
-        user_id: 1,
-        email: "usuario@example.com",
-        first_name: "Juan",
-        last_name: "Pérez",
-        gender: "M", // M, F, prefer_not_say
-        date_of_birth: "1998-05-15",
-        profile_picture: null,
-        role: "customer",
-        account_status: true,
-        // fitness_profile incluido en el perfil del usuario
-        fitness_profile: {
-            profile_id: 1,
-            test_date: "2025-01-10",
-            attributes: {
-                age: 27,
-                gender: "M",
-                height_cm: 168,
-                weight_kg: 65,
-                bmi: 23.0,
-                exercise_freq: 3,
-                activity_type: "Gym",
-                activity_intensity: "Moderado",
-                activity_details: "1 hr diaria - 3 días a la semana",
-                diet_type: "Balanceada",
-                diet_special: "N/A",
-                diet_restrictions: "N/A",
-                supplements: "Proteína",
-                goal_declared: "BeStrong",
-                sleep_hours: "6-8 hrs diarias",
-                hydration: "1.5 lts al dia",
-                recommended_plan: "BeStrong",
-                description: "Plan enfocado en el aumento de masa muscular y fuerza. Este perfil está diseñado para maximizar tu desarrollo muscular mediante una combinación de entrenamiento de fuerza progresivo y nutrición adecuada. Productos recomendados: Proteína aislada, Creatina, Pre-entreno.",
-                recommended_products: ["Proteína aislada", "Creatina", "Pre-entreno"]
-            }
-        }
-    };
+
 
     // ==============================
     // EFECTO: CARGA INICIAL DE DATOS
@@ -177,9 +139,6 @@ const FitnessProfile = () => {
             setLoading(true);
             setError(null);
 
-            
-            // TODO: CÓDIGO PARA PRODUCCIÓN (descomentar cuando backend esté listo) ============
-            /*
             try {
                 // 1. Obtener perfil completo del usuario (incluye fitness_profile)
                 const userResponse = await getUserProfile();
@@ -240,103 +199,18 @@ const FitnessProfile = () => {
             } finally {
                 setLoading(false);
             }
-            */
-
-            // ============ DATOS MOCK PARA DESARROLLO ============
-            // Simula llamadas al backend con datos estáticos
-            // TODO: Eliminar este setTimeout y descomentar el código anterior cuando backend esté listo
-            setTimeout(async () => {
-                setUserData(mockUserProfile);
-                
-                // Mock de productos recomendados siguiendo estructura ProductListResponse
-                const mockRecommendations = {
-                    category: "Proteínas y Suplementos",
-                    description: "Productos para ganancia muscular y fuerza",
-                    products: [
-                        {
-                            product_id: 1,
-                            name: "Proteína Whey Premium",
-                            price: 29.99,
-                            stock: 50,
-                            average_rating: 4.5,
-                            brand: "FitNutrition",
-                            category: "Proteínas",
-                            primary_image: "https://via.placeholder.com/150"
-                        },
-                        {
-                            product_id: 2,
-                            name: "Creatina Monohidrato",
-                            price: 19.99,
-                            stock: 35,
-                            average_rating: 4.8,
-                            brand: "MuscleTech",
-                            category: "Suplementos",
-                            primary_image: "https://via.placeholder.com/150"
-                        },
-                        {
-                            product_id: 3,
-                            name: "BCAA Recovery",
-                            price: 24.99,
-                            stock: 40,
-                            average_rating: 4.3,
-                            brand: "Optimum Nutrition",
-                            category: "Aminoácidos",
-                            primary_image: "https://via.placeholder.com/150"
-                        }
-                    ]
-                };
-                setRecommendations(mockRecommendations);
-                
-                setLoading(false);
-            }, 500);
         }
 
         fetchFitnessData();
     }, [navigate]);
 
     // ============================================================================
-    // FUNCIÓN: ACTUALIZAR PERFIL FITNESS
+    // NOTA: ACTUALIZACIÓN DE PERFIL FITNESS
     // ============================================================================
     /**
-     * Descripción: Actualiza información específica del perfil fitness del usuario.
-     *              Actualmente no implementada en UI, pero lista para integración futura.
-     * Parámetros:
-     *   @param {object} updatedData - Objeto con campos a actualizar del perfil
-     * Endpoint: PUT /api/v1/fitness-profile/me (pendiente de implementación)
-     * Uso futuro: Permitir edición manual de datos sin retomar test completo
+     * Para actualizar el fitness profile, el usuario debe retomar el test completo.
+     * No hay endpoint de actualización parcial, solo el test crea/actualiza el perfil.
      */
-    async function handleUpdateFitnessProfile(updatedData) {
-        setLoading(true);
-        setError(null);
-
-        /*
-        // Nota: Para actualizar el fitness profile, se debe retomar el test completo.
-        // No hay endpoint de actualización parcial, solo el test crea/actualiza el perfil.
-        try {
-            // Recargar datos del usuario completo
-            const userResponse = await getUserProfile();
-            setUserData(userResponse);
-
-            alert("Información actualizada correctamente");
-        } catch (err) {
-            setError(err.message);
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-        */
-
-        // MOCK
-        setUserData({ 
-            ...userData, 
-            fitness_profile: { 
-                ...userData.fitness_profile, 
-                ...updatedData 
-            } 
-        });
-        alert("Información actualizada correctamente (simulación)");
-        setLoading(false);
-    }
 
     // ============================================================================
     // FUNCIÓN: RETOMAR TEST FITNESS
@@ -347,18 +221,12 @@ const FitnessProfile = () => {
      * Navegación: /placement-test (pendiente de implementación de ruta)
      */
     async function handleRetakeTest() {
-        /*
-        // CÓDIGO PARA PRODUCCIÓN:
         try {
             // Redirigir a la página del test fitness
             navigate("/placement-test");
         } catch (err) {
             console.error(err);
         }
-        */
-
-        // Redirigir al test fitness
-        navigate("/placement-test");
     }
 
     // ============================================================================

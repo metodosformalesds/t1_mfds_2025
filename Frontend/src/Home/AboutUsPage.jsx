@@ -1,5 +1,13 @@
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: AboutUs
+ * Descripción: Página informativa que presenta la misión y filosofía de la compañía. Utiliza animaciones de Framer Motion para una experiencia de usuario atractiva.
+ */
+}
 import React from 'react';
 import { motion } from 'framer-motion';
+import UsLogo from '../assets/AboutUs.png';
 
 // Variantes de animacion para la pagina
 const pageVariants = {
@@ -49,9 +57,9 @@ const AboutUs = () => {
         transition={{ delay: 0.2 }}
       >
         <img 
-          src="https://placehold.co/800x400/333333/FFFFFF?text=Tu+Imagen+Aqu%C3%AD" // Reemplaza con tu URL
+          src={UsLogo} // Reemplaza con tu URL
           alt="Equipo Befit en el gimnasio" 
-          className="w-full max-w-4xl h-[352px] mx-auto object-cover rounded-2xl shadow-xl border-4 border-white" 
+          className="w-full max-w-4xl h-[352px] mx-auto object-cover shadow-xl" 
         />
       </motion.div>
       <div className="max-w-4xl mx-auto px-6 pt-80 pb-36 relative z-0"> 

@@ -1,6 +1,15 @@
-import { useCallback } from 'react';
+{
+/*
+ * Autor: Ricardo Rodriguez
+ * Componente: HomeView
+ * Descripción: Componente principal de la página de inicio para clientes. Agrupa las secciones Hero, HowItWorks, FeaturedProducts, PersonalizedPlan y Testimonials, aplicando animaciones globales de Framer Motion.
+ */
+}
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { searchProducts } from '../utils/api';
+import HeroImg from '../assets/hero.jpg';
 
 export const ProfileIcon = ({ className = "w-8 h-8" }) => (
   <svg
@@ -214,7 +223,7 @@ const Hero = () => (
   >
     <motion.img 
       className="absolute inset-0 h-full w-full object-cover opacity-50" 
-      src="https://placehold.co/1440x624/000000/FFFFFF?text=Hero+Image" 
+      src={HeroImg} 
       alt="Suplementos para tu cuerpo"
       initial={{ scale: 1.1 }}
       animate={{ scale: 1 }}
@@ -312,114 +321,167 @@ const Hero = () => (
 );
 
 // --- Component: ProductCard ---
-const ProductCard = ({ product }) => (
-  <motion.div 
-    className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-2xl"
-    variants={cardVariants}
-    initial="hidden"
-    whileInView="visible"
-    viewport={{ once: true, margin: "-50px" }}
-    whileHover="hover"
-  >
-    <div className="relative">
-      <motion.img 
-        className="h-48 w-full object-cover sm:h-56 md:h-64 lg:h-72" 
-        src={product.imageSrc} 
-        alt={product.title}
-        whileHover={{ scale: 1.1 }}
-        transition={{ duration: 0.3 }}
-      />
-      {product.tag && (
-        <motion.span 
-          className="absolute left-2 top-2 rounded-full border border-green-500 bg-white px-2 py-1 text-xs font-semibold text-green-600 sm:left-4 sm:top-4 sm:px-3 sm:text-sm"
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
+const ProductCard = ({ product }) => {
+  const productImage = product.images?.[0]?.image_url || 'https://placehold.co/305x300/CCCCCC/FFFFFF?text=Producto';
+  const productRating = Math.round(product.average_rating || 0);
+  const isOutOfStock = (product.stock_quantity || 0) <= 0;
+
+  return (
+    <motion.div 
+      className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-2xl"
+      variants={cardVariants}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-50px" }}
+      whileHover="hover"
+    >
+      <div className="relative">
+        <motion.img 
+          className="h-48 w-full object-cover sm:h-56 md:h-64 lg:h-72" 
+          src={productImage} 
+          alt={product.name || 'Producto'}
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.3 }}
+        />
+        {product.tag && (
+          <motion.span 
+            className="absolute left-2 top-2 rounded-full border border-green-500 bg-white px-2 py-1 text-xs font-semibold text-green-600 sm:left-4 sm:top-4 sm:px-3 sm:text-sm"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            {product.tag}
+          </motion.span>
+        )}
+        {isOutOfStock && (
+          <motion.div 
+            className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            <span className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold">Agotado</span>
+          </motion.div>
+        )}
+      </div>
+      
+      <div className="flex flex-1 flex-col p-4 sm:p-6">
+        <motion.h3 
+          className="text-base font-semibold text-black sm:text-lg"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+        >
+          {product.name || 'Producto'}
+        </motion.h3>
+        
+        <motion.p 
+          className="mt-1 text-sm text-gray-500 line-clamp-2"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
         >
-          {product.tag}
-        </motion.span>
-      )}
-    </div>
-    
-    <div className="flex flex-1 flex-col p-4 sm:p-6">
-      <motion.h3 
-        className="text-base font-semibold text-black sm:text-lg"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.2 }}
-      >
-        {product.title}
-      </motion.h3>
-      
-      <motion.p 
-        className="mt-1 text-sm text-gray-500"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.3 }}
-      >
-        {product.description}
-      </motion.p>
-      
-      <motion.div 
-        className="my-2 flex items-center"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.4 }}
-      >
-        <div className="flex">
-          {[...Array(5)].map((_, i) => (
-            <StarIcon key={i} filled={i < product.rating} />
-          ))}
-        </div>
-        <span className="ml-2 text-xs text-gray-500 sm:text-sm">({product.reviewCount})</span>
-      </motion.div>
-
-      <motion.div 
-        className="mt-auto flex items-end justify-between pt-4"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.5 }}
-      >
-        <div>
-          <motion.p 
-            className="text-3xl font-bold text-black sm:text-4xl lg:text-5xl"
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: "spring", stiffness: 400 }}
-          >
-            ${product.price}
-          </motion.p>
-          <span className="text-sm text-gray-500 sm:text-md">MXN</span>
-        </div>
-      <Link to={`/Productos/${product.id}`}>
-        <motion.button 
-          className="rounded-2xl bg-blue-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 sm:px-6 sm:py-3 sm:text-base"
-          whileHover={{ 
-            scale: 1.05,
-            boxShadow: "0 5px 15px rgba(37, 99, 235, 0.4)"
-          }}
-          whileTap={{ scale: 0.95 }}
+          {product.description || 'Sin descripción'}
+        </motion.p>
+        
+        <motion.div 
+          className="my-2 flex items-center"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
         >
-          Ver
-        </motion.button>
-      </Link>
-      </motion.div>
-    </div>
-  </motion.div>
-);
+          <div className="flex">
+            {[...Array(5)].map((_, i) => (
+              <StarIcon key={i} filled={i < productRating} />
+            ))}
+          </div>
+          <span className="ml-2 text-xs text-gray-500 sm:text-sm">({product.review_count || 0})</span>
+        </motion.div>
+
+        <motion.div 
+          className="mt-auto flex items-end justify-between pt-4"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5 }}
+        >
+          <div>
+            <motion.p 
+              className="text-3xl font-bold text-black sm:text-4xl lg:text-5xl"
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              ${product.price?.toFixed(2) || '0.00'}
+            </motion.p>
+            <span className="text-sm text-gray-500 sm:text-md">MXN</span>
+          </div>
+          <Link to={`/Productos/${product.product_id}`}>
+            <motion.button 
+              className={`rounded-2xl px-4 py-2 text-sm font-semibold text-white transition sm:px-6 sm:py-3 sm:text-base ${
+                isOutOfStock 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-800 hover:bg-blue-700'
+              }`}
+              whileHover={!isOutOfStock ? { 
+                scale: 1.05,
+                boxShadow: "0 5px 15px rgba(37, 99, 235, 0.4)"
+              } : {}}
+              whileTap={!isOutOfStock ? { scale: 0.95 } : {}}
+              disabled={isOutOfStock}
+            >
+              {isOutOfStock ? 'Agotado' : 'Ver'}
+            </motion.button>
+          </Link>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
 
 // --- Component: FeaturedProducts ---
 const FeaturedProducts = () => {
-  const products = [
-    { id: 1, title: "Proteina Whey Gold Standard", description: "2.27kg Chocolate Flavor", price: 899, rating: 5, reviewCount: 322, tag: "Recomendado para ti", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Proteina" },
-    { id: 4, title: "Creatina Monohidratada", description: "500g Sin Sabor", price: 499, rating: 4, reviewCount: 210, tag: "Popular", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Creatina" },
-    { id: 3, title: "Multivitamínico Opti-Men", description: "90 Tabletas", price: 350, rating: 5, reviewCount: 180, tag: "Esencial", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Vitaminas" },
-    { id: 2, title: "Gatorade", description: "Hidratación intensa", price: 200, rating: 4, reviewCount: 500, tag: "team_sports", imageSrc: "https://placehold.co/305x300/CCCCCC/FFFFFF?text=Gatorade" },
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadFeaturedProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Obtener productos activos, limitados a 4, ordenados por rating
+        const response = await searchProducts({
+          page: 1,
+          limit: 4,
+          is_active: true,
+          // Podríamos agregar más filtros aquí si el backend lo soporta
+        });
+        
+        // Agregar tags personalizados a los primeros productos
+        const productsWithTags = (response.items || []).map((product, index) => {
+          const tags = ['Recomendado para ti', 'Popular', 'Esencial', 'Destacado'];
+          return {
+            ...product,
+            tag: tags[index] || null
+          };
+        });
+        
+        setProducts(productsWithTags);
+      } catch (err) {
+        console.error('Error al cargar productos destacados:', err);
+        setError(err.message || 'Error al cargar productos');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFeaturedProducts();
+  }, []);
 
   return (
     <motion.section 
@@ -444,14 +506,60 @@ const FeaturedProducts = () => {
           Los productos más populares entre nuestra comunidad
         </motion.p>
         
-        <motion.div 
-          className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 sm:mt-12"
-          variants={staggerContainer}
-        >
-          {products.map((product, index) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </motion.div>
+        {/* Loading State */}
+        {loading && (
+          <motion.div 
+            className="mt-12 flex justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-green-600 rounded-full animate-bounce"></div>
+              <div className="w-4 h-4 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-4 h-4 bg-green-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <span className="ml-3 text-gray-700 font-semibold">Cargando productos...</span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <motion.div 
+            className="mt-8 mx-auto max-w-md"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+              <p className="text-red-800 font-semibold">Error al cargar productos</p>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
+            </div>
+          </motion.div>
+        )}
+        
+        {/* Products Grid */}
+        {!loading && !error && products.length > 0 && (
+          <motion.div 
+            className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 sm:mt-12"
+            variants={staggerContainer}
+          >
+            {products.map((product) => (
+              <ProductCard key={product.product_id} product={product} />
+            ))}
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && products.length === 0 && (
+          <motion.div 
+            className="mt-12 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <p className="text-gray-600 text-lg">No hay productos destacados disponibles en este momento</p>
+          </motion.div>
+        )}
       </div>
     </motion.section>
   );
@@ -571,10 +679,6 @@ const PersonalizedPlan = () => {
       description: "Modifica tus objetivos o repite el test en cualquier momento para ajustar las recomendaciones." 
     },
   ];
-
-  const handleStartTest = () => {
-    console.log("Iniciar test de plan personalizado");
-  };
 
   return (
     <motion.section 

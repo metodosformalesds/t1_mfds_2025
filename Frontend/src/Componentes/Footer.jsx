@@ -1,3 +1,10 @@
+{
+/*
+ * Autor: Diego Jasso
+ * Componente: Footer
+ * Descripción: Pie de página estándar de la aplicación. Contiene enlaces de navegación principales, información de copyright y enlaces a redes sociales, todo con animaciones de aparición al hacer scroll (whileInView).
+ */
+}
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
