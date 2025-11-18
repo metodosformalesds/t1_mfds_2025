@@ -6,13 +6,14 @@
 # confirmación de email, inicio de sesión, cierre de sesión, recuperación y
 # restablecimiento de contraseñas utilizando AWS Cognito como proveedor de identidad.
 from fastapi import (
-    APIRouter, 
-    HTTPException, 
-    Depends, 
-    UploadFile, 
-    status, 
+    APIRouter,
+    HTTPException,
+    Depends,
+    UploadFile,
+    status,
     Form,
-    Security
+    Security,
+    BackgroundTasks
 )
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict
@@ -21,8 +22,9 @@ from app.api.v1.auth import schemas
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.config import settings
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter()
 
 security = HTTPBearer()
 
@@ -40,13 +42,14 @@ def get_token_from_header(
 
 @router.post("/signup", response_model=schemas.SignUpResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     first_name: str = Form(...),
     last_name: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
     gender: Optional[str] = Form(None),
-    birth_date: Optional[str] = Form(None), 
+    birth_date: Optional[str] = Form(None),
     profile_image: Optional[UploadFile] = None
 ):
     """
@@ -80,13 +83,27 @@ async def register_user(
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors())
 
+    # Read image bytes before processing
     image_bytes = await profile_image.read() if profile_image else None
 
-    result = cognito_service.sign_up(db=db, user_data=user_data, profile_image=image_bytes)
-    
+    # Call async sign_up (await required since it's now async)
+    result = await cognito_service.sign_up(db=db, user_data=user_data, profile_image=image_bytes)
+
     if not result.get("success"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error"))
-    
+
+    # Add background task to migrate S3 image from temp to final location
+    # Skip in test mode to ensure tests receive final URLs
+    if image_bytes and result.get("temp_s3_id") and settings.COGNITO_REGION != "test":
+        background_tasks.add_task(
+            cognito_service.process_s3_and_cognito_updates_sync,
+            db=db,
+            temp_s3_id=result["temp_s3_id"],
+            final_user_id=result["user_id"],
+            cognito_sub=result["user_sub"],
+            profile_image=image_bytes
+        )
+
     return result
 
 @router.post(

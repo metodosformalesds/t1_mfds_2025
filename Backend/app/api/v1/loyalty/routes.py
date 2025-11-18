@@ -8,48 +8,22 @@ from fastapi import (
     HTTPException,
     Depends,
     status,
-    Security,
     Query
 )
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import Dict, List
+from typing import List
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
 from app.api.v1.loyalty import schemas
 from app.api.v1.loyalty.service import loyalty_service
 
 router = APIRouter()
 
-security = HTTPBearer()
-
-"""Extrae el token del header Authorization"""
-def get_token_from_header(
-    credentials: HTTPAuthorizationCredentials = Security(security)
-) -> str:
-    if not credentials or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No se proporcionaron credenciales de autenticación",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
-
-def get_current_user(token: str = Depends(get_token_from_header)) -> Dict:
-    from app.api.v1.auth.service import cognito_service
-    
-    payload = cognito_service.verify_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return payload
-
 @router.get("/me", response_model=schemas.UserLoyaltyResponse, status_code=status.HTTP_200_OK)
 async def get_my_loyalty_status(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -65,7 +39,7 @@ async def get_my_loyalty_status(
     Retorna:
         dict: Datos del estado de lealtad del usuario.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = loyalty_service.get_user_loyalty_status(
         db=db,
@@ -139,7 +113,7 @@ async def get_tier_details(
 async def get_my_point_history(
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -155,7 +129,7 @@ async def get_my_point_history(
     Retorna:
         list: Historial de puntos del usuario.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = loyalty_service.get_point_history(
         db=db,
@@ -174,7 +148,7 @@ async def get_my_point_history(
 @router.post("/me/expire-points", response_model=schemas.ExpirePointsResponse, status_code=status.HTTP_200_OK)
 async def expire_my_points(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -190,7 +164,7 @@ async def expire_my_points(
     Retorna:
         dict: Resultado de la expiración de puntos.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = loyalty_service.expire_points_for_user(
         db=db,

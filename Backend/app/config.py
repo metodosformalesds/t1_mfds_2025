@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "BeFit API"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
+    DEV_MODE: bool = False  # Modo desarrollo (saltea AWS S3, admin checks, etc)
     
     # ============ BASE DE DATOS ============
     DATABASE_URL: str
@@ -63,6 +64,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignorar campos extra del .env que no estén definidos
         
     def print_debug_info(self):
         """

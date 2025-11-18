@@ -1,3 +1,7 @@
+# Autor: Lizbeth Barajas
+# Fecha: 11-11-25
+# Descripción: Servicio para crear y manejar direcciones de envío
+
 from sqlalchemy.orm import Session
 from typing import Dict, Optional
 from app.models.address import Address
@@ -7,7 +11,18 @@ class AddressService:
     
     def get_user_addresses(self, db: Session, cognito_sub: str) -> Dict:
         """
-        Obtiene todas las direcciones de un usuario
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Obtiene todas las direcciones asociadas a un usuario identificado por su
+            `cognito_sub`. Valida que el usuario exista y esté activo.
+
+        Parámetros:
+            db (Session): Sesión activa hacia la base de datos.
+            cognito_sub (str): Identificador único del usuario en Cognito.
+
+        Retorna:
+            Dict: Diccionario con éxito, lista de direcciones y total, o mensaje de error.
         """
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
@@ -26,7 +41,19 @@ class AddressService:
     
     def get_address_by_id(self, db: Session, cognito_sub: str, address_id: int) -> Dict:
         """
-        Obtiene una direccion especifica del usuario
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Obtiene una dirección específica perteneciente al usuario autenticado. Valida 
+            que el usuario exista y que la dirección le pertenezca.
+
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            cognito_sub (str): Identificador del usuario autenticado.
+            address_id (int): ID de la dirección que se desea consultar.
+
+        Retorna:
+            Dict: Diccionario con éxito y la dirección encontrada, o error si no existe.
         """
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
@@ -64,7 +91,29 @@ class AddressService:
         is_default: bool = False
     ) -> Dict:
         """
-        Crea nueva direccion 
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Crea una nueva dirección para el usuario autenticado. Permite marcar la
+            dirección como predeterminada y actualiza cualquier dirección previa con
+            ese estado.
+
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            cognito_sub (str): Identificador del usuario.
+            address_name (str | None): Nombre asignado a la dirección.
+            address_line1 (str): Línea principal de dirección.
+            address_line2 (str | None): Línea secundaria opcional.
+            country (str): País.
+            state (str): Estado.
+            city (str): Ciudad.
+            zip_code (str): Código postal.
+            recipient_name (str): Nombre de la persona que recibe.
+            phone_number (str): Número de teléfono asociado.
+            is_default (bool): Si la dirección debe ser marcada como predeterminada.
+
+        Retorna:
+            Dict: Diccionario con éxito, mensaje y la dirección creada, o error.
         """
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
@@ -121,7 +170,30 @@ class AddressService:
         is_default: Optional[bool] = None
     ) -> Dict:
         """
-        Actualiza una direccion existente
+        Autor: Lizbeth Barajas
+
+        Descripción:
+            Actualiza los campos de una dirección existente perteneciente al usuario.
+            Permite modificar cualquier atributo individualmente y actualizar la 
+            dirección predeterminada si corresponde.
+
+        Parámetros:
+            db (Session): Sesión de base de datos.
+            cognito_sub (str): Identificador del usuario.
+            address_id (int): ID de la dirección a modificar.
+            address_name (str | None): Nuevo nombre de la dirección.
+            address_line1 (str | None): Nueva línea 1.
+            address_line2 (str | None): Nueva línea 2.
+            country (str | None): País actualizado.
+            state (str | None): Estado actualizado.
+            city (str | None): Ciudad actualizada.
+            zip_code (str | None): Código postal actualizado.
+            recipient_name (str | None): Nombre del receptor.
+            phone_number (str | None): Teléfono asociado.
+            is_default (bool | None): Si la dirección será predeterminada.
+
+        Retorna:
+            Dict: Diccionario con éxito, mensaje y la dirección actualizada, o error.
         """
         try:
             user = db.query(User).filter(User.cognito_sub == cognito_sub).first()

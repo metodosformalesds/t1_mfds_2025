@@ -880,7 +880,11 @@ class ReportExportService:
         ]))
         
         elements.append(table)
-        
+
         doc.build(elements)
         buffer.seek(0)
         return buffer
+
+# Instancias singleton de los servicios
+analytics_service = AnalyticsService()
+report_export_service = ReportExportService()

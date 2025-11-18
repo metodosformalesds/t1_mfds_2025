@@ -340,3 +340,5 @@ class CartService:
             "valid": len(issues) == 0,
             "issues": issues
         }
+# Instancia singleton del servicio
+cart_service = CartService()
