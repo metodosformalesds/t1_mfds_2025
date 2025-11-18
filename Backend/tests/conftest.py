@@ -5,6 +5,28 @@
 
 import pytest
 import os
+
+# ============================================================================
+# IMPORTANTE: Configurar TODAS las variables de entorno ANTES de importar app
+# ============================================================================
+os.environ["COGNITO_REGION"] = "test"
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["AWS_REGION"] = "us-east-1"
+os.environ["AWS_ACCESS_KEY_ID"] = "test-access-key-id"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "test-secret-access-key"
+os.environ["COGNITO_USER_POOL_ID"] = "test-pool-id"
+os.environ["COGNITO_CLIENT_ID"] = "test-client-id"
+os.environ["S3_BUCKET_NAME"] = "test-bucket"
+os.environ["JWT_SECRET_KEY"] = "test-jwt-secret"
+os.environ["STRIPE_API_KEY"] = "pk_test_12345"
+os.environ["STRIPE_SECRET_KEY"] = "sk_test_12345"
+os.environ["STRIPE_WEBHOOK_SECRET"] = "whsec_test_12345"
+os.environ["PAYPAL_CLIENT_ID"] = "test-paypal-client-id"
+os.environ["PAYPAL_CLIENT_SECRET"] = "test-paypal-secret"
+os.environ["PAYPAL_API_BASE_URL"] = "https://api.sandbox.paypal.com"
+os.environ["APP_URL"] = "http://localhost:3000"
+
+# Ahora sí podemos importar la aplicación
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -20,11 +42,10 @@ from app.models.product import Product
 from app.models.product_image import ProductImage
 from app.models.shopping_cart import ShoppingCart
 from app.models.cart_item import CartItem
-from app.models.enum import UserRole, AuthType, Gender
+from app.models.address import Address
+from app.models.payment_method import PaymentMethod
+from app.models.enum import UserRole, AuthType, Gender, PaymentType
 from app.core.security import hash_password
-
-# Configurar variable de entorno para modo de prueba
-os.environ["COGNITO_REGION"] = "test"
 
 # Configuración de base de datos en memoria para tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -165,7 +186,8 @@ def test_user(db):
         date_of_birth=date(1990, 1, 1),
         auth_type=AuthType.EMAIL,
         role=UserRole.USER,
-        account_status=True
+        account_status=True,
+        stripe_customer_id="cus_test_123"
     )
     db.add(user)
     db.commit()
@@ -257,6 +279,39 @@ def test_cart(db, test_user):
 
 
 @pytest.fixture
+def test_cart_with_items(db, test_user, test_product):
+    """
+    Autor: Luis Flores
+    Descripción: Fixture que crea un carrito con items de prueba.
+    Parámetros:
+        db (Session): Sesión de base de datos.
+        test_user (User): Usuario de prueba.
+        test_product (Product): Producto de prueba.
+    Retorna:
+        ShoppingCart: Carrito con items de prueba.
+    """
+    from app.models.shopping_cart import ShoppingCart
+    from app.models.cart_item import CartItem
+
+    cart = ShoppingCart(user_id=test_user.user_id)
+    db.add(cart)
+    db.commit()
+    db.refresh(cart)
+
+    # Add 2 items to cart
+    cart_item = CartItem(
+        cart_id=cart.cart_id,
+        product_id=test_product.product_id,
+        quantity=2
+    )
+    db.add(cart_item)
+    db.commit()
+    db.refresh(cart)
+
+    return cart
+
+
+@pytest.fixture
 def mock_cognito_token():
     """
     Autor: Luis Flores
@@ -265,3 +320,58 @@ def mock_cognito_token():
         str: Token JWT de prueba.
     """
     return "mock-jwt-token-for-testing"
+
+
+@pytest.fixture
+def test_address(db, test_user):
+    """
+    Autor: Luis Flores
+    Descripción: Fixture que crea una dirección de prueba.
+    Parámetros:
+        db (Session): Sesión de base de datos.
+        test_user (User): Usuario de prueba.
+    Retorna:
+        Address: Dirección de prueba creada.
+    """
+    address = Address(
+        user_id=test_user.user_id,
+        address_name="Casa",
+        address_line1="Calle Test 123",
+        address_line2="Depto 4B",
+        country="México",
+        state="Chihuahua",
+        city="Juárez",
+        zip_code="32000",
+        recipient_name="Test User",
+        phone_number="1234567890",
+        is_default=True
+    )
+    db.add(address)
+    db.commit()
+    db.refresh(address)
+    return address
+
+
+@pytest.fixture
+def test_payment_method(db, test_user):
+    """
+    Autor: Luis Flores
+    Descripción: Fixture que crea un método de pago de prueba.
+    Parámetros:
+        db (Session): Sesión de base de datos.
+        test_user (User): Usuario de prueba.
+    Retorna:
+        PaymentMethod: Método de pago de prueba creado.
+    """
+    payment = PaymentMethod(
+        user_id=test_user.user_id,
+        payment_type=PaymentType.CREDIT_CARD,
+        provider_ref="test_stripe_pm_123",
+        last_four="4242",
+        expiration_date="12/2025",
+        is_default=True
+    )
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+    return payment
