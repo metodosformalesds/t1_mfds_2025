@@ -25,32 +25,6 @@ export default function PaymentMethods() {
     const [paymentMethods, setPaymentMethods] = useState([]);
     const [defaultPaymentId, setDefaultPaymentId] = useState(null);
 
-    // --- MOCK DATA (estructura esperada del backend) ---
-    const mockPaymentMethods = [
-        {
-            payment_id: 1,
-            stripe_payment_method_id: "pm_1MockVisa4242",
-            card_brand: "visa",
-            card_last4: "4242",
-            card_exp_month: 12,
-            card_exp_year: 2025,
-            cardholder_name: "Juan Pérez",
-            is_default: true,
-            created_at: "2025-01-15T10:30:00"
-        },
-        {
-            payment_id: 2,
-            stripe_payment_method_id: "pm_2MockMC5555",
-            card_brand: "mastercard",
-            card_last4: "5555",
-            card_exp_month: 6,
-            card_exp_year: 2026,
-            cardholder_name: "María García",
-            is_default: false,
-            created_at: "2025-02-01T14:20:00"
-        }
-    ];
-
     // ====================
     // Fetch Payment Methods
     // ====================
@@ -58,8 +32,6 @@ export default function PaymentMethods() {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
             const data = await getPaymentMethods();
             setPaymentMethods(data.payment_methods || []);
@@ -68,22 +40,11 @@ export default function PaymentMethods() {
                 setDefaultPaymentId(defaultMethod.payment_id);
             }
         } catch (err) {
-            console.error(err);
-            setError(err.message);
+            console.error('Error al cargar métodos de pago:', err);
+            setError(err.message || 'Error al cargar métodos de pago');
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK DATA
-        setTimeout(() => {
-            setPaymentMethods(mockPaymentMethods);
-            const defaultMethod = mockPaymentMethods.find(pm => pm.is_default);
-            if (defaultMethod) {
-                setDefaultPaymentId(defaultMethod.payment_id);
-            }
-            setLoading(false);
-        }, 500);
     }
 
     useEffect(() => {
@@ -108,25 +69,15 @@ export default function PaymentMethods() {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
             await setDefaultPaymentMethod(pmId);
             await fetchPaymentMethods();
         } catch (err) {
-            setError(err.message);
+            console.error('Error al establecer tarjeta predeterminada:', err);
+            setError(err.message || 'Error al establecer tarjeta predeterminada');
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK
-        setPaymentMethods(prev => prev.map(pm => ({
-            ...pm,
-            is_default: pm.payment_id === pmId
-        })));
-        setDefaultPaymentId(pmId);
-        setLoading(false);
     }
 
     // Actualizar nombre del titular (Stripe solo permite actualizar billing_details)
@@ -137,28 +88,28 @@ export default function PaymentMethods() {
 
         const newCardholderName = e.target.cardholder_name.value;
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
-        // Nota: Stripe no permite editar los números de tarjeta, solo billing_details
+        // Nota: Stripe no permite editar los números de tarjeta directamente.
+        // Para cambiar número de tarjeta, el usuario debe eliminar la actual y agregar una nueva.
+        // Solo podemos actualizar billing_details (nombre del titular).
         try {
-            // Aquí irían las llamadas al backend para actualizar billing_details en Stripe
-            await fetchPaymentMethods();
+            // Por ahora, Stripe API no expone directamente un endpoint para actualizar solo billing_details
+            // de un PaymentMethod existente. La forma estándar es:
+            // 1. Mostrar un mensaje al usuario que no se puede cambiar la tarjeta
+            // 2. Sugerir agregar una nueva tarjeta y eliminar la anterior
+            // 3. Para actualizar el nombre, necesitaríamos un endpoint backend personalizado
+            
+            // Si el backend implementa actualización de billing_details:
+            // await updatePaymentMethodBillingDetails(editingCard.payment_id, newCardholderName);
+            
+            setError('Por el momento, para cambiar información de la tarjeta debes agregar una nueva y eliminar la anterior.');
+            await new Promise(resolve => setTimeout(resolve, 2000));
             setShowEditModal(false);
         } catch (err) {
-            setError(err.message);
+            console.error('Error al actualizar tarjeta:', err);
+            setError(err.message || 'Error al actualizar información');
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK
-        setPaymentMethods(prev => prev.map(pm =>
-            pm.payment_id === editingCard.payment_id
-                ? { ...pm, cardholder_name: newCardholderName }
-                : pm
-        ));
-        setShowEditModal(false);
-        setLoading(false);
     }
 
     // Agregar tarjeta
@@ -167,63 +118,74 @@ export default function PaymentMethods() {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
-            // 1. Crear SetupIntent
-            const intent = await createSetupIntent();
+            // Validación: Stripe debe estar cargado
+            if (!stripe || !elements) {
+                setError('Stripe no está cargado correctamente. Por favor, recarga la página.');
+                setLoading(false);
+                return;
+            }
 
             const cardElement = elements.getElement(CardElement);
+            if (!cardElement) {
+                setError('No se pudo acceder al elemento de tarjeta.');
+                setLoading(false);
+                return;
+            }
 
-            // 2. Confirmar con Stripe
+            // 1. Crear SetupIntent en el backend
+            const intent = await createSetupIntent();
+            if (!intent.client_secret) {
+                throw new Error('No se recibió client_secret del servidor');
+            }
+
+            // 2. Confirmar con Stripe (validación de tarjeta en el lado de Stripe)
             const result = await stripe.confirmCardSetup(intent.client_secret, {
                 payment_method: {
                     card: cardElement,
                     billing_details: { 
-                        name: e.target.cardholder_name.value 
+                        name: e.target.cardholder_name.value.trim()
                     }
                 }
             });
 
+            // 3. Manejo de errores de Stripe
             if (result.error) {
+                // Errores comunes de Stripe:
+                // - card_declined: Tarjeta declinada
+                // - expired_card: Tarjeta expirada
+                // - incorrect_cvc: CVC incorrecto
+                // - processing_error: Error de procesamiento
+                // - incorrect_number: Número de tarjeta incorrecto
                 setError(result.error.message);
                 setLoading(false);
                 return;
             }
 
-            // 3. Guardar en backend
+            // 4. Verificar que tenemos el payment_method
+            if (!result.setupIntent?.payment_method) {
+                throw new Error('No se recibió el método de pago de Stripe');
+            }
+
+            // 5. Guardar en backend
+            // Si es la primera tarjeta, establecerla como predeterminada automáticamente
             const isFirstCard = paymentMethods.length === 0;
             await savePaymentMethod(result.setupIntent.payment_method, isFirstCard);
 
+            // 6. Recargar lista de tarjetas
             await fetchPaymentMethods();
+            
+            // 7. Cerrar modal
             setShowAddModal(false);
+            
+            // 8. Limpiar el formulario
+            cardElement.clear();
         } catch (err) {
-            setError(err.message);
+            console.error('Error al agregar tarjeta:', err);
+            setError(err.message || 'Error al agregar la tarjeta. Por favor, intenta de nuevo.');
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK: agregar tarjeta
-        const cardholderName = e.target.cardholder_name?.value || "Usuario";
-        const newCard = {
-            payment_id: Date.now(),
-            stripe_payment_method_id: `pm_mock_${Date.now()}`,
-            card_brand: "visa",
-            card_last4: String(Math.floor(1000 + Math.random() * 9000)),
-            card_exp_month: 12,
-            card_exp_year: 2027,
-            cardholder_name: cardholderName,
-            is_default: paymentMethods.length === 0,
-            created_at: new Date().toISOString()
-        };
-
-        setPaymentMethods([...paymentMethods, newCard]);
-        if (paymentMethods.length === 0) {
-            setDefaultPaymentId(newCard.payment_id);
-        }
-        setShowAddModal(false);
-        setLoading(false);
     }
 
 
@@ -233,32 +195,22 @@ export default function PaymentMethods() {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
+            // Eliminar del backend (también elimina de Stripe)
             await deletePaymentMethod(pmId);
+            
+            // Recargar lista actualizada desde el backend
+            // El backend automáticamente establecerá otra tarjeta como predeterminada si es necesario
             await fetchPaymentMethods();
+            
+            // Cerrar modal de confirmación
             setShowConfirm({ visible: false, pmId: null });
         } catch (err) {
-            setError(err.message);
+            console.error('Error al eliminar tarjeta:', err);
+            setError(err.message || 'Error al eliminar la tarjeta');
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK
-        const updatedMethods = paymentMethods.filter(pm => pm.payment_id !== pmId);
-        setPaymentMethods(updatedMethods);
-        
-        // Si eliminamos la tarjeta predeterminada y hay otras, establecer la primera como predeterminada
-        if (defaultPaymentId === pmId && updatedMethods.length > 0) {
-            const newDefault = updatedMethods[0];
-            newDefault.is_default = true;
-            setDefaultPaymentId(newDefault.payment_id);
-        }
-        
-        setShowConfirm({ visible: false, pmId: null });
-        setLoading(false);
     }
 
     // ====================

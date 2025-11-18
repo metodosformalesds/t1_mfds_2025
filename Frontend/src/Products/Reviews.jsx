@@ -1,54 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// import { getOrderDetail, createProductReview } from '../utils/api';
-
-// La teoria es que en base al orderId que llega por params, 
-// se carga la info del pedido y se muestran los productos 
-// que no han sido reseñados aun para que el usuario pueda hacerlo.
-
-// Mock data para desarrollo
-const MOCK_ORDER_DETAIL = {
-    order_id: 2,
-    order_code: "234-5F5F-OJF96F-2039-101",
-    total_price: 2577.2,
-    created_at: "2025-10-12T14:20:00",
-    status: "delivered",
-    items: [
-        {
-            product_id: 1,
-            product_name: "Proteína Whey Gold Standard",
-            product_description: "Proteína de suero de alta calidad con 24g por porción",
-            quantity: 3,
-            unit_price: 450.0,
-            subtotal: 1350.0,
-            image_url: null,
-            has_review: false // Si el usuario ya revisó este producto
-        },
-        {
-            product_id: 2,
-            product_name: "Creatina Monohidratada",
-            product_description: "Creatina pura para aumentar fuerza y masa muscular",
-            quantity: 2,
-            unit_price: 350.0,
-            subtotal: 700.0,
-            image_url: null,
-            has_review: false
-        },
-        {
-            product_id: 3,
-            product_name: "BCAA 5000 Powder",
-            product_description: "Aminoácidos ramificados para recuperación muscular",
-            quantity: 1,
-            unit_price: 380.0,
-            subtotal: 380.0,
-            image_url: null,
-            has_review: true // Este producto ya fue reseñado
-        }
-    ],
-    shipping_address: {
-        recipient_name: "Juan Pérez"
-    }
-};
+import { getOrderDetail, createProductReview } from '../utils/api';
 
 // --- Icono SVG ---
 const StarIcon = ({ className, ...props }) => (
@@ -125,12 +77,8 @@ const OrderReview = () => {
             setLoading(true);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // const orderDetails = await getOrderDetail(orderId);
-
-            // Mock data para desarrollo
-            await new Promise(resolve => setTimeout(resolve, 800));
-            const orderDetails = MOCK_ORDER_DETAIL;
+            // Obtener detalles de la orden desde el backend
+            const orderDetails = await getOrderDetail(orderId);
 
             setOrderData(orderDetails);
 
@@ -191,23 +139,15 @@ const OrderReview = () => {
 
             // Enviar reseñas solo para productos con rating > 0
             const reviewPromises = Object.entries(reviews)
-                .filter(([_, review]) => review.rating > 0)
+                .filter(([, review]) => review.rating > 0)
                 .map(([productId, review]) => {
-                    // TODO: Descomentar cuando el backend esté listo
-                    // return createProductReview(parseInt(productId), {
-                    //     rating: review.rating,
-                    //     text: review.comment
-                    // });
-
-                    // Mock para desarrollo
-                    console.log(`Enviando reseña para producto ${productId}:`, review);
-                    return Promise.resolve({ success: true });
+                    return createProductReview(parseInt(productId), {
+                        rating: review.rating,
+                        text: review.comment
+                    });
                 });
 
             await Promise.all(reviewPromises);
-
-            // Simular delay para mock
-            await new Promise(resolve => setTimeout(resolve, 1000));
 
             alert("¡Gracias por tu opinión! Tus reseñas han sido enviadas.");
             navigate("/profile/order-history");

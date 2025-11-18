@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// import { getOrders } from '../utils/api';
+import { getOrders } from '../utils/api';
 
 // Icono de Lupa para la búsqueda
 const SearchIcon = () => (
@@ -21,177 +21,7 @@ const SearchIcon = () => (
     </svg>
 );
 
-// Mock data detallado con toda la información necesaria
-const MOCK_ORDERS = [
-    {
-        order_id: 1,
-        order_code: "234-5F5F-OJF56F-0055-101",
-        total_price: 543.0,
-        created_at: "2025-10-12T10:30:00",
-        status: "delivered",
-        is_subscription: false,
-        shipping_address: {
-            address_name: "Casa",
-            address_line1: "Av. Tecnológico 1400",
-            address_line2: "Col. Residencial",
-            city: "Monterrey",
-            state: "Nuevo León",
-            zip_code: "64849",
-            recipient_name: "Juan Pérez",
-            phone_number: "+52 81 1234 5678"
-        },
-        payment_method: {
-            card_type: "Visa",
-            last_four: "4242",
-            card_holder_name: "Juan Pérez"
-        },
-        items: [
-            {
-                product_id: 1,
-                product_name: "Proteína Whey Gold Standard",
-                quantity: 1,
-                unit_price: 450.0,
-                subtotal: 450.0,
-                image_url: null
-            }
-        ],
-        subtotal: 450.0,
-        shipping_cost: 93.0,
-        discount: 0.0,
-        coupon_code: null,
-        total: 543.0
-    },
-    {
-        order_id: 2,
-        order_code: "234-5F5F-OJF96F-2039-101",
-        total_price: 2577.2,
-        created_at: "2025-10-12T14:20:00",
-        status: "delivered",
-        is_subscription: true,
-        shipping_address: {
-            address_name: "Oficina",
-            address_line1: "Av. Constitución 2000",
-            address_line2: "Piso 3, Oficina 302",
-            city: "Monterrey",
-            state: "Nuevo León",
-            zip_code: "64000",
-            recipient_name: "Juan Pérez",
-            phone_number: "+52 81 1234 5678"
-        },
-        payment_method: {
-            card_type: "MasterCard",
-            last_four: "8888",
-            card_holder_name: "Juan Pérez"
-        },
-        items: [
-            {
-                product_id: 1,
-                product_name: "Proteína Whey Gold Standard",
-                quantity: 3,
-                unit_price: 450.0,
-                subtotal: 1350.0,
-                image_url: null
-            },
-            {
-                product_id: 2,
-                product_name: "Creatina Monohidratada",
-                quantity: 2,
-                unit_price: 350.0,
-                subtotal: 700.0,
-                image_url: null
-            },
-            {
-                product_id: 3,
-                product_name: "BCAA 5000 Powder",
-                quantity: 1,
-                unit_price: 380.0,
-                subtotal: 380.0,
-                image_url: null
-            }
-        ],
-        subtotal: 2430.0,
-        shipping_cost: 0.0,
-        discount: 243.0,
-        coupon_code: "FIRST10",
-        total: 2187.0
-    },
-    {
-        order_id: 3,
-        order_code: "234-5F5F-OJF94F-0055-101",
-        total_price: 543.0,
-        created_at: "2025-09-15T09:15:00",
-        status: "delivered",
-        is_subscription: false,
-        shipping_address: {
-            address_name: "Casa",
-            address_line1: "Av. Tecnológico 1400",
-            address_line2: "Col. Residencial",
-            city: "Monterrey",
-            state: "Nuevo León",
-            zip_code: "64849",
-            recipient_name: "Juan Pérez",
-            phone_number: "+52 81 1234 5678"
-        },
-        payment_method: {
-            card_type: "Visa",
-            last_four: "4242",
-            card_holder_name: "Juan Pérez"
-        },
-        items: [
-            {
-                product_id: 1,
-                product_name: "Proteína Whey Gold Standard",
-                quantity: 1,
-                unit_price: 450.0,
-                subtotal: 450.0,
-                image_url: null
-            }
-        ],
-        subtotal: 450.0,
-        shipping_cost: 93.0,
-        discount: 0.0,
-        coupon_code: null,
-        total: 543.0
-    },
-    {
-        order_id: 4,
-        order_code: "234-5F5F-OJF94F-0055-102",
-        total_price: 780.0,
-        created_at: "2025-08-22T16:45:00",
-        status: "delivered",
-        is_subscription: false,
-        shipping_address: {
-            address_name: "Casa",
-            address_line1: "Av. Tecnológico 1400",
-            address_line2: "Col. Residencial",
-            city: "Monterrey",
-            state: "Nuevo León",
-            zip_code: "64849",
-            recipient_name: "Juan Pérez",
-            phone_number: "+52 81 1234 5678"
-        },
-        payment_method: {
-            card_type: "American Express",
-            last_four: "1005",
-            card_holder_name: "Juan Pérez"
-        },
-        items: [
-            {
-                product_id: 4,
-                product_name: "Pre-Entreno C4 Original",
-                quantity: 2,
-                unit_price: 320.0,
-                subtotal: 640.0,
-                image_url: null
-            }
-        ],
-        subtotal: 640.0,
-        shipping_cost: 140.0,
-        discount: 0.0,
-        coupon_code: null,
-        total: 780.0
-    }
-];
+
 
 export default function OrderHistoryPage() {
     const navigate = useNavigate();
@@ -218,23 +48,21 @@ export default function OrderHistoryPage() {
             setLoading(true);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // const response = await getOrders(100, 0);
-            // setOrders(response.orders || []);
-
-            // Mock data para desarrollo
-            await new Promise(resolve => setTimeout(resolve, 800));
-            const loadedOrders = MOCK_ORDERS;
+            // Cargar órdenes desde el backend
+            const response = await getOrders(100, 0);
+            const loadedOrders = response.orders || response;
             setOrders(loadedOrders);
 
             // Calcular precio máximo del historial
-            const maxOrderPrice = Math.max(...loadedOrders.map(order => order.total_price));
-            const roundedMax = Math.ceil(maxOrderPrice / 100) * 100; // Redondear hacia arriba a centenas
-            setMaxPrice(roundedMax);
-            setFilters(prev => ({
-                ...prev,
-                priceRange: [0, roundedMax]
-            }));
+            if (loadedOrders.length > 0) {
+                const maxOrderPrice = Math.max(...loadedOrders.map(order => order.total_price));
+                const roundedMax = Math.ceil(maxOrderPrice / 100) * 100; // Redondear hacia arriba a centenas
+                setMaxPrice(roundedMax);
+                setFilters(prev => ({
+                    ...prev,
+                    priceRange: [0, roundedMax]
+                }));
+            }
         } catch (err) {
             console.error("Error al cargar órdenes:", err);
             setError(err.message || "Error al cargar el historial de pedidos");

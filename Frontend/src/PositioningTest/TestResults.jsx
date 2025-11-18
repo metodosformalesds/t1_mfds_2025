@@ -11,56 +11,52 @@ const TestResults = () => {
     const resultsRef = useRef(null);
 
     useEffect(() => {
-        // Simular proceso de cálculo del plan
-        const calculatePlan = async () => {
-            // En producción, aquí se recibirían los resultados del backend
-            // const testResults = location.state?.results;
-            
-            // Simular delay de procesamiento (2-3 segundos)
-            // TEMPORAL: Cambia a 0 para ver resultados inmediatamente, o mantén 2500 para ver animación de carga
-            await new Promise(resolve => setTimeout(resolve, 0));
+        // Procesar resultados del test
+        const processResults = async () => {
+            try {
+                // Obtener resultados del backend pasados via state
+                const testResults = location.state?.results;
 
-            // Mock de resultados del backend
-            // Posibles planes según fitness_goal: BeStrong, BeLean, BeBalance, BeDefine, BeNutri
-            const mockPlans = {
-                'BeStrong': {
-                    plan_name: "BeStrong",
-                    description: "Plan enfocado en el aumento de masa muscular y fuerza.",
-                    recommendation_summary: "Productos recomendados: Proteína aislada, Creatina, Pre-entreno. Complementa con una rutina de fuerza de 4-5 días por semana enfocada en ejercicios compuestos."
-                },
-                'BeLean': {
-                    plan_name: "BeLean",
-                    description: "Plan centrado en la pérdida de grasa y tonificación.",
-                    recommendation_summary: "Productos recomendados: Proteína ligera, Termogénicos, Omega 3. Combina con ejercicio cardiovascular y entrenamiento de resistencia 4-5 días por semana."
-                },
-                'BeBalance': {
-                    plan_name: "BeBalance",
-                    description: "Plan equilibrado para mantener un estado físico estable.",
-                    recommendation_summary: "Productos recomendados: Multivitamínico, Colágeno, Proteína media. Mantén una rutina balanceada de 3-4 días con ejercicio variado."
-                },
-                'BeDefine': {
-                    plan_name: "BeDefine",
-                    description: "Plan de definición muscular con enfoque en detalle y tono.",
-                    recommendation_summary: "Productos recomendados: L-Carnitina, BCAA, Proteína ligera. Enfoca tu entrenamiento en circuitos de alta repetición y ejercicio funcional 4-5 días por semana."
-                },
-                'BeNutri': {
-                    plan_name: "BeNutri",
-                    description: "Plan basado en nutrición integral y balance alimenticio.",
-                    recommendation_summary: "Productos recomendados: Batidos meal replacement, Fibra, Omega 3. Complementa con ejercicio moderado 3 días por semana y alimentación consciente."
+                // Validar que existan resultados
+                if (!testResults) {
+                    console.error('No se recibieron resultados del test');
+                    // Redirigir de vuelta al test si no hay resultados
+                    setTimeout(() => {
+                        navigate('/placement-test', { 
+                            state: { error: 'No se encontraron resultados del test' } 
+                        });
+                    }, 2000);
+                    return;
                 }
-            };
-            
-            // Simular selección aleatoria de plan (en producción vendría del backend)
-            const plans = ['BeStrong', 'BeLean', 'BeBalance', 'BeDefine', 'BeNutri'];
-            const randomPlan = plans[Math.floor(Math.random() * plans.length)];
-            const mockResults = mockPlans[randomPlan];
 
-            setResults(mockResults);
-            setIsCalculating(false);
+                console.log('Resultados del backend:', testResults);
+
+                // Opcional: Simular un pequeño delay para mostrar la animación de carga
+                // Esto mejora la experiencia de usuario al hacer la transición más suave
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Establecer resultados con la estructura esperada del backend
+                // El backend devuelve: { plan_name, description, recommendation_summary }
+                setResults({
+                    plan_name: testResults.plan_name || 'Plan Personalizado',
+                    description: testResults.description || 'Plan diseñado específicamente para tus necesidades.',
+                    recommendation_summary: testResults.recommendation_summary || 'Recomendaciones basadas en tu perfil fitness.'
+                });
+                
+                setIsCalculating(false);
+            } catch (error) {
+                console.error('Error al procesar resultados:', error);
+                setResults({
+                    plan_name: 'Error',
+                    description: 'Hubo un problema al cargar tus resultados.',
+                    recommendation_summary: 'Por favor, intenta realizar el test nuevamente.'
+                });
+                setIsCalculating(false);
+            }
         };
 
-        calculatePlan();
-    }, [location]);
+        processResults();
+    }, [location, navigate]);
 
     // Animación de entrada de resultados
     useEffect(() => {

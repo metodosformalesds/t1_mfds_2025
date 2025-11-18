@@ -55,45 +55,7 @@ const ManageProducts = () => {
         productName: ''
     });
 
-    // ============ DATOS MOCK ============
-    const mockProducts = [
-        {
-            product_id: 1,
-            name: "Proteína Whey Premium",
-            price: 29.99,
-            stock: 50,
-            brand: "FitNutrition",
-            category: "Proteínas",
-            description: "Proteína de suero de alta calidad",
-            primary_image: "https://via.placeholder.com/100",
-            created_at: "2025-01-15T10:30:00",
-            is_active: true
-        },
-        {
-            product_id: 2,
-            name: "Creatina Monohidrato",
-            price: 19.99,
-            stock: 35,
-            brand: "MuscleTech",
-            category: "Suplementos",
-            description: "Creatina pura para aumento de fuerza",
-            primary_image: "https://via.placeholder.com/100",
-            created_at: "2025-01-14T09:15:00",
-            is_active: true
-        },
-        {
-            product_id: 3,
-            name: "BCAA Recovery",
-            price: 24.99,
-            stock: 40,
-            brand: "Optimum Nutrition",
-            category: "Aminoácidos",
-            description: "Aminoácidos para recuperación muscular",
-            primary_image: "https://via.placeholder.com/100",
-            created_at: "2025-01-13T14:20:00",
-            is_active: true
-        }
-    ];
+
 
     // ============================================================================
     // EFECTO: CARGAR PRODUCTOS
@@ -134,8 +96,6 @@ const ManageProducts = () => {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
             const response = await searchProducts({ 
                 page: 1, 
@@ -150,13 +110,6 @@ const ManageProducts = () => {
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK
-        setTimeout(() => {
-            setProducts(mockProducts);
-            setLoading(false);
-        }, 500);
     }
 
     // ============================================================================
@@ -167,8 +120,6 @@ const ManageProducts = () => {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
             const formDataToSend = new FormData();
             formDataToSend.append("name", formData.name);
@@ -196,29 +147,6 @@ const ManageProducts = () => {
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK
-        setTimeout(() => {
-            const newProduct = {
-                product_id: Date.now(),
-                name: formData.name,
-                price: parseFloat(formData.price),
-                stock: parseInt(formData.stock),
-                brand: formData.brand,
-                category: formData.category,
-                description: formData.description,
-                primary_image: "https://via.placeholder.com/100",
-                created_at: new Date().toISOString(),
-                is_active: true
-            };
-
-            setProducts([newProduct, ...products]);
-            setShowAddModal(false);
-            resetForm();
-            setLoading(false);
-            showNotification('added', formData.name);
-        }, 500);
     }
 
     // ============================================================================
@@ -229,8 +157,6 @@ const ManageProducts = () => {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
             const productName = formData.name;
             // updateProduct espera JSON con campos opcionales a actualizar
@@ -253,30 +179,6 @@ const ManageProducts = () => {
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK
-        setTimeout(() => {
-            const updatedProducts = products.map(p => 
-                p.product_id === selectedProduct.product_id 
-                    ? { 
-                        ...p, 
-                        name: formData.name,
-                        price: parseFloat(formData.price),
-                        stock: parseInt(formData.stock),
-                        brand: formData.brand,
-                        category: formData.category,
-                        description: formData.description
-                    }
-                    : p
-            );
-
-            setProducts(updatedProducts);
-            setShowEditModal(false);
-            resetForm();
-            setLoading(false);
-            showNotification('updated', formData.name);
-        }, 500);
     }
 
     // ============================================================================
@@ -286,8 +188,6 @@ const ManageProducts = () => {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
             const deletedName = selectedProduct.name;
             // deleteProduct(productId, hardDelete=false) - soft delete por defecto
@@ -302,20 +202,6 @@ const ManageProducts = () => {
         } finally {
             setLoading(false);
         }
-        */
-
-        // MOCK
-        setTimeout(() => {
-            const filteredProducts = products.filter(
-                p => p.product_id !== selectedProduct.product_id
-            );
-            setProducts(filteredProducts);
-            setShowDeleteConfirm(false);
-            const deletedName = selectedProduct.name;
-            setSelectedProduct(null);
-            setLoading(false);
-            showNotification('deleted', deletedName);
-        }, 500);
     }
 
     // ============================================================================
@@ -561,8 +447,8 @@ const ManageProducts = () => {
                         <p className="text-gray-600">Cargando productos...</p>
                     </div>
                 ) : (
-                    /* ============ TABLA DE PRODUCTOS ============ */
                     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                        {/* ============ TABLA DE PRODUCTOS ============ */}
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-50 border-b">

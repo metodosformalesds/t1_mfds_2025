@@ -8,6 +8,7 @@ import Header from "./Componentes/Header";
 import Footer from "./Componentes/Footer";
 import CartSidebar from "./Componentes/CartSidebar";
 import AdminSidebar from "./Componentes/AdminSidebar";
+import { ProtectedRoute } from "./Componentes/ProtectedRoute";
 
 // Páginas principales
 import Home from "./Home/HomePage";
@@ -53,17 +54,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "pk_t
 // Estilos globales
 import "./index.css";
 
-// --- BASE DE DATOS CENTRALIZADA ---
-const ALL_PRODUCTS = [
-  { id: 1, title: "Whey Gold Standard", category: "proteinas", goal: "muscle", activity: "gym", description: "Proteína aislada", price: 1200, rating: 5, reviewCount: 320, hasBg: false },
-  { id: 2, title: "Gatorade Polvo", category: "post-entreno", goal: "performance", activity: "team_sports", description: "Hidratación intensa", price: 200, rating: 4, reviewCount: 500, hasBg: true },
-  { id: 3, title: "Multivitamínico Pro", category: "vitaminas", goal: "health", activity: "swimming", description: "Salud integral", price: 400, rating: 5, reviewCount: 120, hasBg: false },
-  { id: 4, title: "Creatina Monohidratada", category: "creatinas", goal: "muscle", activity: "crossfit", description: "Fuerza explosiva", price: 600, rating: 5, reviewCount: 300, hasBg: false },
-  { id: 5, title: "Pre-Workout C4", category: "pre-entreno", goal: "energy", activity: "gym", description: "Energía total", price: 550, rating: 4, reviewCount: 200, hasBg: false },
-  { id: 6, title: "Isotónico Gel", category: "pre-entreno", goal: "performance", activity: "cycling", description: "Resistencia larga", price: 50, rating: 5, reviewCount: 80, hasBg: true },
-  { id: 7, title: "Quemador Hydroxy", category: "quemadores", goal: "weight_loss", activity: "running", description: "Termogénico", price: 700, rating: 3, reviewCount: 90, hasBg: false },
-  { id: 8, title: "BCAAs Recovery", category: "aminoacidos", goal: "recovery", activity: "gym", description: "Recuperación muscular", price: 500, rating: 4, reviewCount: 150, hasBg: false },
-];
+// Mock data removido - ahora se obtiene del backend
 
 // --- MAIN LAYOUT ---
 const MainLayout = () => {
@@ -80,24 +71,33 @@ const MainLayout = () => {
 
   const addToCart = (product) => {
     setCartItems((prev) => {
-      const exists = prev.find((item) => item.id === product.id);
+      const productId = product.product_id || product.id;
+      const exists = prev.find((item) => (item.product_id || item.id) === productId);
       if (exists) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          (item.product_id || item.id) === productId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      // Normalizar estructura para compatibilidad
+      return [...prev, { 
+        ...product,
+        id: productId,
+        product_id: productId,
+        title: product.name || product.title,
+        name: product.name || product.title,
+        quantity: 1 
+      }];
     });
   };
 
   const removeFromCart = (id) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+    setCartItems((prev) => prev.filter((item) => (item.product_id || item.id) !== id));
   };
 
   const updateQuantity = (id, qty) => {
     if (qty <= 0) return removeFromCart(id);
     setCartItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: qty } : item))
+      prev.map((item) => ((item.product_id || item.id) === id ? { ...item, quantity: qty } : item))
     );
   };
 
@@ -126,7 +126,6 @@ const MainLayout = () => {
           removeFromCart,
           updateQuantity,
           setIsCartOpen,
-          allProducts: ALL_PRODUCTS,
           clearCart,
         }}
       />
@@ -151,59 +150,64 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Auth */}
+        {/* Rutas Públicas - Accesibles sin autenticación */}
         <Route path="/" element={<Login />} />
         <Route path="/RegisterPage" element={<Register />} />
         <Route path="/RecoverySelect" element={<RSelect />} />
         <Route path="/RecoveryCode" element={<RCode />} />
         <Route path="/RecoveryPassword" element={<RPassword />} />
-        <Route path="/SetupProfile" element={<SetupP />} />
-        <Route path="/placement-test/questions" element={<PlacementTestQuestions />} />
-        <Route path="/placement-test/results" element={<TestResults />} />
 
         {/* Layout principal */}
         <Route element={<MainLayout />}>
+          {/* HomePage - Accesible sin autenticación */}
           <Route path="/home" element={<Home />} />
-          <Route path="/profile" element={<ProfileUser />} />
           <Route path="/aboutUsPage" element={<AboutUs />} />
 
-          {/* Tienda */}
+          {/* Rutas Protegidas - Requieren autenticación */}
+          <Route path="/SetupProfile" element={<ProtectedRoute><SetupP /></ProtectedRoute>} />
+          <Route path="/placement-test/questions" element={<ProtectedRoute><PlacementTestQuestions /></ProtectedRoute>} />
+          <Route path="/placement-test/results" element={<ProtectedRoute><TestResults /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfileUser /></ProtectedRoute>} />
+
+          {/* Tienda - Protegida */}
           <Route path="/Productos" element={<Tienda />} />
           <Route path="/:productName/:id" element={<ProductDetail />} />
-          <Route path="/CartPage" element={<CartPage />} />
-          <Route path="/CheckoutPage" element={<CheckoutPage />} />
+          <Route path="/CartPage" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+          <Route path="/CheckoutPage" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
 
-          {/* Subscripción */}
-          <Route path="/subscription" element={<SubscriptionPage />} />
+          {/* Subscripción - Protegida */}
+          <Route path="/subscription" element={<ProtectedRoute><SubscriptionPage /></ProtectedRoute>} />
 
-          {/* Órdenes */}
-          <Route path="/order-history" element={<OrderHistory />} />
-          <Route path="/reviews/:orderId" element={<DoReviews />} />
+          {/* Órdenes - Protegidas */}
+          <Route path="/order-history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
+          <Route path="/reviews/:orderId" element={<ProtectedRoute><DoReviews /></ProtectedRoute>} />
 
-          {/* Test */}
-          <Route path="/placement-test" element={<PlacementTest />} />
+          {/* Test - Protegido */}
+          <Route path="/placement-test" element={<ProtectedRoute><PlacementTest /></ProtectedRoute>} />
 
-          {/* Perfil */}
-          <Route path="/personal-info" element={<PersonalInfo />} />
-          <Route path="/addresses" element={<Addresses />} />
-          <Route path="/fitness-profile" element={<FitnessProfile />} />
+          {/* Perfil - Protegido */}
+          <Route path="/personal-info" element={<ProtectedRoute><PersonalInfo /></ProtectedRoute>} />
+          <Route path="/addresses" element={<ProtectedRoute><Addresses /></ProtectedRoute>} />
+          <Route path="/fitness-profile" element={<ProtectedRoute><FitnessProfile /></ProtectedRoute>} />
 
-          {/* Pagos */}
+          {/* Pagos - Protegido */}
           <Route
             path="/payment-methods"
             element={
-              <Elements stripe={stripePromise}>
-                <PaymentMethods />
-              </Elements>
+              <ProtectedRoute>
+                <Elements stripe={stripePromise}>
+                  <PaymentMethods />
+                </Elements>
+              </ProtectedRoute>
             }
           />
 
-          {/* Lealtad */}
-          <Route path="/loyalty-program" element={<LoyaltyProgram />} />
+          {/* Lealtad - Protegida */}
+          <Route path="/loyalty-program" element={<ProtectedRoute><LoyaltyProgram /></ProtectedRoute>} />
         </Route>
 
-        {/* Admin */}
-        <Route path="/admin" element={<AdminLayout />}>
+        {/* Admin - Protegido */}
+        <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="products" element={<ManageProducts />} />

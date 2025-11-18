@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { updateUserProfile, updateProfileImage, confirmSignUp } from '../utils/api';
 
 // Icono de Lapiz para editar
 const EditIcon = () => (
@@ -22,6 +23,8 @@ const EditIcon = () => (
 
 // --- Componente Principal ---
 export default function App() {
+  const navigate = useNavigate();
+  
   // Estado de inputs
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
@@ -32,6 +35,23 @@ export default function App() {
 
   // Foto de perfil
   const [foto, setFoto] = useState(null);
+  const [fotoFile, setFotoFile] = useState(null);
+  
+  // Control de flujo
+  const [email, setEmail] = useState('');
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [confirmationCode, setConfirmationCode] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Verificar si viene de registro
+    const pendingEmail = sessionStorage.getItem('pendingConfirmEmail');
+    if (pendingEmail) {
+      setEmail(pendingEmail);
+      setNeedsConfirmation(true);
+    }
+  }, []);
 
   // Variantes de animación
   const containerVariants = {
@@ -43,7 +63,7 @@ export default function App() {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.7,
+        duration: 0.4,
         ease: "easeOut",
         when: "beforeChildren",
         staggerChildren: 0.1
@@ -53,7 +73,7 @@ export default function App() {
       opacity: 0,
       y: -50,
       transition: {
-        duration: 0.5,
+        duration: 0.3,
         ease: "easeIn"
       }
     }
@@ -70,7 +90,7 @@ export default function App() {
       y: 0,
       scale: 1,
       transition: {
-        duration: 0.6,
+        duration: 0.4,
         ease: "easeOut"
       }
     }
@@ -152,6 +172,7 @@ export default function App() {
     const file = e.target.files[0];
     if (file) {
       setFoto(URL.createObjectURL(file));
+      setFotoFile(file);
     }
   };
 
@@ -195,10 +216,66 @@ export default function App() {
     return years;
   };
 
+  // --- Confirmar Código ---
+  const handleConfirmCode = async () => {
+    if (!confirmationCode || confirmationCode.length !== 6) {
+      setError('Por favor ingresa un código válido de 6 dígitos');
+      return;
+    }
+    
+    setError('');
+    setLoading(true);
+    
+    try {
+      await confirmSignUp(email, confirmationCode);
+      setNeedsConfirmation(false);
+      sessionStorage.removeItem('pendingConfirmEmail');
+    } catch (err) {
+      setError(err.message || 'Código de verificación inválido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // --- Enviar Formulario ---
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Perfil enviado:", { nombre, apellido, genero, dia, mes, año, foto });
+    setError('');
+    
+    if (!nombre || !apellido || !genero || !dia || !mes || !año) {
+      setError('Por favor completa todos los campos');
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      // Construir fecha de nacimiento en formato ISO
+      const birthDate = `${año}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      
+      // Actualizar perfil básico
+      await updateUserProfile({
+        first_name: nombre,
+        last_name: apellido,
+        gender: genero,
+        date_of_birth: birthDate
+      });
+      
+      // Si hay foto, subirla
+      if (fotoFile) {
+        await updateProfileImage(fotoFile);
+      }
+      
+      // Limpiar sessionStorage
+      sessionStorage.removeItem('pendingConfirmEmail');
+      
+      // Navegar a login
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Error al completar el perfil');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -229,7 +306,7 @@ export default function App() {
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                CREA TU PERFIL
+                {needsConfirmation ? 'CONFIRMA TU CUENTA' : 'CREA TU PERFIL'}
               </motion.h1>
               
               <motion.div 
@@ -245,7 +322,45 @@ export default function App() {
             </div>
           </motion.div>
 
-          {/* ------------------ FOTO DE PERFIL ------------------ */}
+          {error && (
+            <motion.div 
+              className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {error}
+            </motion.div>
+          )}
+
+          {needsConfirmation ? (
+            /* UI para confirmar código */
+            <motion.div variants={itemVariants}>
+              <p className="text-gray-600 mb-4 text-center">
+                Ingresa el código de 6 dígitos enviado a <strong>{email}</strong>
+              </p>
+              <input 
+                type="text"
+                value={confirmationCode}
+                onChange={(e) => setConfirmationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                maxLength={6}
+                className="w-full text-center text-2xl tracking-widest border-2 border-gray-300 rounded-lg py-3 mb-4 focus:border-[#3b4d82] focus:outline-none"
+              />
+              <motion.button
+                onClick={handleConfirmCode}
+                disabled={loading || confirmationCode.length !== 6}
+                className="w-full bg-[#3b4d82] text-white py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={!loading ? { scale: 1.02 } : {}}
+                whileTap={!loading ? { scale: 0.98 } : {}}
+              >
+                {loading ? 'Confirmando...' : 'Confirmar Código'}
+              </motion.button>
+            </motion.div>
+          ) : (
+            <>
+              {/* ------------------ FOTO DE PERFIL ------------------ */}
           <motion.div 
             className="mb-10 flex justify-center"
             variants={photoVariants}
@@ -438,18 +553,21 @@ export default function App() {
             {/* Boton Continuar */}
             <motion.div
               variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
+              whileHover={!loading ? "hover" : {}}
+              whileTap={!loading ? "tap" : {}}
             >
-              <Link
-                to="/Home" // Ajusta la ruta según necesites
-                className="font-bebas tracking-[3px] w-full rounded-md bg-[#3b4d82] py-3 font-medium text-white text-center shadow-md transition-all duration-150 border border-transparent hover:bg-transparent hover:border-[#3b4d82] hover:text-black block"
+              <button
+                type="submit"
+                disabled={loading}
+                className="font-bebas tracking-[3px] w-full rounded-md bg-[#3b4d82] py-3 font-medium text-white text-center shadow-md transition-all duration-150 border border-transparent hover:bg-transparent hover:border-[#3b4d82] hover:text-black block disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Crear Cuenta
-              </Link>
+                {loading ? 'Guardando...' : 'Crear Cuenta'}
+              </button>
             </motion.div>
 
           </motion.form>
+          </>
+          )}
         </motion.div>
       </div>
 

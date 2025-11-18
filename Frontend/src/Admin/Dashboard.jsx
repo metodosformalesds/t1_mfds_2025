@@ -13,80 +13,7 @@ import {
     Legend,
     ResponsiveContainer
 } from 'recharts';
-// import { getDashboardStats, getSalesReport, getProductsReport } from '../utils/api';
-
-// --- Mock Data ---
-const mockDashboardData = {
-    total_active_subscribers: 1247,
-    total_sales: 3699,
-    total_revenue: 1287450,
-    today_sales: 5000,
-    sales_change_percent: 10,
-    today_orders: 500,
-    total_products: 9,
-    products_change_percent: 2,
-    new_subscribers_today: 12,
-    subscribers_change: 5,
-    new_subscribers_this_month: 58,
-    subscribers_trend: 15
-};
-
-const mockSalesData = {
-    top_categories: [
-        { category: 'Proteínas', percentage: 100 },
-        { category: 'Pre-entreno', percentage: 85 },
-        { category: 'Post-entreno', percentage: 70 },
-        { category: 'Aminoácidos', percentage: 60 },
-        { category: 'Vitaminas', percentage: 45 }
-    ]
-};
-
-const mockProductsData = {
-    top_product: { name: 'Proteína Whey' },
-    top_products: [
-        { product_id: 1, name: 'Proteína Whey', popularity_percent: 80, sales_count: 156 },
-        { product_id: 2, name: 'Creatina Monohidrato', popularity_percent: 65, sales_count: 98 },
-        { product_id: 3, name: 'BCAA Recovery', popularity_percent: 55, sales_count: 87 },
-        { product_id: 4, name: 'Pre-Workout Extreme', popularity_percent: 45, sales_count: 72 },
-        { product_id: 5, name: 'Glutamina Pura', popularity_percent: 40, sales_count: 61 }
-    ]
-};
-
-// Mock data para gráficos
-const mockMonthlyData = [
-    { month: 'Ene', ventas: 45000, pedidos: 120, ingresos: 89000 },
-    { month: 'Feb', ventas: 52000, pedidos: 145, ingresos: 104000 },
-    { month: 'Mar', ventas: 48000, pedidos: 130, ingresos: 96000 },
-    { month: 'Abr', ventas: 61000, pedidos: 165, ingresos: 118000 },
-    { month: 'May', ventas: 55000, pedidos: 150, ingresos: 107000 },
-    { month: 'Jun', ventas: 67000, pedidos: 180, ingresos: 135000 },
-    { month: 'Jul', ventas: 72000, pedidos: 195, ingresos: 142000 },
-    { month: 'Ago', ventas: 68000, pedidos: 185, ingresos: 138000 },
-    { month: 'Sep', ventas: 75000, pedidos: 200, ingresos: 151000 },
-    { month: 'Oct', ventas: 82000, pedidos: 220, ingresos: 165000 },
-    { month: 'Nov', ventas: 78000, pedidos: 210, ingresos: 158000 },
-    { month: 'Dic', ventas: 89000, pedidos: 240, ingresos: 178000 }
-];
-
-const mockSubscribersWeekly = [
-    { week: 'Sem 1', nuevos: 8 },
-    { week: 'Sem 2', nuevos: 12 },
-    { week: 'Sem 3', nuevos: 15 },
-    { week: 'Sem 4', nuevos: 18 },
-    { week: 'Sem 5', nuevos: 22 }
-];
-
-const mockSubscribersHistory = [
-    { date: '01 Nov', total: 1180 },
-    { date: '03 Nov', total: 1195 },
-    { date: '05 Nov', total: 1203 },
-    { date: '07 Nov', total: 1210 },
-    { date: '09 Nov', total: 1218 },
-    { date: '11 Nov', total: 1225 },
-    { date: '13 Nov', total: 1232 },
-    { date: '15 Nov', total: 1240 },
-    { date: '17 Nov', total: 1247 }
-];
+import { getDashboardStats, getSalesReport, getProductsReport } from '../utils/api';
 
 // --- Iconos SVG ---
 const UsersIcon = () => (
@@ -203,8 +130,6 @@ const Dashboard = () => {
         setLoading(true);
         setError(null);
 
-        /*
-        // CÓDIGO PARA PRODUCCIÓN
         try {
             // Obtener estadísticas del dashboard
             const dashboard = await getDashboardStats();
@@ -226,15 +151,6 @@ const Dashboard = () => {
             setError(err.message);
             setLoading(false);
         }
-        */
-
-        // MOCK DATA
-        setTimeout(() => {
-            setDashboardData(mockDashboardData);
-            setSalesData(mockSalesData);
-            setProductsData(mockProductsData);
-            setLoading(false);
-        }, 500);
     }
 
     if (loading) {
@@ -355,7 +271,7 @@ const Dashboard = () => {
                             Ventas mensuales
                         </h2>
                         <ResponsiveContainer width="100%" height={256}>
-                            <AreaChart data={mockMonthlyData}>
+                            <AreaChart data={salesData?.monthly_data || []}>
                                 <defs>
                                     <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#70AA77" stopOpacity={0.8} />
@@ -425,7 +341,7 @@ const Dashboard = () => {
                         </p>
                         <p className="text-sm text-gray-500 mb-4">Nuevos este mes</p>
                         <ResponsiveContainer width="100%" height={192}>
-                            <BarChart data={mockSubscribersWeekly}>
+                            <BarChart data={dashboardData?.subscribers_weekly || []}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                                 <XAxis dataKey="week" stroke="#6b7280" style={{ fontSize: '11px' }} />
                                 <YAxis stroke="#6b7280" style={{ fontSize: '11px' }} />
@@ -526,8 +442,8 @@ const Dashboard = () => {
                     <p className="text-2xl font-bold text-gray-800 mb-4">
                         {dashboardData?.total_active_subscribers?.toLocaleString() || '0'}
                     </p>
-                    <ResponsiveContainer width="100%" height={160}>
-                        <LineChart data={mockSubscribersHistory}>
+                        <ResponsiveContainer width="100%" height={160}>
+                        <LineChart data={dashboardData?.subscribers_history || []}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis dataKey="date" stroke="#6b7280" style={{ fontSize: '11px' }} />
                             <YAxis stroke="#6b7280" style={{ fontSize: '11px' }} domain={['dataMin - 10', 'dataMax + 10']} />

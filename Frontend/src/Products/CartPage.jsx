@@ -19,7 +19,11 @@ const StarIcon = ({ filled }) => (
 );
 
 const ProductCard = ({ product, onAddToCart }) => {
-  const productSlug = product.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+  // Compatibilidad con backend: usar name o title, product_id o id
+  const productName = product.name || product.title;
+  const productId = product.product_id || product.id;
+  const productSlug = productName.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+  const firstImage = product.images && product.images[0] ? product.images[0].image_url : product.imageSrc;
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -30,11 +34,11 @@ const ProductCard = ({ product, onAddToCart }) => {
   return (
     <motion.div 
       className="flex flex-col rounded-3xl bg-white p-5 shadow-sm hover:shadow-xl transition-all duration-300 h-[440px] w-full border border-gray-100"
-      variants={cardItemVariants} // Usará las variantes definidas abajo
+      variants={cardItemVariants}
       whileHover={{ y: -5, scale: 1.02 }}
       transition={{ duration: 0.2 }}
     >
-      <Link to={`/${productSlug}/${product.id}`} className="contents">
+      <Link to={`/${productSlug}/${productId}`} className="contents">
         <div className={`relative flex justify-center items-center h-72 rounded-2xl mb-4 overflow-hidden ${product.hasBg ? 'bg-[#EADBC8]' : 'bg-gray-50'}`}>
           {product.tag && (
             <div className="absolute top-0 left-0 bg-[#D99030] text-white text-[10px] font-bold px-2 py-3 rounded-tl-2xl rounded-br-lg leading-tight z-10">
@@ -43,8 +47,8 @@ const ProductCard = ({ product, onAddToCart }) => {
           )}
           <motion.img 
             className="h-52 w-full object-contain mix-blend-multiply" 
-            src={product.imageSrc || `https://placehold.co/300x400/EEE/31343C?text=${encodeURIComponent(product.title.split(' ')[0])}`} 
-            alt={product.title}
+            src={firstImage || `https://placehold.co/300x400/EEE/31343C?text=${encodeURIComponent(productName.split(' ')[0])}`} 
+            alt={productName}
             loading="lazy"
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.3 }}
@@ -53,7 +57,7 @@ const ProductCard = ({ product, onAddToCart }) => {
         
         <div className="flex flex-col flex-1">
           <h3 className="text-sm font-bold text-gray-900 mb-1 line-clamp-2 hover:text-[#334173] transition-colors min-h-[2.5rem]">
-            {product.title}
+            {productName}
           </h3>
           <p className="text-[11px] text-gray-400 mb-2 line-clamp-2 min-h-[2rem]">
             {product.description}
@@ -61,11 +65,11 @@ const ProductCard = ({ product, onAddToCart }) => {
           <div className="flex items-center mb-4">
             <div className="flex space-x-0.5">
               {[...Array(5)].map((_, i) => (
-                <StarIcon key={i} filled={i < (product.rating || 0)} />
+                <StarIcon key={i} filled={i < Math.round(product.average_rating || product.rating || 0)} />
               ))}
             </div>
             <span className="text-[10px] text-gray-400 ml-1">
-              ({product.reviewCount || 0})
+              ({product.review_count || product.reviewCount || 0})
             </span>
           </div>
         </div>
@@ -142,7 +146,13 @@ export default function CartPage() {
   const total = subtotal + shipping - discount;
 
   const recommendations = allProducts
-    .filter(p => !cartItems.find(item => item.id === p.id))
+    .filter(p => {
+      const pId = p.product_id || p.id;
+      return !cartItems.find(item => {
+        const itemId = item.product_id || item.id;
+        return itemId === pId;
+      });
+    })
     .slice(0, 4);
 
   return (
@@ -185,7 +195,7 @@ export default function CartPage() {
                     <AnimatePresence>
                       {cartItems.map((item) => (
                         <motion.div 
-                          key={item.id} 
+                          key={item.product_id || item.id} 
                           className="flex flex-col sm:flex-row gap-4 py-4 border-b border-gray-100 last:border-0"
                           variants={itemVariants}
                           layout
@@ -200,7 +210,7 @@ export default function CartPage() {
                           <div className="flex-1 flex flex-col justify-between">
                             <div>
                               <div className="flex justify-between items-start">
-                                <h3 className="font-bold text-lg">{item.title}</h3>
+                                <h3 className="font-bold text-lg">{item.name || item.title}</h3>
                                 <p className="font-bold text-xl">${item.price}</p>
                               </div>
                               <p className="text-gray-500 text-sm mt-1">{item.description}</p>
@@ -211,7 +221,7 @@ export default function CartPage() {
                             <div className="flex justify-between items-end mt-4">
                               <div className="flex items-center gap-3">
                                 <motion.button 
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  onClick={() => updateQuantity(item.product_id || item.id, item.quantity + 1)}
                                   className="w-8 h-8 rounded-full bg-[#2D3A96] text-white flex items-center justify-center hover:bg-[#1e2a7a] transition"
                                   whileTap={{ scale: 0.9 }}
                                 >
@@ -219,7 +229,7 @@ export default function CartPage() {
                                 </motion.button>
                                 <span className="font-bold text-lg w-4 text-center">{item.quantity}</span>
                                 <motion.button 
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  onClick={() => updateQuantity(item.product_id || item.id, item.quantity - 1)}
                                   className="w-8 h-8 rounded-full bg-[#2D3A96] text-white flex items-center justify-center hover:bg-[#1e2a7a] transition"
                                   whileTap={{ scale: 0.9 }}
                                 >
@@ -229,7 +239,7 @@ export default function CartPage() {
                               
                               {/* Boton Eliminar */}
                               <motion.button 
-                                onClick={() => removeFromCart(item.id)} 
+                                onClick={() => removeFromCart(item.product_id || item.id)} 
                                 className="mb-1"
                                 whileTap={{ scale: 0.8 }}
                               >
@@ -328,7 +338,7 @@ export default function CartPage() {
             {/* --- INICIO DE LA MODIFICACION --- */}
             {recommendations.map(product => (
               <ProductCard
-                key={product.id}
+                key={product.product_id || product.id}
                 product={product}
                 onAddToCart={addToCart}
               />

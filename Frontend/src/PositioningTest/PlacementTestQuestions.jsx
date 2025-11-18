@@ -35,7 +35,11 @@ const PlacementTestQuestions = () => {
                     id: "gender",
                     question: "¿Cuál es tu género?",
                     type: "radio",
-                    options: ["Masculino", "Femenino", "Prefiero no decirlo"]
+                    options: ["Masculino", "Femenino"],
+                    mapValues: {
+                        "Masculino": "M",
+                        "Femenino": "F"
+                    }
                 },
                 {
                     id: "height",
@@ -71,19 +75,51 @@ const PlacementTestQuestions = () => {
                     id: "exercise_frequency",
                     question: "¿Con qué frecuencia realizas ejercicio a la semana?",
                     type: "radio",
-                    options: ["Nunca", "1-2 veces", "3-4 veces", "5 o más"]
+                    options: ["Nunca (0 días)", "1 día", "2 días", "3 días", "4 días", "5 o más días"],
+                    mapValues: {
+                        "Nunca (0 días)": 0,
+                        "1 día": 1,
+                        "2 días": 2,
+                        "3 días": 3,
+                        "4 días": 4,
+                        "5 o más días": 5
+                    }
                 },
                 {
                     id: "activity_type",
                     question: "¿Qué tipo de actividad realizas principalmente?",
                     type: "radio",
-                    options: ["Cardio", "Fuerza", "Mixto", "Ninguna"]
+                    options: ["Cardio", "Fuerza (Strength)", "Mixto (Mixed)", "Cualquiera (Any)"],
+                    mapValues: {
+                        "Cardio": "Cardio",
+                        "Fuerza (Strength)": "Strength",
+                        "Mixto (Mixed)": "Mixed",
+                        "Cualquiera (Any)": "Any"
+                    }
                 },
                 {
                     id: "intensity_level",
                     question: "¿Cuál consideras tu nivel de intensidad promedio?",
                     type: "radio",
-                    options: ["Bajo", "Moderado", "Alto"]
+                    options: ["Bajo (Low)", "Moderado (Moderate)", "Alto (High)"],
+                    mapValues: {
+                        "Bajo (Low)": "Low",
+                        "Moderado (Moderate)": "Moderate",
+                        "Alto (High)": "High"
+                    }
+                },
+                {
+                    id: "sleep_hours",
+                    question: "¿Cuántas horas duermes en promedio por noche?",
+                    type: "radio",
+                    options: ["5 horas o menos", "6 horas", "7 horas", "8 horas", "9 o más horas"],
+                    mapValues: {
+                        "5 horas o menos": 5,
+                        "6 horas": 6,
+                        "7 horas": 7,
+                        "8 horas": 8,
+                        "9 o más horas": 9
+                    }
                 }
             ]
         },
@@ -96,12 +132,19 @@ const PlacementTestQuestions = () => {
                     question: "¿Cuál es tu meta principal?",
                     type: "radio",
                     options: [
-                        "Perder grasa",
                         "Ganar masa muscular",
+                        "Perder grasa",
                         "Mantenerme",
-                        "Mejorar rendimiento",
-                        "Rehabilitación"
-                    ]
+                        "Definir músculos",
+                        "Mejorar nutrición"
+                    ],
+                    mapValues: {
+                        "Ganar masa muscular": "Gain Muscle",
+                        "Perder grasa": "Lose Fat",
+                        "Mantenerme": "Maintain",
+                        "Definir músculos": "Define",
+                        "Mejorar nutrición": "Nutrition"
+                    }
                 },
                 {
                     id: "goal_timeframe",
@@ -126,23 +169,40 @@ const PlacementTestQuestions = () => {
                     question: "¿Cómo describirías tu alimentación actual?",
                     type: "radio",
                     options: [
+                        "Rica en proteínas",
+                        "Baja en carbohidratos",
                         "Balanceada",
-                        "Alta en carbohidratos",
-                        "Alta en grasas",
-                        "Rica en proteínas"
-                    ]
+                        "Alta en grasas"
+                    ],
+                    mapValues: {
+                        "Rica en proteínas": "High Protein",
+                        "Baja en carbohidratos": "Low Carb",
+                        "Balanceada": "Balanced",
+                        "Alta en grasas": "High Fat"
+                    }
                 },
                 {
                     id: "diet_type",
                     question: "¿Eres vegetariano, vegano o sigues una dieta especial?",
                     type: "radio",
-                    options: ["Ninguna", "Vegetariano", "Vegano", "Keto", "Otra"]
+                    options: ["Ninguna", "Vegetariano", "Vegano", "Keto"],
+                    mapValues: {
+                        "Ninguna": "Any",
+                        "Vegetariano": "Vegetarian",
+                        "Vegano": "Vegan",
+                        "Keto": "Keto"
+                    }
                 },
                 {
                     id: "supplement_usage",
                     question: "¿Consumes suplementos actualmente?",
                     type: "radio",
-                    options: ["Sí", "No", "Ocasionalmente"]
+                    options: ["Sí", "Ocasionalmente", "No"],
+                    mapValues: {
+                        "Sí": "Yes",
+                        "Ocasionalmente": "Ocasional",
+                        "No": "No"
+                    }
                 },
                 {
                     id: "current_supplements",
@@ -280,34 +340,56 @@ const PlacementTestQuestions = () => {
         setIsSubmitting(true);
 
         try {
-            // Transformar respuestas al formato esperado por el backend
+            // Transformar respuestas al formato esperado por el backend ML
+            // Valores esperados según el modelo entrenado:
+            // genders = ["M", "F"]
+            // exercise_freq = [0, 1, 2, 3, 4, 5]
+            // activity_type = ["Cardio", "Strength", "Mixed", "Any"]
+            // activity_intensity = ["Low", "Moderate", "High"]
+            // diet_type = ["High Protein", "Low Carb", "Balanced", "High Fat"]
+            // diet_special = ["Any", "Vegetarian", "Vegan", "Keto"]
+            // supplements = ["Yes", "Ocasional", "No"]
+            // goal_declared = ["Gain Muscle", "Lose Fat", "Maintain", "Define", "Nutrition"]
+            // sleep_hours = [5, 6, 7, 8, 9]
+            
+            // Helper para obtener valor mapeado si existe mapValues en la pregunta
+            const getMappedValue = (phaseIdx, questionId, answer) => {
+                const phase = phases[phaseIdx];
+                const question = phase.questions.find(q => q.id === questionId);
+                if (question?.mapValues && answer in question.mapValues) {
+                    return question.mapValues[answer];
+                }
+                return answer;
+            };
+            
             const testData = {
                 // Fase 1: Información Básica
-                age: parseInt(answers.age) || 0,
-                gender: answers.gender || "Prefiero no decirlo",
-                height: parseFloat(answers.height) || 0,
-                weight: parseFloat(answers.weight) || 0,
+                age: parseInt(answers.age) || 25,
+                gender: getMappedValue(0, "gender", answers.gender) || "M",
+                height: parseFloat(answers.height) || 170,
+                weight: parseFloat(answers.weight) || 70,
                 medical_conditions: Array.isArray(answers.medical_condition) 
                     ? answers.medical_condition.join(", ") 
-                    : "",
+                    : "Ninguna",
                 
                 // Fase 2: Nivel de Actividad Física
-                exercise_freq: answers.exercise_frequency || "Nunca",
-                activity_type: answers.activity_type || "Any", // Si no me equivoco eston estaba asi por el entrenamiento del modelo que fallaba con Nulos
-                activity_intensity: answers.intensity_level || "Bajo",
+                exercise_freq: getMappedValue(1, "exercise_frequency", answers.exercise_frequency) ?? 0,
+                activity_type: getMappedValue(1, "activity_type", answers.activity_type) || "Any",
+                activity_intensity: getMappedValue(1, "intensity_level", answers.intensity_level) || "Moderate",
+                sleep_hours: getMappedValue(1, "sleep_hours", answers.sleep_hours) ?? 7,
                 
                 // Fase 3: Metas y Objetivos
-                goal_declared: answers.main_goal || "Mantenerme",
+                goal_declared: getMappedValue(2, "main_goal", answers.main_goal) || "Maintain",
                 goal_timeframe: answers.goal_timeframe || "3 meses",
                 focus_area: answers.focus_area || "General",
                 
                 // Fase 4: Hábitos Alimenticios
-                diet_type: answers.diet_description || "Balanceada",
-                diet_special: answers.diet_type || "Any", // Si no me equivoco eston estaba asi por el entrenamiento del modelo que fallaba con Nulos
-                supplements: answers.supplement_usage || "No",
+                diet_type: getMappedValue(3, "diet_description", answers.diet_description) || "Balanced",
+                diet_special: getMappedValue(3, "diet_type", answers.diet_type) || "Any",
+                supplements: getMappedValue(3, "supplement_usage", answers.supplement_usage) || "No",
                 current_supplements: Array.isArray(answers.current_supplements)
                     ? answers.current_supplements.join(", ")
-                    : "",
+                    : "Ninguno",
                 
                 // Fase 5: Preferencias y Recomendaciones
                 supplement_format: answers.supplement_format || "Polvo",
@@ -317,20 +399,27 @@ const PlacementTestQuestions = () => {
 
             console.log("Enviando respuestas del test al backend:", testData);
 
-            // Llamada al backend (comentada para desarrollo)
-            // const response = await submitPlacementTest(testData);
-            // console.log("Respuesta del backend:", response);
+            // Llamada al backend
+            const response = await submitPlacementTest(testData);
+            console.log("Respuesta del backend:", response);
 
-            // Simular delay de envío para desarrollo
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Redirigir a la página de resultados del test
-            // En producción, pasar los resultados del backend via state:
-            // navigate("/placement-test/results", { state: { results: response } });
-            navigate("/placement-test/results");
+            // Redirigir a la página de resultados del test con los resultados del backend
+            navigate("/placement-test/results", { 
+                state: { 
+                    results: response,
+                    testData: testData // Opcional: pasar datos del test para referencia
+                } 
+            });
         } catch (error) {
             console.error("Error al enviar el test:", error);
-            alert("Hubo un error al enviar el test. Por favor, intenta de nuevo.");
+            
+            // Mensaje de error más específico
+            const errorMessage = error.message || "Error desconocido";
+            alert(
+                `Hubo un error al procesar tu test:\n\n${errorMessage}\n\n` +
+                `Por favor, verifica tu conexión a internet e intenta de nuevo. ` +
+                `Si el problema persiste, contacta a soporte.`
+            );
         } finally {
             setIsSubmitting(false);
         }

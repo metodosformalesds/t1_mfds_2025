@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import { addItemToCart, getFitnessProfile } from '../utils/api';
+import { addItemToCart, getUserProfile, getMySubscription } from '../utils/api';
 
 // --- Iconos SVG ---
 const ArrowLeftIcon = () => (
@@ -84,59 +84,7 @@ const ProductCard = ({ title, tag }) => (
     </div>
 );
 
-// Mock data para desarrollo
-const MOCK_FITNESS_PROFILE = {
-    fitness_profile_id: 1,
-    user_id: 1,
-    age: 25,
-    gender: "M",
-    exercise_freq: 5,
-    activity_type: "Gimnasio/Pesas",
-    activity_intensity: "Alta intensidad",
-    diet_type: "Balanceada",
-    diet_special: "Ninguna",
-    supplements: "Proteína",
-    goal_declared: "Ganar masa muscular",
-    sleep_hours: 7,
-    recommended_plan: "Plan Premium Muscular",
-    plan_description: "Kit mensual optimizado para ganancia de masa muscular con entrenamiento de alta intensidad",
-    test_date: "2025-01-15T10:30:00"
-};
 
-const MOCK_SUBSCRIPTION_PRODUCT = {
-    product_id: 999,
-    name: "Suscripción Premium Mensual",
-    description: "Kit mensual personalizado según tus objetivos fitness",
-    price: 150.00,
-    is_subscription: true
-};
-
-const MOCK_PRODUCTS_IN_KIT = [
-    {
-        product_id: 101,
-        name: "Proteína Gold Standard Whey",
-        tag: "Para tu objetivo",
-        image_url: null
-    },
-    {
-        product_id: 102,
-        name: "Pre-Entreno C4 Original",
-        tag: "Para tu objetivo",
-        image_url: null
-    },
-    {
-        product_id: 103,
-        name: "Creatina Monohidratada",
-        tag: "Para tu objetivo",
-        image_url: null
-    },
-    {
-        product_id: 104,
-        name: "BCAA 5000 Powder",
-        tag: "Para tu objetivo",
-        image_url: null
-    }
-];
 
 // --- Componente Principal ---
 const SubscriptionPage = () => {
@@ -158,20 +106,40 @@ const SubscriptionPage = () => {
             setLoading(true);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // const profile = await getFitnessProfile();
-            // Aquí también necesitarías un endpoint para obtener los productos del kit
-            // const kitData = await getRecommendedKit(profile.fitness_profile_id);
+            // Cargar perfil del usuario (incluye fitness_profile)
+            const userProfile = await getUserProfile();
+            
+            if (!userProfile.fitness_profile) {
+                setError('No tienes un perfil fitness. Completa el test de placement primero.');
+                return;
+            }
 
-            // Mock data para desarrollo
-            await new Promise(resolve => setTimeout(resolve, 800));
-            const profile = MOCK_FITNESS_PROFILE;
-            const product = MOCK_SUBSCRIPTION_PRODUCT;
-            const products = MOCK_PRODUCTS_IN_KIT;
-
-            setFitnessProfile(profile);
-            setSubscriptionProduct(product);
-            setKitProducts(products);
+            // Cargar suscripción activa si existe
+            // const subscription = await getMySubscription().catch(() => null);
+            
+            // Configurar fitness profile
+            setFitnessProfile(userProfile.fitness_profile.attributes);
+            
+            // Configurar producto de suscripción (simulado por ahora)
+            // TODO: Crear endpoint específico para obtener producto de suscripción
+            setSubscriptionProduct({
+                product_id: 999,
+                name: "Suscripción Mensual " + userProfile.fitness_profile.attributes.recommended_plan,
+                description: "Kit mensual personalizado según tus objetivos fitness",
+                price: 150.00,
+                is_subscription: true
+            });
+            
+            // Productos recomendados del fitness profile
+            const recommendedProducts = userProfile.fitness_profile.attributes.recommended_products || [];
+            const kitProducts = recommendedProducts.map((name, index) => ({
+                product_id: 100 + index,
+                name: name,
+                tag: "Para tu objetivo",
+                image_url: null
+            }));
+            
+            setKitProducts(kitProducts);
         } catch (err) {
             setError(err.message || "Error al cargar la información del plan");
         } finally {
@@ -185,17 +153,14 @@ const SubscriptionPage = () => {
         try {
             setSubscribing(true);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // await addItemToCart(subscriptionProduct.product_id, 1);
-
-            // Mock para desarrollo
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Agregar producto de suscripción al carrito
+            await addItemToCart(subscriptionProduct.product_id, 1);
 
             // Mostrar mensaje de éxito y redirigir al carrito
             alert("¡Plan agregado al carrito exitosamente!");
             navigate("/CartPage");
         } catch (err) {
-            alert("Error al agregar el plan al carrito. Por favor intenta nuevamente.");
+            alert(err.message || "Error al agregar el plan al carrito. Por favor intenta nuevamente.");
         } finally {
             setSubscribing(false);
         }

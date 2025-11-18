@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import { getUserProfile, updateUserProfile, updateProfileImage } from "../utils/api";
-
-// --- Datos Mock para Desarrollo ---
-const MOCK_USER_DATA = {
-    user_id: 1,
-    first_name: "Nombre",
-    last_name: "Apellido",
-    email: "nombre.apellido@ejemplo.com",
-    gender: "M",
-    date_of_birth: "1999-12-25",
-    profile_image_url: null,
-    cognito_user_sub: "mock-cognito-sub"
-};
+import { getUserProfile, updateUserProfile, updateProfileImage } from "../utils/api";
 
 // --- Iconos SVG ---
 
@@ -135,11 +123,8 @@ const PersonalInfo = () => {
             setLoading(true);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // const data = await getUserProfile();
-            
-            // Mock data para desarrollo
-            const data = MOCK_USER_DATA;
+            // Cargar perfil del usuario desde el backend
+            const data = await getUserProfile();
             
             setUserData(data);
             setFormData({
@@ -189,12 +174,9 @@ const PersonalInfo = () => {
             setSaving(true);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // const result = await updateProfileImage(selectedImage);
-            // setUserData(prev => ({ ...prev, profile_image_url: result.profile_image_url }));
-            
-            // Mock para desarrollo
-            console.log("Uploading image:", selectedImage.name);
+            // Subir imagen al backend
+            const result = await updateProfileImage(selectedImage);
+            setUserData(prev => ({ ...prev, profile_image_url: result.profile_image_url }));
             
             setSuccessMessage("Imagen de perfil actualizada exitosamente.");
             setSelectedImage(null);
@@ -222,13 +204,9 @@ const PersonalInfo = () => {
                 return;
             }
 
-            // TODO: Descomentar cuando el backend esté listo
-            // const updatedData = await updateUserProfile(formData);
-            // setUserData(updatedData);
-            
-            // Mock para desarrollo
-            console.log("Updating profile with:", formData);
-            setUserData(prev => ({ ...prev, ...formData }));
+            // Actualizar perfil en el backend
+            const updatedData = await updateUserProfile(formData);
+            setUserData(updatedData);
             
             setSuccessMessage("Perfil actualizado exitosamente.");
             setTimeout(() => setSuccessMessage(null), 3000);

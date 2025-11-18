@@ -1,11 +1,38 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import logo from '../assets/Befitwhite.png';
+import { forgotPassword } from '../utils/api';
 
 const MotionLink = motion(Link);
 
 export default function VerifyAccount() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSendCode = async (method) => {
+    if (!email || !email.includes('@')) {
+      setError('Por favor ingresa un email válido');
+      return;
+    }
+    
+    setError('');
+    setLoading(true);
+    
+    try {
+      await forgotPassword(email);
+      // Guardar email para siguiente paso
+      sessionStorage.setItem('recoveryEmail', email);
+      sessionStorage.setItem('recoveryMethod', method);
+      navigate('/RecoveryCode');
+    } catch (err) {
+      setError(err.message || 'Error al enviar código de verificación');
+    } finally {
+      setLoading(false);
+    }
+  };
   const mainCardVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: { 
@@ -35,32 +62,12 @@ export default function VerifyAccount() {
   // Datos simulados
   const options = [
     {
-      id: 'sms',
-      title: 'SMS',
-      detail: 'Al celular que termina con **21',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-        </svg>
-      ),
-    },
-    {
       id: 'email',
       title: 'Correo',
-      detail: 'Al correo que termina con r****@gmail.com',
+      detail: 'Enviaremos un código a tu correo electrónico',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-    },
-    {
-      id: 'whatsapp',
-      title: 'WhatsApp',
-      detail: 'Al celular que termina con **21',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
         </svg>
       ),
     },
@@ -103,9 +110,33 @@ export default function VerifyAccount() {
                 Verifica que esta cuenta te pertenece
               </h1>
               <p className="font-poppins text-gray-600 text-sm md:text-base font-light">
-                Elige cómo recibir el código de verificación
+                Ingresa tu email y elige cómo recibir el código
               </p>
             </motion.div>
+
+            {/* Input Email */}
+            <motion.div className="mb-6" variants={itemVariant}>
+              <input 
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-[#70AA77] transition-colors"
+              />
+            </motion.div>
+
+            {error && (
+              <motion.div 
+                className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                {error}
+              </motion.div>
+            )}
 
             {/* Lista de Opciones */}
             <div className="space-y-0">
@@ -113,11 +144,12 @@ export default function VerifyAccount() {
                 <motion.div key={option.id} variants={itemVariant}>
                   {index > 0 && <div className="h-px bg-gray-100"></div>}
                   
-                  <MotionLink 
-                    to="/RecoveryCode" 
-                    className="group w-full flex items-center justify-between py-5 transition-colors rounded-lg px-2 -mx-2"
-                    whileHover={{ backgroundColor: "rgb(249 250 251)" }}
-                    whileTap={{ scale: 0.98 }}
+                  <motion.button 
+                    onClick={() => handleSendCode(option.id)}
+                    disabled={loading}
+                    className="group w-full flex items-center justify-between py-5 transition-colors rounded-lg px-2 -mx-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileHover={!loading ? { backgroundColor: "rgb(249 250 251)" } : {}}
+                    whileTap={!loading ? { scale: 0.98 } : {}}
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full bg-[#B8D2B1] group-hover:bg-[#A5C8A1] transition-colors flex items-center justify-center flex-shrink-0 text-[#fcfbf5]">
@@ -132,7 +164,7 @@ export default function VerifyAccount() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-400 group-hover:text-[#70AA77] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
-                  </MotionLink>
+                  </motion.button>
                 </motion.div>
               ))}
               <div className="h-px bg-gray-100"></div>

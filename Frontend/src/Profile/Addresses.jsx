@@ -1,55 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import { 
-//     getAddresses, 
-//     createAddress, 
-//     updateAddress, 
-//     deleteAddress, 
-//     setDefaultAddress 
-// } from '../utils/api';
-
-// --- Datos Mock para Desarrollo ---
-const MOCK_ADDRESSES = [
-    {
-        address_id: 1,
-        address_name: "Casa",
-        address_line1: "Calle Ejemplo 1234, Fraccionamiento 1",
-        address_line2: "Depto 101",
-        country: "México",
-        state: "Chiahuahua",
-        city: "Ciudad Juárez",
-        zip_code: "64000",
-        recipient_name: "Juan Pérez",
-        phone_number: "Tel. 656 123 4567",
-        is_default: true
-    },
-    {
-        address_id: 2,
-        address_name: "Oficina",
-        address_line1: "Av. Constitución 456",
-        address_line2: null,
-        country: "México",
-        state: "Oaxaca",
-        city: "alcalá de Henares",
-        zip_code: "66260",
-        recipient_name: "Juan Pérez",
-        phone_number: "Tel. 444 987 6543",
-        is_default: false
-    },
-    {
-        address_id: 3,
-        address_name: "Casa de Padres",
-        address_line1: "Calle Principal 789, Colonia Centro",
-        address_line2: null,
-        country: "México",
-        state: "Nuevo León",
-        city: "Guadalupe",
-        zip_code: "67100",
-        recipient_name: "María Pérez",
-        phone_number: "Tel. 811 555 1234",
-        is_default: false
-    }
-];
+import { 
+    getAddresses, 
+    createAddress, 
+    updateAddress, 
+    deleteAddress, 
+    setDefaultAddress 
+} from '../utils/api';
 
 // --- Iconos SVG ---
 
@@ -410,11 +367,8 @@ const ShippingAddresses = () => {
             setLoading(true);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // const data = await getAddresses();
-            
-            // Mock data para desarrollo
-            const data = MOCK_ADDRESSES;
+            // Cargar direcciones desde el backend
+            const data = await getAddresses();
             
             setAddresses(data);
         } catch (err) {
@@ -438,27 +392,16 @@ const ShippingAddresses = () => {
     const handleSaveAddress = async (formData) => {
         try {
             if (editingAddress) {
-                // TODO: Descomentar cuando el backend esté listo
-                // const updated = await updateAddress(editingAddress.address_id, formData);
-                
-                // Mock para desarrollo
-                console.log("Updating address:", editingAddress.address_id, formData);
-                const updated = { ...editingAddress, ...formData };
+                // Actualizar dirección en el backend
+                const updated = await updateAddress(editingAddress.address_id, formData);
                 
                 setAddresses(prev => prev.map(addr => 
                     addr.address_id === editingAddress.address_id ? updated : addr
                 ));
                 setSuccessMessage("Dirección actualizada exitosamente.");
             } else {
-                // TODO: Descomentar cuando el backend esté listo
-                // const newAddress = await createAddress(formData);
-                
-                // Mock para desarrollo
-                console.log("Creating address:", formData);
-                const newAddress = { 
-                    ...formData, 
-                    address_id: addresses.length + 1 
-                };
+                // Crear nueva dirección en el backend
+                const newAddress = await createAddress(formData);
                 
                 setAddresses(prev => [...prev, newAddress]);
                 setSuccessMessage("Dirección agregada exitosamente.");
@@ -480,11 +423,8 @@ const ShippingAddresses = () => {
             setDeletingId(addressId);
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // await deleteAddress(addressId);
-            
-            // Mock para desarrollo
-            console.log("Deleting address:", addressId);
+            // Eliminar dirección desde el backend
+            await deleteAddress(addressId);
             
             setAddresses(prev => prev.filter(addr => addr.address_id !== addressId));
             setSuccessMessage("Dirección eliminada exitosamente.");
@@ -501,11 +441,8 @@ const ShippingAddresses = () => {
         try {
             setError(null);
 
-            // TODO: Descomentar cuando el backend esté listo
-            // await setDefaultAddress(addressId);
-            
-            // Mock para desarrollo
-            console.log("Setting default address:", addressId);
+            // Establecer dirección predeterminada en el backend
+            await setDefaultAddress(addressId);
             
             setAddresses(prev => prev.map(addr => ({
                 ...addr,
