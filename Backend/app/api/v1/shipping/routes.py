@@ -6,11 +6,11 @@
 
 from app.core.database import get_db
 from app.api.v1.shipping.schemas import Order, CreateOrder, OrderTrackingResponse
-from app.api.v1.shipping.service import ShippingService
+from app.api.v1.shipping.service import shipping_service
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, HTTPException, status, Depends
 
-router = APIRouter(prefix="/shipping", tags=["Shipping"])
+router = APIRouter()
 
 @router.post("/crear-pedido/", response_model=Order, status_code=status.HTTP_201_CREATED)
 def crear_pedido(pedido_in: CreateOrder, db: Session = Depends(get_db)):
@@ -33,7 +33,7 @@ def crear_pedido(pedido_in: CreateOrder, db: Session = Depends(get_db)):
     """
     
     try:
-        nuevo_pedido = ShippingService.create_order_db(db=db, order_in=pedido_in)
+        nuevo_pedido = shipping_service.create_order_db(db=db, order_in=pedido_in)
     except HTTPException as http_exc:
         raise http_exc
     except Exception as e:
@@ -62,8 +62,8 @@ def rastrear_pedido( pedido_id: int, db: Session = Depends(get_db)):
     Returns:
         `OrderTrackingResponse`: Detalles clave para el rastreo del pedido.
     """
-    tracking_details = ShippingService.get_details(db=db, pedido_id=pedido_id)
-    
+    tracking_details = shipping_service.get_details(db=db, pedido_id=pedido_id)
+
     if not tracking_details:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 

@@ -7,49 +7,21 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Depends,
-    status,
-    Security
+    status
 )
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import Dict
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
 from app.api.v1.payment_method import schemas
 from app.api.v1.payment_method.service import payment_method_service
 
 router = APIRouter()
 
-security = HTTPBearer()
-
-"""Extrae el token del header Authorization"""
-def get_token_from_header(
-    credentials: HTTPAuthorizationCredentials = Security(security)
-) -> str:
-    if not credentials or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No se proporcionaron credenciales de autenticación",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
-
-"""Verifica el token JWT y devuelve el payload del usuario"""
-def get_current_user(token: str = Depends(get_token_from_header)) -> Dict:
-    from app.api.v1.auth.service import cognito_service
-    
-    payload = cognito_service.verify_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return payload
-
 @router.get("", response_model=schemas.PaymentMethodListResponse, status_code=status.HTTP_200_OK)
 async def get_my_payment_methods(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -64,7 +36,7 @@ async def get_my_payment_methods(
     Retorna:
         dict: Resultado que incluye la lista de métodos de pago y su conteo total.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = payment_method_service.get_user_payment_methods(db=db, cognito_sub=cognito_sub)
     
@@ -80,7 +52,7 @@ async def get_my_payment_methods(
 async def get_payment_method(
     payment_id: int,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -96,7 +68,7 @@ async def get_payment_method(
     Retorna:
         dict: Objeto del método de pago encontrado.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = payment_method_service.get_payment_method_by_id(
         db=db,
@@ -115,7 +87,7 @@ async def get_payment_method(
 @router.post("/setup-intent", response_model=schemas.SetupIntentResponse, status_code=status.HTTP_200_OK)
 async def create_setup_intent(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -130,7 +102,7 @@ async def create_setup_intent(
     Retorna:
         dict: Información necesaria para el frontend, incluyendo client_secret y setup_intent_id.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = payment_method_service.create_setup_intent(
         db=db,
@@ -149,7 +121,7 @@ async def create_setup_intent(
 async def save_payment_method(
     save_data: schemas.SavePaymentMethodRequest,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -166,7 +138,7 @@ async def save_payment_method(
     Retorna:
         dict: Objeto del método de pago almacenado.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = payment_method_service.save_payment_method_from_setup(
         db=db,
@@ -187,7 +159,7 @@ async def save_payment_method(
 async def delete_payment_method(
     payment_id: int,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -203,7 +175,7 @@ async def delete_payment_method(
     Retorna:
         dict: Mensaje confirmando la eliminación exitosa.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = payment_method_service.delete_payment_method(
         db=db,
@@ -223,7 +195,7 @@ async def delete_payment_method(
 async def set_default_payment_method(
     payment_id: int,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -239,7 +211,7 @@ async def set_default_payment_method(
     Retorna:
         dict: Objeto del método de pago actualizado como predeterminado.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = payment_method_service.set_default_payment_method(
         db=db,

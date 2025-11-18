@@ -7,44 +7,16 @@ from fastapi import (
     HTTPException,
     Depends,
     status,
-    Security,
     Query
 )
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from typing import Dict
 from sqlalchemy.orm import Session
 from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User
 from app.api.v1.orders import schemas
 from app.api.v1.orders.service import order_service
 
 router = APIRouter()
-
-security = HTTPBearer()
-
-def get_token_from_header(
-    credentials: HTTPAuthorizationCredentials = Security(security)
-) -> str:
-
-    if not credentials or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No se proporcionaron credenciales de autenticación",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return credentials.credentials
-
-def get_current_user(token: str = Depends(get_token_from_header)) -> Dict:
- 
-    from app.api.v1.auth.service import cognito_service
-    
-    payload = cognito_service.verify_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return payload
 
 
 @router.get("", response_model=schemas.OrderListResponse, status_code=status.HTTP_200_OK)
@@ -52,7 +24,7 @@ async def get_my_orders(
     limit: int = Query(50, ge=1, le=100, description="Número de pedidos a retornar"),
     offset: int = Query(0, ge=0, description="Offset para paginación"),
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -70,7 +42,7 @@ async def get_my_orders(
     Retorna:
         Dict: Lista de pedidos y total encontrado.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = order_service.get_user_orders(
         db=db,
@@ -92,7 +64,7 @@ async def get_my_orders(
 async def get_order_details(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -109,7 +81,7 @@ async def get_order_details(
     Retorna:
         Dict: Pedido detallado si existe, de lo contrario error 404.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = order_service.get_order_by_id(
         db=db,
@@ -129,7 +101,7 @@ async def get_order_details(
 @router.get("/subscription/all", response_model=schemas.OrderListResponse, status_code=status.HTTP_200_OK)
 async def get_subscription_orders(
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -145,7 +117,7 @@ async def get_subscription_orders(
     Retorna:
         Dict: Lista de pedidos de suscripción.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = order_service.get_subscription_orders(
         db=db,
@@ -166,7 +138,7 @@ async def cancel_order(
     order_id: int,
     cancel_data: schemas.CancelOrderRequest,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -184,7 +156,7 @@ async def cancel_order(
     Retorna:
         Dict: Resultado de la cancelación.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = order_service.cancel_order(
         db=db,
@@ -206,7 +178,7 @@ async def cancel_order(
 async def get_order_status(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user: Dict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Autor: Lizbeth Barajas
@@ -223,7 +195,7 @@ async def get_order_status(
     Retorna:
         Dict: Estado del pedido y datos básicos de seguimiento.
     """
-    cognito_sub = current_user.get("sub")
+    cognito_sub = current_user.cognito_sub
     
     result = order_service.get_order_status(
         db=db,

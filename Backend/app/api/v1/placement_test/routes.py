@@ -12,7 +12,7 @@ from app.api.v1.placement_test.service import prepare_profile_attributes
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/placement-test", tags=["Placement Test"])
+router = APIRouter()
 
 @router.post(
     "/",
