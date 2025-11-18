@@ -29,7 +29,6 @@ async def get_my_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    
     """
     Autor: Lizbeth Barajas
 
@@ -57,15 +56,11 @@ async def get_my_profile(
     
     return result["user"]
 
-"""
-Obtiene informacion basica del perfil
-"""
 @router.get("/me/basic", response_model=schemas.BasicProfileResponse, status_code=status.HTTP_200_OK)
 async def get_my_basic_profile(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    
     """
     Autor: Lizbeth Barajas
 
@@ -93,16 +88,12 @@ async def get_my_basic_profile(
     
     return result["user"]
 
-"""
-Actualiza la informacion del perfil del usuario
-"""
 @router.put("/me", response_model=schemas.UserProfileResponse, status_code=status.HTTP_200_OK)
 async def update_my_profile(
     profile_data: schemas.UpdateProfileRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    
     """
     Autor: Lizbeth Barajas
 
@@ -138,16 +129,12 @@ async def update_my_profile(
     
     return result["user"]
 
-"""
-Actualiza la imagen de perfil del usuario
-"""
 @router.put("/me/image", response_model=schemas.ProfileImageResponse, status_code=status.HTTP_200_OK)
 async def update_profile_image(
     profile_image: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    
     """
     Autor: Lizbeth Barajas
 
@@ -191,15 +178,11 @@ async def update_profile_image(
     
     return result
 
-"""
-Elimina la cuenta del usuario (soft delete)
-"""
 @router.delete("/me", response_model=schemas.DeleteAccountResponse, status_code=status.HTTP_200_OK)
 async def delete_my_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    
     """
     Autor: Lizbeth Barajas
 

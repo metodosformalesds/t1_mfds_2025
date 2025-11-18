@@ -5,6 +5,9 @@ import logging
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.v1.router import api_router
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,3 +77,13 @@ def health_check():
         "status": "healthy",
         "version": settings.APP_VERSION
     }
+
+@app.get("/openapi.json", include_in_schema=False)
+async def get_open_api_endpoint():
+    # Retorna la definición OpenAPI, bypassando la seguridad de los endpoints
+    return JSONResponse(get_openapi(title=app.title, version=app.APP_VERSION, routes=app.routes))
+
+@app.get("/docs", include_in_schema=False)
+async def get_documentation():
+    # Retorna la interfaz de Swagger UI
+    return get_swagger_ui_html(openapi_url="/openapi.json", title=app.title)
