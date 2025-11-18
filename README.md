@@ -23,7 +23,7 @@
 | Prototipo del proyecto <img src="https://cdn.brandfetch.io/idZHcZ_i7F/theme/light/symbol.svg?c=1dxbfHSJFAPEGdCLU4o5B" width="15"> | [Prototipo del proyecto](https://www.figma.com/design/WaS7B5Rg99ll3yqHYbcc5B/BeFit-Prototype?node-id=0-1&t=EOAzZqQikuIRQCX2-1) |
 | Deployment AWS <img src="https://cdn.brandfetch.io/idVoqFQ-78/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B" width="20"> | https://frontend.d34s9corpodswj.amplifyapp.com/ |
 | Presentación Ejecutiva <img src="https://cdn.brandfetch.io/id6O2oGzv-/theme/dark/idncaAgFGT.svg?c=1bxid64Mup7aczewSAYMX&t=1755572716016" width="20"> | [Presentación Ejecutiva](https://docs.google.com/presentation/d/1fEga5ncM2CfUvp7k2cFZSsOFCJLBZvDYWGEVPykqIM0/edit?usp=drive_link) |
-| Presentación Final <img src="https://cdn.brandfetch.io/id6O2oGzv-/theme/dark/idncaAgFGT.svg?c=1bxid64Mup7aczewSAYMX&t=1755572716016" width="20"> | Disponible más adelante... |
+| Presentación Final <img src="https://cdn.brandfetch.io/id6O2oGzv-/theme/dark/idncaAgFGT.svg?c=1bxid64Mup7aczewSAYMX&t=1755572716016" width="20"> | [Presentación Final](https://docs.google.com/presentation/d/11B806NqzJEaMkIvx8jn-RqnJVFBaCarcXumYOmdgNmk/edit?usp=sharing) |
 
 ## ⚙️ Tecnologías Utilizadas
 
@@ -295,3 +295,27 @@ Frontend/
 ---
 
 ## Credenciales de Uso
+
+  ### Credenciales de Admin
+  - **Email:** g2vilchis@gmail.com  
+  - **Password:** `NuevaPassword123!`
+  
+  ### Métodos de Pago – Stripe
+  
+  #### Email
+  - Puede ser cualquiera.
+  
+  #### Tarjetas (valores de prueba)
+  - **Visa (pago exitoso):** `4242 4242 4242 4242`
+  - **MasterCard (pago exitoso):** `5555 5555 5555 4444`
+  - **Error de CVC:** `4000 0000 0000 0101`
+  - **Tarjeta declinada:** `4000 0000 0000 0002`
+  
+  > Para todas las tarjetas de prueba:  
+  > - Fecha: cualquier fecha futura  
+  > - CVC: cualquier número
+  
+  ### Métodos de Pago – PayPal
+  - **Email:** `sb-08h9u47490918@personal.example.com`  
+  - **Password:** `HjKy7H$&`  
+  - **Código de verificación (en caso de ser requerido):** `1111`
