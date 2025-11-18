@@ -72,8 +72,9 @@ class TestCognitoServiceUnit:
         assert user.first_name == "New"
         assert user.last_name == "User"
 
+    @pytest.mark.asyncio
     @patch('app.api.v1.auth.service.boto3.client')
-    def test_sign_in_success(self, mock_boto_client):
+    async def test_sign_in_success(self, mock_boto_client):
         """
         Autor: Luis Flores
         Descripción: Prueba unitaria para inicio de sesión exitoso.
@@ -95,10 +96,14 @@ class TestCognitoServiceUnit:
         service = CognitoService()
 
         # Act
+        # Handle both sync and async versions
         result = service.sign_in(
             email="test@example.com",
             password="Test123!@#"
         )
+        # If result is a coroutine, await it
+        if hasattr(result, '__await__'):
+            result = await result
 
         # Assert
         assert result["success"] is True
@@ -107,8 +112,9 @@ class TestCognitoServiceUnit:
         assert result["refresh_token"] == "mock-refresh-token"
         assert result["expires_in"] == 3600
 
+    @pytest.mark.asyncio
     @patch('app.api.v1.auth.service.boto3.client')
-    def test_sign_in_invalid_credentials(self, mock_boto_client):
+    async def test_sign_in_invalid_credentials(self, mock_boto_client):
         """
         Autor: Luis Flores
         Descripción: Prueba unitaria para credenciales inválidas.
@@ -136,13 +142,17 @@ class TestCognitoServiceUnit:
             email="test@example.com",
             password="WrongPassword123!"
         )
+        # If result is a coroutine, await it
+        if hasattr(result, '__await__'):
+            result = await result
 
         # Assert
         assert result["success"] is False
         assert "error" in result
 
+    @pytest.mark.asyncio
     @patch('app.api.v1.auth.service.boto3.client')
-    def test_confirm_sign_up(self, mock_boto_client):
+    async def test_confirm_sign_up(self, mock_boto_client):
         """
         Autor: Luis Flores
         Descripción: Prueba unitaria para confirmación de registro.
@@ -161,13 +171,17 @@ class TestCognitoServiceUnit:
             email="test@example.com",
             code="123456"
         )
+        # If result is a coroutine, await it
+        if hasattr(result, '__await__'):
+            result = await result
 
         # Assert
         assert result["success"] is True
         mock_cognito.confirm_sign_up.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch('app.api.v1.auth.service.boto3.client')
-    def test_forgot_password(self, mock_boto_client):
+    async def test_forgot_password(self, mock_boto_client):
         """
         Autor: Luis Flores
         Descripción: Prueba unitaria para solicitud de recuperación de contraseña.
@@ -183,13 +197,17 @@ class TestCognitoServiceUnit:
 
         # Act
         result = service.forgot_password(email="test@example.com")
+        # If result is a coroutine, await it
+        if hasattr(result, '__await__'):
+            result = await result
 
         # Assert
         assert result["success"] is True
         mock_cognito.forgot_password.assert_called_once()
 
+    @pytest.mark.asyncio
     @patch('app.api.v1.auth.service.boto3.client')
-    def test_refresh_token(self, mock_boto_client):
+    async def test_refresh_token(self, mock_boto_client):
         """
         Autor: Luis Flores
         Descripción: Prueba unitaria para renovación de token.
@@ -211,6 +229,9 @@ class TestCognitoServiceUnit:
 
         # Act
         result = service.refresh_token(refresh_token="old-refresh-token")
+        # If result is a coroutine, await it
+        if hasattr(result, '__await__'):
+            result = await result
 
         # Assert
         assert result["success"] is True
