@@ -18,7 +18,8 @@ from app.models.enum import AuthType, UserRole, Gender
 from app.core.security import hash_password
 from app.api.v1.auth.schemas import SignUpRequest
 from starlette.concurrency import run_in_threadpool
-
+from fastapi import Depends
+from app.core.database import get_db
 
 class CognitoService:
     """Servicio para gestión de autenticación con AWS Cognito"""
@@ -67,51 +68,28 @@ class CognitoService:
         
         return CognitoService._jwks_cache
     
-    async def sign_up(
+    async def sign_up( # <--- AHORA ES ASÍNCRONO
         self, 
         db: Session, 
         user_data: SignUpRequest, 
         profile_image: Optional[bytes] = None
     ) -> Dict:
         """
-        Registra un nuevo usuario en Cognito y en la base de datos local.
-        
-        Args:
-            db: Sesión de base de datos
-            user_data: Datos del usuario
-            profile_image: Imagen de perfil opcional (bytes)
-            
-        Returns:
-            Dict con success, user_sub, user_id, profile_image_url, message o error
+        Registra un nuevo usuario en Cognito y DB. Usa run_in_threadpool para operaciones bloqueantes.
         """
         profile_image_url = None
         s3_service_instance = S3Service()
-        profile_img = None # Usado para la URL que va a la DB y al retorno
+        temp_s3_id = None
         current_time = datetime.now()
 
         try:
             email = user_data.email
-            temp_s3_id = None # id temporal para subir cosas al s3 y cumplir el campo obligatorio de cognito
             
-            # Generar ID temporal ANTES de subir la imagen
-            temp_s3_id = str(uuid.uuid4())
-
+            # 1. TAREA LENTA: SUBIR IMAGEN TEMPORAL (usa await en el servicio S3)
             if profile_image:
-                # Validar tamaño de imagen
-                if len(profile_image) > 5 * 1024 * 1024:
-                    return {
-                        "success": False, 
-                        "error": "La imagen es demasiado grande (máximo 5MB)"
-                    }
-                
-                upload_result = await s3_service_instance.upload_profile_img(
-                    profile_image, 
-                    user_id=temp_s3_id
-                )
-
                 temp_s3_id = str(uuid.uuid4())
-
-                upload_result = await s3_service_instance.upload_profile_img(
+                
+                upload_result = await s3_service_instance.upload_profile_img( # <--- AWAIT en S3
                     file_content=profile_image,
                     user_id=temp_s3_id
                 )
@@ -120,18 +98,14 @@ class CognitoService:
                     return {"success": False, "error": upload_result["error"]}
             
                 profile_image_url = upload_result["file_url"]
-                profile_img = profile_image_url # placeholder inicial de la imagen
 
-
-            # Construir atributos para Cognito
+            # 2. Construir atributos y registrar en Cognito (operación síncrona/bloqueante)
             user_attributes = [
                 {"Name": "email", "Value": email},
                 {"Name": "given_name", "Value": user_data.first_name},
                 {"Name": "family_name", "Value": user_data.last_name},
                 {"Name": "custom:role", "Value": UserRole.USER.value},
             ]
-            
-            # Agregar atributos opcionales
             if user_data.gender:
                 user_attributes.append({"Name": "gender", "Value": user_data.gender})
             if user_data.birth_date:
@@ -139,64 +113,71 @@ class CognitoService:
             if profile_image_url:
                 user_attributes.append({"Name": "picture", "Value": profile_image_url})
 
-            # Registrar en Cognito
             response = await run_in_threadpool(
                 self.client.sign_up,
                 ClientId=self.client_id,
                 Username=email,
                 Password=user_data.password,
                 UserAttributes=user_attributes
-            )   
-
-            cognito_sub = response["UserSub"]
-            
-            # Hashear la contraseña para almacenamiento local
-            hashed_password = hash_password(user_data.password)
-
-            # Crear usuario en base de datos local
-            new_db_user = User(
-                cognito_sub=cognito_sub,
-                email=email,
-                auth_type=AuthType.EMAIL,
-                password_hash=hashed_password,
-                first_name=user_data.first_name,
-                last_name=user_data.last_name,
-                gender=Gender(user_data.gender) if user_data.gender else None,
-                date_of_birth=user_data.birth_date,
-                profile_picture=profile_image_url,
-                role=UserRole.USER,
-                account_status=True,
-                created_at=current_time
             )
 
-            db.add(new_db_user)
-            db.commit()
-            db.refresh(new_db_user)
+            cognito_sub = response["UserSub"]
 
+            # 3. Crear usuario en base de datos local (operaciones síncronas/bloqueantes)
+            hashed_password = hash_password(user_data.password)
+            
+            # Función síncrona para DB
+            def create_db_user():
+                new_db_user = User(
+                    cognito_sub=cognito_sub,
+                    email=email,
+                    auth_type=AuthType.EMAIL,
+                    password_hash=hashed_password,
+                    first_name=user_data.first_name,
+                    last_name=user_data.last_name,
+                    gender=Gender(user_data.gender) if user_data.gender else None,
+                    date_of_birth=user_data.birth_date,
+                    profile_picture=profile_image_url,
+                    role=UserRole.USER,
+                    account_status=True,
+                    created_at=current_time
+                )
+                db.add(new_db_user)
+                db.commit() # <--- El bloqueo ocurre aquí
+                db.refresh(new_db_user)
+                return new_db_user
+
+            new_db_user = await run_in_threadpool(create_db_user)
+            
             return {
                 "success": True,
                 "user_sub": cognito_sub,
                 "user_id": str(new_db_user.user_id),
-                "temp_s3_id": temp_s3_id,
-                "profile_image": profile_image,
                 "profile_image_url": profile_image_url,
+                "temp_s3_id": temp_s3_id, # Para la tarea de fondo
+                "profile_image": profile_image, # Para la tarea de fondo
                 "message": "Usuario registrado correctamente. Verifica tu correo.",
             }
 
         except self.client.exceptions.UsernameExistsException:
+            # Si el registro falla, limpia la imagen temporal
             if profile_image_url and temp_s3_id:
-                # Esto es una limpieza de emergencia. No debería ser asíncrono.
-                s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
+                await s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
             return {"success": False, "error": "El usuario ya existe"}
         except self.client.exceptions.InvalidPasswordException:
             return {"success": False, "error": "La contraseña no cumple con los requisitos"}
         except Exception as e:
+            # Si hay un error, limpia S3 (asíncrono)
             if profile_image_url and temp_s3_id:
-                # Esto es una limpieza de emergencia. No debería ser asíncrono.
-                s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
+                await s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
             return {"success": False, "error": str(e)}
         
-    def process_s3_and_cognito_updates_sync(self, profile_image: bytes, cognito_sub: str, temp_s3_id: str, profile_image_url: str):
+    async def process_s3_and_cognito_updates_sync(self, 
+                                            profile_image: bytes, 
+                                            cognito_sub: str, 
+                                            temp_s3_id: str, 
+                                            profile_image_url: str,
+                                            db: Session = Depends(get_db)):
         """Tarea síncrona de limpieza y actualización que se ejecuta en segundo plano."""
         s3_service_instance = S3Service()
         
@@ -204,7 +185,7 @@ class CognitoService:
             return
             
         try:
-            transfer_upload_result = s3_service_instance.upload_profile_img(
+            transfer_upload_result = await s3_service_instance.upload_profile_img(
                 file_content=profile_image,
                 user_id=cognito_sub
             )
@@ -212,21 +193,39 @@ class CognitoService:
             if transfer_upload_result["success"]:
                 final_profile_image_url = transfer_upload_result["file_url"]
                 
-                s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
+                await s3_service_instance.delete_profile_img(old_url=profile_image_url, user_id=temp_s3_id)
 
-                self.client.admin_update_user_attributes(
-                    UserPoolId=self.user_pool_id,
-                    Username=self.client.admin_get_user(UserPoolId=self.user_pool_id, Username=cognito_sub)['Username'], 
-                    UserAttributes=[
-                        {'Name': 'picture', 'Value': final_profile_image_url}
-                    ]
-                )
+               # #self.client.admin_update_user_attributes(
+                #    UserPoolId=self.user_pool_id,
+                 #   Username=self.client.admin_get_user(UserPoolId=self.user_pool_id, Username=cognito_sub)['Username'], 
+                  ##     {'Name': 'picture', 'Value': final_profile_image_url}
+                    #]
+                #)
+                def update_user_picture():
+                    self.client.admin_update_user_attributes(
+                        UserPoolId=self.user_pool_id,
+                        #Username=email, 
+                        UserAttributes=[
+                            {'Name': 'picture', 'Value': final_profile_image_url}
+                        ]
+                    )
+
+                await run_in_threadpool(update_user_picture)
+
+                # 3. Actualiza la DB local con la URL final (síncrono, se envuelve)
+                def update_db_picture():
+                    user = db.query(User).filter(User.cognito_sub == cognito_sub).first()
+                    if user:
+                        user.profile_picture = final_profile_image_url
+                        db.commit()
+                
+                await run_in_threadpool(update_db_picture)
                 
         except Exception as e:
             print(f"ERROR TAREA DE FONDO: Falló la re-subida o limpieza en S3: {e}")
 
     
-    def confirm_sign_up(self, email: str, code: str) -> Dict:
+    async def confirm_sign_up(self, email: str, code: str) -> Dict:
         """
         Confirma el registro con el código enviado al email.
         
@@ -238,7 +237,8 @@ class CognitoService:
             Dict con success y message o error
         """
         try:
-            self.client.confirm_sign_up(
+            await run_in_threadpool(
+                self.client.confirm_sign_up,
                 ClientId=self.client_id,
                 Username=email,
                 ConfirmationCode=code
@@ -252,7 +252,7 @@ class CognitoService:
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
-    def resend_confirmation_code(self, email: str) -> Dict:
+    async def resend_confirmation_code(self, email: str) -> Dict:
         """
         Reenvía el código de confirmación.
         
@@ -263,7 +263,8 @@ class CognitoService:
             Dict con success y message o error
         """
         try:
-            self.client.resend_confirmation_code(
+            await run_in_threadpool(
+                self.client.resend_confirmation_code,
                 ClientId=self.client_id,
                 Username=email
             )
@@ -271,7 +272,7 @@ class CognitoService:
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
-    def sign_in(self, email: str, password: str) -> Dict:
+    async def sign_in(self, email: str, password: str) -> Dict:
         """
         Inicia sesión con email y contraseña.
         
@@ -283,7 +284,8 @@ class CognitoService:
             Dict con tokens o error
         """
         try:
-            response = self.client.initiate_auth(
+            response = await run_in_threadpool(
+                self.client.initiate_auth,
                 ClientId=self.client_id,
                 AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters={
@@ -309,7 +311,7 @@ class CognitoService:
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
-    def sign_out(self, access_token: str) -> Dict:
+    async def sign_out(self, access_token: str) -> Dict:
         """
         Cierra la sesión del usuario (invalida el token).
         
@@ -320,12 +322,12 @@ class CognitoService:
             Dict con success y message o error
         """
         try:
-            self.client.global_sign_out(AccessToken=access_token)
+            await run_in_threadpool(self.client.global_sign_out, AccessToken=access_token)
             return {'success': True, 'message': 'Sesión cerrada correctamente'}
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
-    def refresh_token(self, refresh_token: str) -> Dict:
+    async def refresh_token(self, refresh_token: str) -> Dict:
         """
         Refresca el access token usando el refresh token.
         
@@ -336,7 +338,8 @@ class CognitoService:
             Dict con nuevos tokens o error
         """
         try:
-            response = self.client.initiate_auth(
+            response = await run_in_threadpool(
+                self.client.initiate_auth,
                 ClientId=self.client_id,
                 AuthFlow='REFRESH_TOKEN_AUTH',
                 AuthParameters={
@@ -438,7 +441,7 @@ class CognitoService:
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
-    def forgot_password(self, email: str) -> Dict:
+    async def forgot_password(self, email: str) -> Dict:
         """
         Inicia el proceso de recuperación de contraseña.
         
@@ -449,7 +452,8 @@ class CognitoService:
             Dict con success y message o error
         """
         try:
-            self.client.forgot_password(
+            await run_in_threadpool(
+                self.client.forgot_password,
                 ClientId=self.client_id,
                 Username=email
             )
@@ -459,7 +463,7 @@ class CognitoService:
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
-    def confirm_forgot_password(self, email: str, code: str, new_password: str) -> Dict:
+    async def confirm_forgot_password(self, email: str, code: str, new_password: str) -> Dict:
         """
         Confirma el cambio de contraseña con el código recibido.
         
@@ -472,7 +476,8 @@ class CognitoService:
             Dict con success y message o error
         """
         try:
-            self.client.confirm_forgot_password(
+            await run_in_threadpool(
+                self.client.confirm_forgot_password,
                 ClientId=self.client_id,
                 Username=email,
                 ConfirmationCode=code,
@@ -488,7 +493,7 @@ class CognitoService:
         except Exception as e:
             return {'success': False, 'error': str(e)}
     
-    def change_password(self, access_token: str, old_password: str, new_password: str) -> Dict:
+    async def change_password(self, access_token: str, old_password: str, new_password: str) -> Dict:
         """
         Cambia la contraseña del usuario autenticado.
         
@@ -501,7 +506,8 @@ class CognitoService:
             Dict con success y message o error
         """
         try:
-            self.client.change_password(
+            await run_in_threadpool(
+                self.client.change_password,
                 AccessToken=access_token,
                 PreviousPassword=old_password,
                 ProposedPassword=new_password
