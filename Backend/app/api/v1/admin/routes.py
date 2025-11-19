@@ -145,7 +145,7 @@ async def create_product(
             image_bytes = await image_file.read()
             
             # Subir a S3
-            result = s3_service.upload_product_img(
+            result = await s3_service.upload_product_img(
                 file_content=image_bytes,
                 product_id=str(new_product.product_id)
             )

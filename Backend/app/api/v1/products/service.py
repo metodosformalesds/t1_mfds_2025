@@ -227,7 +227,7 @@ class ReviewService:
         product_id: int,
         user_id: int,
         review_data: schemas.ReviewCreate,
-        order_id: int
+        order_id: Optional[int] = None
 ) -> Review:
         """
         Autor: Luis Flores

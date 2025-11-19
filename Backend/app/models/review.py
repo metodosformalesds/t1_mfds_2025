@@ -11,7 +11,7 @@ class Review(Base):
     # Keys
     review_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("product.product_id", ondelete="CASCADE"), nullable=False)
-    order_id: Mapped[int] = mapped_column(ForeignKey("order.order_id", ondelete="CASCADE"), nullable=False)
+    order_id: Mapped[Optional[int]] = mapped_column(ForeignKey("order.order_id", ondelete="CASCADE"), nullable=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False)
 
     # Attributes
@@ -22,7 +22,7 @@ class Review(Base):
 
     # Relationships
     product: Mapped["Product"] = relationship("Product", back_populates="reviews")
-    order: Mapped["Order"] = relationship("Order", back_populates="reviews")
+    order: Mapped[Optional["Order"]] = relationship("Order", back_populates="reviews")
     user: Mapped["User"] = relationship("User", back_populates="reviews")
 
     def __repr__(self) -> str:
