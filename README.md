@@ -21,9 +21,11 @@
 | Cronograma de actividades <img src="https://cdn.brandfetch.io/idU6lzwMYA/theme/light/symbol.svg?c=1bxid64Mup7aczewSAYMX&t=1678376731571" width="20"> | [Cronograma de actividades](https://app.clickup.com/9017313759/v/s/90171635782) |
 | Diagrama de Gantt <img src="https://cdn.brandfetch.io/idM6BU9PqJ/w/150/h/150/theme/dark/logo.png?c=1bxid64Mup7aczewSAYMX&t=1755681232908" width="20"> | [Diagrama de Gantt](https://docs.google.com/spreadsheets/d/1o7dNqU7Jxi7ucojEVMmcOWRPgSNp3zA9nR-aOBnljX4/edit?usp=sharing) |
 | Prototipo del proyecto <img src="https://cdn.brandfetch.io/idZHcZ_i7F/theme/light/symbol.svg?c=1dxbfHSJFAPEGdCLU4o5B" width="15"> | [Prototipo del proyecto](https://www.figma.com/design/WaS7B5Rg99ll3yqHYbcc5B/BeFit-Prototype?node-id=0-1&t=EOAzZqQikuIRQCX2-1) |
-| Deployment AWS <img src="https://cdn.brandfetch.io/idVoqFQ-78/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B" width="20"> | https://frontend.d34s9corpodswj.amplifyapp.com/ |
+| Deployment Front <img src="https://cdn.brandfetch.io/idVoqFQ-78/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B" width="20"> | https://frontend.d34s9corpodswj.amplifyapp.com/ |
+| Producción Back <img src="https://cdn.brandfetch.io/idbpOFBgcc/theme/dark/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B" width="20"> | [Producción Back](https://befitapi.store/docs) |
 | Presentación Ejecutiva <img src="https://cdn.brandfetch.io/id6O2oGzv-/theme/dark/idncaAgFGT.svg?c=1bxid64Mup7aczewSAYMX&t=1755572716016" width="20"> | [Presentación Ejecutiva](https://docs.google.com/presentation/d/1fEga5ncM2CfUvp7k2cFZSsOFCJLBZvDYWGEVPykqIM0/edit?usp=drive_link) |
 | Presentación Final <img src="https://cdn.brandfetch.io/id6O2oGzv-/theme/dark/idncaAgFGT.svg?c=1bxid64Mup7aczewSAYMX&t=1755572716016" width="20"> | [Presentación Final](https://docs.google.com/presentation/d/11B806NqzJEaMkIvx8jn-RqnJVFBaCarcXumYOmdgNmk/edit?usp=sharing) |
+| Video Demo <img src="https://cdn.brandfetch.io/idchmboHEZ/theme/dark/symbol.svg?c=1dxbfHSJFAPEGdCLU4o5B" width="20"> | [Video Demo - Teams](https://teams.microsoft.com/l/meetingrecap?driveId=b%21jiSbrXa7vEeXXyZ-jO0kQpqry_tdZnJOmMrooZL9CLkCeI1zoPeoRoN-DAxVIS7U&driveItemId=01MJXRVGPAZN54FUKNE5HKRLFJUSXNT4PP&sitePath=https%3A%2F%2Falumnosuacj.sharepoint.com%2Fsites%2FSection_458381-t1_MFDS_2025%2FShared%2520Documents%2FRecordings%2FMeeting%2520in%2520t1_MFDS_2025-20251118_222259-Meeting%2520Recording.mp4%3Fweb%3D1&fileUrl=https%3A%2F%2Falumnosuacj.sharepoint.com%2Fsites%2FSection_458381-t1_MFDS_2025%2FShared%2520Documents%2FRecordings%2FMeeting%2520in%2520t1_MFDS_2025-20251118_222259-Meeting%2520Recording.mp4%3Fweb%3D1&threadId=19%3A2cb6d8f80c9b451fbd137065f7830727%40thread.tacv2&organizerId=483626ad-f266-4e72-94b8-17d4288fad7d&tenantId=e1ba6395-7a64-4b92-aaf3-a7c020c3d18f&callId=530eed19-160a-4c97-9f39-937809546b6d&threadType=space&meetingType=Unknown&channelType=Private&replyChainId=1763527857272&subType=RecapSharingLink_RecapChiclet) |
 
 ## ⚙️ Tecnologías Utilizadas
 
@@ -40,6 +42,10 @@
 
 ---
 <h1 align="center"> T1- MFDS 2025 - APP </h1>
+
+## Ramas clave
+ - `Frontend` : prod
+ - `develop` : dev
 
 ## Instrucciones de uso - Backend
 Para instalar las dependencias requeridas ubicadas en "requirements.txt", es necesario realizar los siguientes pasos:
