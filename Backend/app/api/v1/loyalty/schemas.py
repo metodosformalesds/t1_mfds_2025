@@ -157,3 +157,18 @@ class AddPointsResponse(BaseModel):
                 "expiration_date": "2025-05-12"
             }
         }
+
+"""
+Schema de respuesta para generación de cupones
+"""
+class CouponGenerationResponse(BaseModel):
+    message: str
+    codes: List[str]
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "message": "Coupons generated successfully",
+                "codes": ["BEFIT-ABC123", "BEFIT-XYZ789", "BEFIT-QWE456"]
+            }
+        }
