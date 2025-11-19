@@ -41,7 +41,7 @@
 <br>
 
 ---
-<h1 align="center"> T1- MFDS 2025 - APP </h1>
+<h1 align="center"> T1- MFDS 2025</h1>
 
 ## Ramas clave
  - `Frontend` : prod
