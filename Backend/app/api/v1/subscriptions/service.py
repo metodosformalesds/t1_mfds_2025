@@ -399,7 +399,6 @@ class SubscriptionService:
         attributes = fitness_profile.attributes or {}
         recommended_plan = attributes.get("recommended_plan", "")
         
-        # Buscar productos que coincidan con el plan recomendado
         selected_products = []
         
         if recommended_plan:
@@ -413,21 +412,33 @@ class SubscriptionService:
             
             selected_products.extend(products)
         
-        # Si no se encontraron suficientes productos por nombre, buscar por objetivos
+        # Si no se encontraron suficientes productos por nombre
         if len(selected_products) < 3:
             fitness_objectives = attributes.get("fitness_objectives", [])
             
-            additional_products = db.query(Product).filter(
-                and_(
-                    Product.is_active == True,
-                    Product.stock > 0,
-                    Product.fitness_objectives.contains(fitness_objectives)
-                )
-            ).limit(3 - len(selected_products)).all()
+            # Solo buscar por objetivos si realmente hay objetivos definidos
+            if fitness_objectives and len(fitness_objectives) > 0:
+                # Usar operadores JSON específicos de PostgreSQL
+                additional_products = db.query(Product).filter(
+                    and_(
+                        Product.is_active == True,
+                        Product.stock > 0,
+                        # Verificar si algún objetivo coincide
+                        Product.fitness_objectives.op('?|')(fitness_objectives)
+                    )
+                ).limit(3 - len(selected_products)).all()
+            else:
+                # Si no hay objetivos, buscar productos genéricos
+                additional_products = db.query(Product).filter(
+                    and_(
+                        Product.is_active == True,
+                        Product.stock > 0
+                    )
+                ).limit(3 - len(selected_products)).all()
             
             selected_products.extend(additional_products)
         
-        return selected_products[:3]  # Máximo 3 productos por suscripción
+        return selected_products[:3]
     
     @staticmethod
     def _process_subscription_charge(

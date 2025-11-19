@@ -133,8 +133,7 @@ class S3Service:
                 img_format = img.format
 
                 if img_format not in allowed_formats:
-                    formats_str = ", ".join(allowed_formats)
-                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {formats_str}"}
+                    return {"success": False, "error": f"Formato de imagen no permitido. Los formatos permitidos son: {", ".join(allowed_formats)}"}
             
             except Exception as e:
                 return {"success": False, "error": f"El archivo no es una imagen válida o está corrupto. Detalle: {str(e)}"}
@@ -149,20 +148,20 @@ class S3Service:
 
             # Lógica para S3
             file_ext = img_format.lower()
-            file_name = f"product_images/{product_id}/picture.{file_ext}" # de igual forma aqui
+            file_name = f"product_images/{product_id}/picture.{file_ext}" # de igual forma aqui 
 
             content_types = {
                 'jpeg': 'image/jpeg',
                 'png': 'image/png',
                 'webp': 'image/webp'
             }
-            content_type = content_types.get(file_ext, 'image/jpeg')
+            content_type = content_types.get(file_ext, 'image/jpeg') 
 
             # Subir el archivo
             self.s3_client.put_object(
                 Bucket=self.bucket_name,
                 Key=file_name,
-                Body=file_content,
+                Body=file_content, 
                 ContentType=content_type,
                 Metadata={'product_id': product_id}
             )
@@ -198,7 +197,7 @@ class S3Service:
         try:
             # busca el patron del sub de cognito en las carpetas
             key_match = re.search(r"profile_images/[^/?]+/[^/?]+", old_url)
-
+            
             if not key_match:
                 return {"success": True, "message": "URL antigua no válida o vacía, no se requiere eliminación."}
 
@@ -221,15 +220,4 @@ class S3Service:
             return {"success": False, "error": f"Error al eliminar de S3: {str(e)}"}
         
         except Exception as e:
-            return {"success": False, "error": f"Error inesperado al intentar eliminar: {str(e)}"}
-
-    async def delete_profile_img(self, old_url: str, user_id: str) -> Dict:
-        """
-        Async wrapper for deleting profile images.
-        Uses run_in_threadpool to avoid blocking the event loop.
-        """
-        return await run_in_threadpool(
-            self._delete_profile_img_sync,
-            old_url,
-            user_id
-        )
+            return {"success": False, "error": f"Error inesperado al intentar eliminar: {str(e)}"} 
