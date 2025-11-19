@@ -377,7 +377,7 @@ const ShippingAddresses = () => {
             // Cargar direcciones desde el backend
             const data = await getAddresses();
             
-            setAddresses(data);
+            setAddresses(data.addresses || []);
         } catch (err) {
             console.error("Error loading addresses:", err);
             setError("Error al cargar las direcciones. Por favor, intenta de nuevo.");

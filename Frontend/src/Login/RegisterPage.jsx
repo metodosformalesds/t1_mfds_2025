@@ -10,7 +10,7 @@ import manIMG from '../assets/FitnessMen.png';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import SocialMediaButtons from '../Componentes/SocialMediaButtons';
-import { signUp } from '../utils/api';
+// signUp se llamará desde SetupProfile con todos los datos completos
 
 const RegisterPage = () => {
     const navigate = useNavigate();
@@ -27,26 +27,24 @@ const RegisterPage = () => {
             return;
         }
 
+        // Validar que la contraseña tenga al menos un carácter especial
+        const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
+        if (!specialCharRegex.test(formData.password)) {
+            setError('La contraseña debe contener al menos un carácter especial (!@#$%^&*(),.?":{}|<>)');
+            return;
+        }
+
         setLoading(true);
 
         try {
-            // Crear FormData básico con email y password
-            const formDataToSend = new FormData();
-            formDataToSend.append('email', formData.email);
-            formDataToSend.append('password', formData.password);
-            // Los demás campos se completarán en SetupProfile
-            formDataToSend.append('first_name', 'Temp');
-            formDataToSend.append('last_name', 'User');
-
-            await signUp(formDataToSend);
-
-            // Guardar email para la confirmación
-            sessionStorage.setItem('pendingConfirmEmail', formData.email);
+            // Guardar credenciales temporalmente en sessionStorage
+            sessionStorage.setItem('tempUserEmail', formData.email);
+            sessionStorage.setItem('tempUserPassword', formData.password);
 
             // Navegar a SetupProfile para completar registro
             navigate('/SetupProfile');
         } catch (err) {
-            setError(err.message || 'Error al registrar usuario');
+            setError(err.message || 'Error al procesar el registro');
         } finally {
             setLoading(false);
         }

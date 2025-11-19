@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { updateUserProfile, updateProfileImage, confirmSignUp } from '../utils/api';
+import { signUp, confirmSignUp } from '../utils/api';
 
 // Icono de Lapiz para editar
 const EditIcon = () => (
@@ -39,19 +39,26 @@ export default function App() {
   
   // Control de flujo
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [confirmationCode, setConfirmationCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Verificar si viene de registro
-    const pendingEmail = sessionStorage.getItem('pendingConfirmEmail');
-    if (pendingEmail) {
-      setEmail(pendingEmail);
-      setNeedsConfirmation(true);
+    // Cargar credenciales temporales del registro
+    const tempEmail = sessionStorage.getItem('tempUserEmail');
+    const tempPassword = sessionStorage.getItem('tempUserPassword');
+    
+    if (tempEmail && tempPassword) {
+      setEmail(tempEmail);
+      setPassword(tempPassword);
+      // No necesitamos confirmación previa, el registro se hará al final
+    } else {
+      // Si no hay datos temporales, redirigir al registro
+      navigate('/register');
     }
-  }, []);
+  }, [navigate]);
 
   // ⭐ NUEVA LÓGICA: Ajustar día seleccionado cuando cambia mes o año
   useEffect(() => {
@@ -251,8 +258,12 @@ export default function App() {
     
     try {
       await confirmSignUp(email, confirmationCode);
-      setNeedsConfirmation(false);
+      
+      // Limpiar sessionStorage
       sessionStorage.removeItem('pendingConfirmEmail');
+      
+      // Navegar al login después de confirmar
+      navigate('/login');
     } catch (err) {
       setError(err.message || 'Código de verificación inválido');
     } finally {
@@ -270,7 +281,7 @@ export default function App() {
       return;
     }
     
-    // ⭐ NUEVA LÓGICA: Validación de fecha de nacimiento
+    // Validación de fecha de nacimiento
     const date = new Date(año, mes - 1, dia);
     const today = new Date();
     
@@ -299,34 +310,41 @@ export default function App() {
       // Construir fecha de nacimiento en formato ISO
       const birthDate = `${año}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
       
-      // ⭐ NUEVA LÓGICA: Mapear género al formato del backend (si aplica)
+      // Mapear género al formato del backend
       const genderMap = {
-        'masculino': 'male',
-        'femenino': 'female',
-        'no-decir': 'other'
+        'masculino': 'M',
+        'femenino': 'F',
+        'no-decir': 'O'
       };
       
-      // Actualizar perfil básico
-      await updateUserProfile({
-        first_name: nombre,
-        last_name: apellido,
-        // Usar el mapeo de género para enviarlo al API
-        gender: genderMap[genero] || genero, 
-        date_of_birth: birthDate
-      });
+      // Crear FormData con TODOS los datos del registro
+      const formDataToSend = new FormData();
+      formDataToSend.append('email', email);
+      formDataToSend.append('password', password);
+      formDataToSend.append('first_name', nombre);
+      formDataToSend.append('last_name', apellido);
+      formDataToSend.append('gender', genderMap[genero] || 'O');
+      formDataToSend.append('birth_date', birthDate);
       
-      // Si hay foto, subirla
+      // Si hay foto de perfil, agregarla
       if (fotoFile) {
-        await updateProfileImage(fotoFile);
+        formDataToSend.append('profile_picture', fotoFile);
       }
       
-      // Limpiar sessionStorage
-      sessionStorage.removeItem('pendingConfirmEmail');
+      // Crear la cuenta con todos los datos
+      await signUp(formDataToSend);
       
-      // Navegar a login
-      navigate('/');
+      // Guardar email para confirmación
+      sessionStorage.setItem('pendingConfirmEmail', email);
+      
+      // Limpiar datos temporales
+      sessionStorage.removeItem('tempUserEmail');
+      sessionStorage.removeItem('tempUserPassword');
+      
+      // Mostrar que necesita confirmación
+      setNeedsConfirmation(true);
     } catch (err) {
-      setError(err.message || 'Error al completar el perfil');
+      setError(err.message || 'Error al crear la cuenta');
     } finally {
       setLoading(false);
     }
