@@ -17,6 +17,7 @@ from app.api.deps import get_current_user
 from app.models.user import User
 from app.api.v1.loyalty import schemas
 from app.api.v1.loyalty.service import loyalty_service
+from app.api.v1.loyalty.schemas import CouponGenerationResponse
 
 router = APIRouter()
 
@@ -182,7 +183,7 @@ async def expire_my_points(
 
 @router.post("/{user_id}/coupons/generate", 
              status_code=status.HTTP_201_CREATED,
-             response_model=list[str] 
+             response_model=CouponGenerationResponse
 )
 def create_monthly_coupons(user_id: int, db: Session = Depends(get_db)):
     """
@@ -200,7 +201,10 @@ def create_monthly_coupons(user_id: int, db: Session = Depends(get_db)):
     """
     try:
         generated_codes = loyalty_service.generate_monthly_coupons_for_user(db, user_id)
-        return {"message": "Coupons generated successfully", "codes": generated_codes}
+        return {
+            "message": "Coupons generated successfully", 
+            "codes": generated_codes
+        }
     
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
