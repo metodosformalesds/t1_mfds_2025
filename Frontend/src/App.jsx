@@ -21,6 +21,7 @@ import RSelect from "./Login/RecoverySelect";
 import RCode from "./Login/RecoveryCode"; 
 import RPassword from "./Login/RecoveryPassword";
 import SetupP from "./Login/SetupProfile";
+import ConfirmAccount from "./Login/ConfirmAccount";
 
 // Perfil de usuario
 import ProfileUser from "./Profile/UserProfile";
@@ -156,7 +157,8 @@ export default function App() {
         <Route path="/RecoverySelect" element={<RSelect />} />
         <Route path="/RecoveryCode" element={<RCode />} />
         <Route path="/RecoveryPassword" element={<RPassword />} />
-        <Route path="/SetupProfile" element={<ProtectedRoute><SetupP /></ProtectedRoute>} />
+        <Route path="/SetupProfile" element={<SetupP />} />
+        <Route path="/confirm-account" element={<ConfirmAccount />} />
 
         {/* Layout principal */}
         <Route element={<MainLayout />}>

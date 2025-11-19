@@ -21,26 +21,111 @@ const API_BASE = import.meta.env.VITE_API_BASE || "https://befitapi.store";
  * Excepciones:
  *   @throws {Error} - Error con mensaje descriptivo si la petición falla (4xx, 5xx)
  */
+// Guarda tokens y expires_at en localStorage
+export function setAuthTokens({ access_token, refresh_token, id_token, expires_in }) {
+    if (access_token) localStorage.setItem('token', access_token);
+    if (refresh_token) localStorage.setItem('refresh_token', refresh_token);
+    if (id_token) localStorage.setItem('id_token', id_token);
+    if (expires_in) {
+        const expiresAt = Date.now() + (Number(expires_in) * 1000);
+        localStorage.setItem('expires_at', String(expiresAt));
+    }
+}
+
+async function doRefresh(refreshTokenValue) {
+    try {
+        const res = await fetch(`${API_BASE}${API_ENDPOINTS.AUTH_REFRESH}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshTokenValue })
+        });
+
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(payload.detail || payload.message || `Refresh error ${res.status}`);
+
+        // payload expected to contain new access_token, refresh_token, id_token, expires_in
+        setAuthTokens(payload);
+        return payload;
+    } catch (err) {
+        // fallthrough - refresh failed
+        return null;
+    }
+}
+
 export async function apiFetch(path, options = {}) {
     // Recuperar token JWT de localStorage para autenticación
-    const token = localStorage.getItem("token");
+    let token = localStorage.getItem("token");
+
+    console.log(`[API] ${options.method || 'GET'} ${path}`);
+    console.log('[API] Token presente:', token ? 'Sí' : 'No');
+    if (token) {
+        console.log('[API] Token preview:', token.substring(0, 20) + '...');
+    }
+
+    // Fusionar headers correctamente
+    let headers = {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` }),
+        ...(options.headers || {})
+    };
+
+    console.log('[API] Headers:', Object.keys(headers));
 
     const res = await fetch(`${API_BASE}${path}`, {
-        headers: {
-            "Content-Type": "application/json",
-            ...(token && { "Authorization": `Bearer ${token}` })
-        },
-        // Para testing sin autenticación, comentar el header anterior y usar:
-        // headers: { "Content-Type": "application/json" },
         ...options,
+        headers
     });
+
+    console.log('[API] Response status:', res.status);
+
+    // Si recibimos 401, intentar refresh (solo una vez)
+    if (res.status === 401 && !options._retry) {
+        console.warn('[API] 401 recibido, intentando refresh de token');
+        const refreshTokenValue = localStorage.getItem('refresh_token');
+        if (refreshTokenValue) {
+            const refreshed = await doRefresh(refreshTokenValue);
+            if (refreshed && refreshed.access_token) {
+                // Reintentar la petición original con nuevas credenciales
+                options._retry = true;
+                token = localStorage.getItem('token');
+                const retryHeaders = {
+                    "Content-Type": "application/json",
+                    ...(token && { "Authorization": `Bearer ${token}` }),
+                    ...(options.headers || {})
+                };
+
+                const retryRes = await fetch(`${API_BASE}${path}`, {
+                    ...options,
+                    headers: retryHeaders
+                });
+
+                const retryData = await retryRes.json().catch(() => ({}));
+                if (!retryRes.ok) {
+                    console.error('[API] Error response after refresh:', retryData);
+                    throw new Error(retryData.detail || retryData.message || `Error ${retryRes.status}: ${retryRes.statusText}`);
+                }
+
+                console.log('[API] Success response after refresh:', retryData);
+                return retryData;
+            }
+        }
+
+        // Si no hay refresh_token o falló, limpiar auth y lanzar error
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('id_token');
+        localStorage.removeItem('expires_at');
+        throw new Error('Sesión expirada. Por favor, inicia sesión de nuevo.');
+    }
 
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+        console.error('[API] Error response:', data);
         throw new Error(data.detail || data.message || `Error ${res.status}: ${res.statusText}`);
     }
     
+    console.log('[API] Success response:', data);
     return data;
 }
 
@@ -60,7 +145,7 @@ export async function apiFetch(path, options = {}) {
  */
 export async function apiUploadFile(path, file, fieldName = "file") {
     // Recuperar token para autenticación
-    const token = localStorage.getItem("token");
+    let token = localStorage.getItem("token");
     const formData = new FormData();
     formData.append(fieldName, file);
 
@@ -72,6 +157,34 @@ export async function apiUploadFile(path, file, fieldName = "file") {
         },
         body: formData
     });
+
+    // Si 401 intentar refresh y reintentar
+    if (res.status === 401) {
+        const refreshTokenValue = localStorage.getItem('refresh_token');
+        if (refreshTokenValue) {
+            const refreshed = await doRefresh(refreshTokenValue);
+            if (refreshed && refreshed.access_token) {
+                token = localStorage.getItem('token');
+                const retryRes = await fetch(`${API_BASE}${path}`, {
+                    method: "PUT",
+                    headers: {
+                        ...(token && { "Authorization": `Bearer ${token}` })
+                    },
+                    body: formData
+                });
+
+                const retryData = await retryRes.json().catch(() => ({}));
+                if (!retryRes.ok) throw new Error(retryData.detail || retryData.message || `Error ${retryRes.status}: ${retryRes.statusText}`);
+                return retryData;
+            }
+        }
+
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('id_token');
+        localStorage.removeItem('expires_at');
+        throw new Error('Sesión expirada. Por favor, inicia sesión de nuevo.');
+    }
 
     const data = await res.json().catch(() => ({}));
 
@@ -111,7 +224,7 @@ export const API_ENDPOINTS = {
     USER_PROFILE_DELETE: "/api/v1/profile/me",
     
     // ============ PLACEMENT TEST ============
-    PLACEMENT_TEST: "/api/v1/placement-test/placement-test",
+    PLACEMENT_TEST: "/api/v1/placement-test",
     
     // ============ BÚSQUEDA Y FILTROS ============
     SEARCH_PRODUCTS: "/api/v1/search",
@@ -1444,3 +1557,36 @@ export const updateSubscriptionPaymentMethod = (paymentMethodId) =>
  * Excepciones: 400 si no hay suscripción o hay error
  */
 export const getSubscriptionHistory = () => apiFetch(API_ENDPOINTS.SUBSCRIPTIONS_HISTORY);
+
+// ============ UTILIDADES DE AUTENTICACIÓN ============
+
+/**
+ * Verifica si el usuario está autenticado
+ * @returns {boolean} - true si hay un token válido en localStorage
+ */
+export const isAuthenticated = () => {
+    const token = localStorage.getItem('token');
+    const expiresAt = Number(localStorage.getItem('expires_at') || 0);
+    if (!token) return false;
+    if (expiresAt && Date.now() > expiresAt) return false;
+    return true;
+};
+
+/**
+ * Obtiene el token del localStorage
+ * @returns {string|null} - El token o null si no existe
+ */
+export const getToken = () => {
+    return localStorage.getItem('token');
+};
+
+/**
+ * Limpia todos los datos de autenticación
+ */
+export const clearAuth = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('id_token');
+    localStorage.removeItem('expires_at');
+    console.log('[AUTH] Tokens eliminados del localStorage');
+};

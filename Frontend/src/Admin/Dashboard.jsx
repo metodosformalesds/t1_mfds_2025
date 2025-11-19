@@ -215,9 +215,10 @@ const Dashboard = () => {
                         <div className="flex flex-col gap-2">
                             <button 
                                 onClick={() => {
+                                    const token = localStorage.getItem('token'); // Obtener el token de autenticación
                                     const endDate = new Date().toISOString();
                                     const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-                                    window.open(`http://localhost:8000/api/v1/analytics/reports/sales/export/csv?start_date=${startDate}&end_date=${endDate}`, '_blank');
+                                    window.open(`http://befitapi.store/api/v1/analytics/reports/sales/export/csv?start_date=${startDate}&end_date=${endDate}&token=${token}`, '_blank');
                                 }}
                                 className="bg-[#31478F] text-white font-semibold py-2 px-6 rounded-lg hover:bg-opacity-90"
                             >
@@ -225,9 +226,10 @@ const Dashboard = () => {
                             </button>
                             <button 
                                 onClick={() => {
+                                    const token = localStorage.getItem('token'); // Obtener el token de autenticación
                                     const endDate = new Date().toISOString();
                                     const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-                                    window.open(`http://localhost:8000/api/v1/analytics/reports/sales/export/pdf?start_date=${startDate}&end_date=${endDate}`, '_blank');
+                                    window.open(`http://befitapi.store/api/v1/analytics/reports/sales/export/pdf?start_date=${startDate}&end_date=${endDate}&token=${token}`, '_blank');
                                 }}
                                 className="bg-gray-100 text-gray-700 border border-gray-300 font-semibold py-2 px-6 rounded-lg hover:bg-gray-200"
                             >

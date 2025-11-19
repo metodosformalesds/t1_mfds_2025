@@ -1,13 +1,26 @@
-/**
- * Utilidades de autenticación
- * Funciones para validar el estado de autenticación del usuario
- */
+// utils/auth.js
 
 /**
- * Verifica si el usuario tiene un token de autenticación válido
- * @returns {boolean} true si existe un token en localStorage
+ * Verifica si un usuario está autenticado revisando si existe un access_token
+ * y si no ha expirado.
  */
 export const isAuthenticated = () => {
-  const token = localStorage.getItem('token');
-  return !!token;
+  const token = localStorage.getItem("token");
+  const expiresAt = Number(localStorage.getItem("expires_at") || 0);
+
+  if (!token) return false;
+  if (expiresAt && Date.now() > expiresAt) return false;
+
+  return true;
+};
+
+
+/**
+ * Cierra sesión limpiando los tokens relevantes.
+ */
+export const logout = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('id_token');
+  localStorage.removeItem('expires_at');
 };

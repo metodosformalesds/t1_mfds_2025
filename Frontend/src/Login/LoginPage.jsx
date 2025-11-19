@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import CreatinaIMG from '../assets/Creatina.png';
 import ScoopIMG from '../assets/Scoop.png';
 import SocialMediaButtons from '../Componentes/SocialMediaButtons';
-import { login } from '../utils/api';
+import { login, setAuthTokens } from '../utils/api';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -27,12 +27,15 @@ const LoginPage = () => {
     try {
       const response = await login(formData.email, formData.password);
       
-      // Guardar tokens en localStorage
-      localStorage.setItem('token', response.access_token);
-      localStorage.setItem('refresh_token', response.refresh_token);
-      localStorage.setItem('id_token', response.id_token);
+      // Guardar tokens en el sistema
+      setAuthTokens({
+        access_token: response.access_token,
+        refresh_token: response.refresh_token,
+        id_token: response.id_token,
+        expires_in: response.expires_in
+      });
       
-      navigate('/Home');
+      navigate('/');
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión. Verifica tus credenciales.');
     } finally {
@@ -232,9 +235,24 @@ const LoginPage = () => {
               <motion.div className="inline-block">
                 <Link 
                   to="/RegisterPage"
-                  className="font-bold text-[#5DA586] hover:underline"
+                  className="font-bold text-[#5DA586] hover:underline ml-1"
                 >
                   Regístrate
+                </Link>
+              </motion.div>
+            </motion.div>
+
+            <motion.div 
+              className="text-center text-xs text-gray-600"
+              variants={itemVariants}
+            >
+              ¿Ya tienes cuenta pero no la confirmaste?
+              <motion.div className="inline-block">
+                <Link 
+                  to="/confirm-account"
+                  className="font-bold text-[#3b4d82] hover:underline ml-1"
+                >
+                  Confirmar cuenta
                 </Link>
               </motion.div>
             </motion.div>
