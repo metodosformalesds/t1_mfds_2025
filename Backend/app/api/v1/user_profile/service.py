@@ -171,7 +171,7 @@ class UserProfileService:
             db.rollback()
             return {"success": False, "error": f"Error al actualizar perfil: {str(e)}"}
         
-    def update_profile_image(
+    async def update_profile_image(
         self,
         db: Session,
         cognito_sub: str,
@@ -221,10 +221,10 @@ class UserProfileService:
             old_url = user.profile_picture
 
             if old_url:
-                self.s3_service.delete_profile_img(old_url=old_url, user_id=str(cognito_sub))
+                await self.s3_service.delete_profile_img(old_url=old_url, user_id=str(cognito_sub))
             
             # Upload new image to S3 (this will overwrite if same user_id)
-            upload_result = self.s3_service.upload_profile_img(
+            upload_result = await self.s3_service.upload_profile_img(
                 file_content=image_content,
                 user_id=str(cognito_sub)
             )

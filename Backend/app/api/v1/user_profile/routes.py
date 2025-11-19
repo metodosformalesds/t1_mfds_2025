@@ -164,7 +164,7 @@ async def update_profile_image(
     # Leer el contenido de la imagen
     image_content = await profile_image.read()
     
-    result = user_profile_service.update_profile_image(
+    result = await user_profile_service.update_profile_image(
         db=db,
         cognito_sub=cognito_sub,
         image_content=image_content
